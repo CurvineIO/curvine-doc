@@ -3,6 +3,8 @@ authors: [david]
 tags: [teams]
 ---
 
+<!-- truncate -->
+
 # Curvine: High-Performance Distributed Cache(Now Open Source)
 
 ## What is Curvine
