@@ -138,7 +138,7 @@ const config: Config = {
             },
             {
               label: 'X',
-              href: 'https://x.com/curvinecache',
+              href: 'https://x.com/szbr8896',
             },
           ],
         },
