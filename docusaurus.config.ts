@@ -134,7 +134,7 @@ const config: Config = {
           items: [
             {
               label: 'Discord',
-              href: 'https://discordapp.com/invite/curvinecache',
+              href: 'https://discord.com/invite/xfxMQKv3',
             },
             {
               label: 'X',
