@@ -24,7 +24,7 @@ Curvine provides rich APIs suitable for various forms of data management, analys
 
 ## Use Cases
 
-![curvine-scene](./img/curvine-scene.jpg)
+![curvine-scene](./img/curvine-scene.png)
 
 Curvine is designed for high-performance, high-concurrency, and massive data caching scenarios:
 

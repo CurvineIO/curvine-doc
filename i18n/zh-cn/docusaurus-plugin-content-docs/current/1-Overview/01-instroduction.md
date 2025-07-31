@@ -26,7 +26,7 @@ Curvine 提供了丰富的 API，适用于各种形式数据的管理、分析�
 - **多硬件架构支持**：支持 x86、ARM等多种硬件架构；
 - 
 ## 使用场景
-![curvine-scene](./img/curvine-scene.jpg)
+![curvine-scene](./img/curvine-scene.png)
 Curvine 为高性能、高并发以及海量数据缓存设计，可以在很多场景中使用：
 
 - **为深度学习训练提供高速数据访问，大幅减少数据加载时间，提高GPU利用率，加速模型训练进程。**
