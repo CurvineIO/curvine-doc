@@ -44,19 +44,21 @@ restart-all.sh脚本会启动curvine master和worker， 并将master和worker的
 
 验证集群状态:
 ```
-./bin/curvine report
+./bin/cv report
 
 输出如下：
-       active_master: localhost:8995
+     active_master: localhost:8995
        journal_nodes: 1,localhost:8996
-            capacity: 10.0 GB
-           available: 9.0 GB (90.23%)
-             fs_used: 1000.0 MB (9.77%)
-         non_fs_used: 30.4 GB
+            capacity: 0.0B
+           available: 0.0B (0.00%)
+             fs_used: 14.0B (0.00%)
+         non_fs_used: 0.0B
      live_worker_num: 1
      lost_worker_num: 0
-           inode_num: 0
-           block_num: 0
+           inode_num: 2
+           block_num: 1
+    live_worker_list: 192.168.xxx.xxx:8997,0.0B/0.0B (0.00%)
+    lost_worker_list:
 ```
 
 访问Master web ui界面：```http://your-hostname:9000```
