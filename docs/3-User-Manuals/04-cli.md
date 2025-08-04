@@ -150,11 +150,12 @@ cat, grep, sed, awk
 
 # File system management
 df -h, du -sh, stat
+
+# Permission management
+chmod, chown, getfacl
 ```
 
-Curvine currently does not implement permission management. When executing the following permission-related commands:
-```bash
-chmod   # Command executes but does not actually modify permission bits
-chown   # User/group change operations have no effect
-getfacl # Cannot obtain valid ACL information
-```
+
+:::note
+Curvine currently does not support soft link management
+:::

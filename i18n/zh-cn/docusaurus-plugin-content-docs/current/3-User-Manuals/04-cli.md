@@ -148,11 +148,11 @@ cat, grep, sed, awk
 
 # 文件系统管理
 df -h, du -sh, stat
+
+# 权限管理
+chmod, chown, getfacl
 ```
 
-Curvine 目前未实现权限管理，当执行以下权限相关命令时：
-```
-chmod  # 命令可执行但不会实际修改权限位
-chown  # 用户/组变更操作不会生效
-getfacl  # 无法获取有效的 ACL 信息
-```
+
+:::note
+Curvine 目前暂未实现软连接的管理
