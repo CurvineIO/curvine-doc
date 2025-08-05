@@ -7,6 +7,15 @@ Here are the recommended operating system versions:
 - macOS
 - Windows
 
+**Supported Distributions**
+| Operating System | Kernel Requirement | Tested Version | Dependencies |
+| --- | --- | --- | --- |
+| CentOS 7 | ≥3.10.0 | 7.6 | fuse2-2.9.2 |
+| CentOS 8 | ≥4.18.0 | 8.5 | fuse3-3.9.1 |
+| Rocky Linux 9 | ≥5.14.0 | 9.5 | fuse3-3.10.2 |
+| RHEL 9 | ≥5.14.0 | 9.5 | fuse3-3.10.2 |
+| Ubuntu 22 | ≥5.15.0 | 22.4 | fuse3-3.10.5 |
+
 ### Resource Requirements
 
 Curvine has no minimum resource requirements and can support extremely high concurrency and traffic with very small resources. Here is a reference configuration:

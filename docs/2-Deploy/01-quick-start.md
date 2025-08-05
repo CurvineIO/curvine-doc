@@ -8,38 +8,123 @@ This chapter introduces how to quickly start a Curvine cluster and perform read/
 
 ## Download and Compile Curvine
 
+**Supported Linux Distributions**
+| OS Distribution     | Kernel Requirement | Tested Version | Dependencies |
+|---------------------|--------------------|----------------|--------------|
+| **CentOS 7**        | ≥3.10.0            | 7.6            | fuse2-2.9.2  |
+| **CentOS 8**        | ≥4.18.0            | 8.5            | fuse3-3.9.1  |
+| **Rocky Linux 9**   | ≥5.14.0            | 9.5            | fuse3-3.10.2 |
+| **RHEL 9**          | ≥5.14.0            | 9.5            | fuse3-3.10.2 |
+| **Ubuntu 22**       | ≥5.15.0            | 22.4           | fuse3-3.10.5 |
+
 Download the source code:
 ```bash
 git clone https://github.com/CurvineIO/curvine.git ./
 ```
 
+### Local Compilation
+
+**Dependencies**
+- **Rust**: version 1.86 or later ([Installation Guide](https://www.rust-lang.org/tools/install))
+- **Protobuf**: version 2.x ([Install Guide](https://github.com/protocolbuffers/protobuf/releases/download/v27.2/protoc-27.2-linux-x86_64.zip))
+- **Maven**: version 3.8 or later ([Install Guide](https://maven.apache.org/install.html))
+- **LLVM**: version 12 or later ([Installation Guide](https://llvm.org/docs/GettingStarted.html))
+- **FUSE**: libfuse2 or libfuse3 development packages
+- **JDK**: version 1.8 or later (OpenJDK or Oracle JDK)
+- **npm**: version 9 or later ([Node.js Installation](https://nodejs.org/))
+
+:::warning
+Please ensure that all the above dependencies are installed and configured in the environment variables.
+:::
+
+Use the make command for full compilation. The compiled results are located in `build/dist`:
+```bash
+make all
+```
+
+### Docker Compilation
+
+:::tip
+If your system environment is macOS or Windows, or your Linux version is not in the [supported list](quick-start/#download-and-compile-curvine), we recommend using Docker compilation. This allows you to operate safely in an isolated environment without affecting your system environment.
+:::
+
+#### 1. Using Curvine-provided Compilation Images
+
+Curvine provides compilation images based on `rocky9` on DockerHub:
+
+- `curvine/curvine-compile:latest` - Minimal image containing only various compilation dependencies
+- `curvine/curvine-compile:build-cached` - Cached with various project crates dependencies
+
+:::tip
+We recommend using the curvine-compile image as a sandbox development environment, where both compilation and execution run within Docker containers.
+:::
+
+For a quick try, you only need to execute:
+```bash
+make docker-build 
+
+# or use the cached image for faster compilation
+make docker-build-cached
+```
+
+**Persistent Development Container**
+```bash
+cd curvine
+docker run -itd --name curvine-compile \
+  -u root --privileged=true \
+  -v .:/workspace \
+  -w /workspace \
+  --network host \
+  curvine/curvine-compile:latest /bin/bash
+
+# The container runs in the background, you can attach directly later
+docker exec -it curvine-compile /bin/bash
+```
+
+#### 2. Advanced: Build Your Own Compilation Image
+
+:::tip
+If you encounter network environment issues or cannot conveniently use the official Docker images, you can choose to build your own compilation image locally.
+:::
+
 The downloaded code includes various Dockerfiles for building compilation images in the `curvine-docker/compile` directory. You can choose the appropriate file to build a compilation image. Here's an example using Rocky9 to build a compilation image and start a container for compilation:
 
 ```bash
-cd curvine-docker/compile
+cd curvine
 
-docker build -f Dockerfile_rocky9 -t curvine-compile:rocky9 .
+docker build -f curvine-docker/compile/Dockerfile_rocky9 -t curvine-compile:rocky9 .
 
 docker run -itd --name curvine-compile \
--u root --privileged=true \
--v /code:/code  \
-curvine-compile:rocky9 /bin/bash
+  -u root --privileged=true \
+  -v .:/workspace \
+  -w /workspace \
+  --network host \
+  curvine-compile:rocky9 /bin/bash
+
+# After entering the container
+make all
+
+# The container runs in the background, you can attach directly later
+# docker exec -it curvine-compile /bin/bash
 ```
 
-Compile the code (compilation may take several minutes depending on machine performance):
-```bash
-docker exec -it curvine-compile /bin/bash
-cd /code/curvine
-sh build/build.sh
-```
+:::warning
+If there are significant differences between your compilation image's OS version and the host machine's OS version, or they are not from the same distribution, the Docker-compiled artifacts may not run directly on the host machine due to libc or ABI incompatibilities.
+
+Therefore, for Docker-compiled artifacts, we strongly recommend running them on the same OS version or within Docker containers!
+:::
 
 ## Start Local Cluster
 
-The compiled code is located in the `build/dist` directory. Start a local cluster:
+The compiled artifacts are located in the `build/dist` directory. Start a local cluster:
 ```bash
 cd build/dist
 ./bin/restart-all.sh
 ```
+
+:::tip
+If you used a Docker container during the compilation stage, we recommend running Curvine in the same container as well.
+:::
 
 The `restart-all.sh` script will start the Curvine master and worker, outputting logs to the `logs` directory. It will also mount a FUSE file system to the `/curvine-fuse` directory.
 
@@ -64,6 +149,10 @@ Verify cluster status:
 
 Access Master web UI: `http://your-hostname:9000`
 Access Worker web UI: `http://your-hostname:9001`
+
+:::tip
+If you are using a Docker container, please ensure you use `--network host` or add port mappings `9000,9001,8995,8996` to ensure proper access from the host machine.
+:::
 
 Access FUSE local mount point: `ls /curvine-fuse`
 
