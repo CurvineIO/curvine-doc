@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Deploy Curvine Cluster
 
 Curvine has excellent cross-platform capabilities and supports running on various operating systems across almost all mainstream architectures, including but not limited to Linux, macOS, Windows, etc. It supports different CPU architectures such as arm64, x86_64, etc.

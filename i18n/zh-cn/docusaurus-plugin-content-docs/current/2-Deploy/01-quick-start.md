@@ -24,21 +24,15 @@ git clone https://github.com/CurvineIO/curvine.git ./
 
 ### 本地编译
 
-**依赖环境**
-- ​**Rust**: version 1.86 or later ([Installation Guide](https://www.rust-lang.org/tools/install))
-- ​**Protobuf**: version 2.x [Install Guide](ttps://github.com/protocolbuffers/protobuf/releases/download/v27.2/protoc-27.2-linux-x86_64.zip )
-- ​**Maven**: version 3.8 or later ([Install Guide](https://maven.apache.org/install.html))
-- ​**LLVM**: version 12 or later ([Installation Guide](https://llvm.org/docs/GettingStarted.html))
-- ​**FUSE**: libfuse2 or libfuse3 development packages
-- ​**JDK**: version 1.8 or later (OpenJDK or Oracle JDK)
-- ​**npm**: version 9 or later ([Node.js Installation](https://nodejs.org/))
-
-
 :::warning
-请确保上述依赖环境已经安装好，并配置到环境变量中
+请确保前置依赖环境已经安装好，并配置到环境变量中。 相关环境依赖的安装过程，您也可以参考
+[环境的初始化教程](prerequisites)
+
+或者
+[Docker环境初始化](https://github.com/CurvineIO/curvine/blob/main/curvine-docker/compile/Dockerfile_rocky9)
 :::
 
-使用make命令即可全量编译， 编译结果位于 `build/dist` 中
+然后，使用make命令即可全量编译， 编译结果位于 `build/dist` 中
 ```
 make all
 ```

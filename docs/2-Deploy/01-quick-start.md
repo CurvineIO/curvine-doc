@@ -24,20 +24,15 @@ git clone https://github.com/CurvineIO/curvine.git ./
 
 ### Local Compilation
 
-**Dependencies**
-- **Rust**: version 1.86 or later ([Installation Guide](https://www.rust-lang.org/tools/install))
-- **Protobuf**: version 2.x ([Install Guide](https://github.com/protocolbuffers/protobuf/releases/download/v27.2/protoc-27.2-linux-x86_64.zip))
-- **Maven**: version 3.8 or later ([Install Guide](https://maven.apache.org/install.html))
-- **LLVM**: version 12 or later ([Installation Guide](https://llvm.org/docs/GettingStarted.html))
-- **FUSE**: libfuse2 or libfuse3 development packages
-- **JDK**: version 1.8 or later (OpenJDK or Oracle JDK)
-- **npm**: version 9 or later ([Node.js Installation](https://nodejs.org/))
-
 :::warning
-Please ensure that all the above dependencies are installed and configured in the environment variables.
+Please ensure that the prerequisite dependencies are installed and configured in the environment variables. For the installation process of related environment dependencies, you can refer to the [Environment Initialization Tutorial](prerequisites)
+
+or
+
+[Docker Environment Initialization](https://github.com/CurvineIO/curvine/blob/main/curvine-docker/compile/Dockerfile_rocky9)
 :::
 
-Use the make command for full compilation. The compiled results are located in `build/dist`:
+Then, use the make command for full compilation. The compiled results are located in `build/dist`:
 ```bash
 make all
 ```

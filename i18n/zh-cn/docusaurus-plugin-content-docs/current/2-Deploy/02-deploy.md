@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # 部署集群
 Curvine有良好的跨平台能力，
 支持在几乎所有主流架构的各类操作系统上运行，包括且不限于 Linux、macOS、Windows 等；支持不同的cpu架构arm64、x86_64等。
