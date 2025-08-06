@@ -15,6 +15,7 @@ This chapter provides detailed environment initialization instructions for diffe
 - **FUSE**: libfuse2 or libfuse3 development packages
 - **JDK**: version 1.8 or later (OpenJDK or Oracle JDK)
 - **npm**: version 9 or later ([Node.js Installation](https://nodejs.org/))
+- **Python**: version 3.7 or later
 
 In particular, the protoc compiler version and its supported protocol capabilities reference:
 | protoc Version | proto2 Support | proto3 Support |
@@ -117,6 +118,76 @@ source /etc/profile
 mvn --version
 ```
 
+### Python Environment Installation
+
+⚠️ **Important: Ensure Python version ≥ 3.7**
+
+```bash
+# Ubuntu 22.04+ provides Python 3.10+ by default, usually meeting requirements
+# Check current Python version
+python3 --version
+
+# If system doesn't have Python 3, install Python 3 and related tools
+sudo apt update
+sudo apt install -y python3 python3-pip python3-dev python3-venv
+
+# Install additional Python development tools
+sudo apt install -y python3-setuptools python3-wheel build-essential
+
+# If you need to install specific Python versions (like Python 3.8, 3.9)
+# You can use deadsnakes PPA
+sudo apt install -y software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+
+# Install specific Python version (example: Python 3.9)
+# sudo apt install -y python3.9 python3.9-dev python3.9-venv python3.9-pip
+
+# Upgrade pip to latest version
+python3 -m pip install --upgrade pip
+
+# Verify installation
+python3 --version
+pip3 --version
+
+# Create soft link (optional, for easier use of python command)
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
+# If you installed multiple Python versions, you can configure alternatives
+# sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+# sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
+# sudo update-alternatives --config python3  # Choose default version
+```
+
+### Python Environment Installation
+
+⚠️ **Important: Ensure Python version ≥ 3.7**
+
+```bash
+# Rocky Linux 9 provides Python 3.9+ by default, usually meeting requirements
+# Check current Python version
+python3 --version
+
+# If system doesn't have Python 3, install Python 3
+sudo dnf install -y python3 python3-pip python3-devel
+
+# If you need to install specific Python versions (like 3.8, 3.9, 3.10)
+# You can use EPEL or compile from source
+
+# Install pip and common tools
+sudo dnf install -y python3-pip python3-setuptools python3-wheel
+
+# Upgrade pip to latest version
+python3 -m pip install --upgrade pip
+
+# Verify installation
+python3 --version
+pip3 --version
+
+# Create soft link (optional, for easier use of python command)
+sudo alternatives --install /usr/bin/python python /usr/bin/python3 1
+```
+
 ### Environment Variables Configuration
 
 Add the following content to your `~/.bashrc` or `~/.zshrc` file:
@@ -174,12 +245,99 @@ protoc --version
 mvn --version | head -1
 java -version
 
+# Verify Python environment
+echo "=== Verifying Python Environment ==="
+python3 --version
+pip3 --version
+python3 -c "import sys; print(f'Python executable: {sys.executable}')"
+python3 -c "import sys; print(f'Python version info: {sys.version_info}')"
+
 # Verify FUSE
 echo "=== Verifying FUSE ==="
 ls -la /usr/include/fuse3/
 pkg-config --modversion fuse3
 
-echo "=== Environment Configuration Complete ===" 
+echo "=== Environment Configuration Complete ==="
+
+### Common Issue Troubleshooting
+
+**Issue 1: protoc command not found**
+```bash
+# Ensure protoc is in PATH
+which protoc
+# If not found, check if it was correctly copied to /usr/local/bin/
+ls -la /usr/local/bin/protoc
+```
+
+**Issue 2: Maven command not found**
+```bash
+# Check if environment variables are effective
+echo $MAVEN_HOME
+echo $PATH | grep maven
+```
+
+**Issue 3: Rust-related commands not found**
+```bash
+# Reload Rust environment
+source ~/.cargo/env
+# Or reinstall
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+**Issue 4: GCC version too low (< 10.0)**
+```bash
+# Check current GCC version
+gcc --version | head -1
+
+# If version is below 10.0, install newer toolset
+sudo dnf install -y gcc-toolset-11
+scl enable gcc-toolset-11 bash
+
+# Verify updated version
+gcc --version | head -1
+
+# To enable permanently, add to ~/.bashrc
+echo 'source /opt/rh/gcc-toolset-11/enable' >> ~/.bashrc
+```
+
+**Issue 5: Python version too low (< 3.7)**
+```bash
+# Check current Python version
+python3 --version
+
+# If version is below 3.7, you can compile from source
+# Install compilation dependencies
+sudo dnf install -y gcc openssl-devel bzip2-devel libffi-devel sqlite-devel
+
+# Download and compile Python 3.9
+cd /tmp
+wget https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz
+tar xzf Python-3.9.18.tgz
+cd Python-3.9.18
+./configure --enable-optimizations
+make altinstall  # Use altinstall to avoid overwriting system Python
+
+# Verify installation
+python3.9 --version
+
+# Create soft link
+sudo ln -sf /usr/local/bin/python3.9 /usr/bin/python3
+```
+
+**Issue 6: pip installation failed or version too old**
+```bash
+# Reinstall pip
+python3 -m ensurepip --upgrade
+
+# Or use get-pip.py script
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python3 get-pip.py
+
+# Upgrade to latest version
+python3 -m pip install --upgrade pip
+
+# Verify pip version
+pip3 --version
 ```
 
 ### Common Issue Troubleshooting
@@ -335,6 +493,52 @@ mvn --version
 # source ~/.zshrc
 ```
 
+### Python Environment Installation
+
+⚠️ **Important: Ensure Python version ≥ 3.7**
+
+```bash
+# Method 1: Install using Homebrew (recommended)
+# macOS may have Python pre-installed, but version may be old
+python3 --version  # Check current version
+
+# Install latest Python 3
+brew install python
+
+# Verify installation
+python3 --version
+pip3 --version
+
+# Method 2: Use pyenv to manage multiple Python versions (recommended for development)
+brew install pyenv
+
+# Install specific Python version (like 3.9.18)
+pyenv install 3.9.18
+pyenv global 3.9.18  # Set as global default version
+
+# Configure pyenv environment variables (add to ~/.zshrc)
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.zshrc
+echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.zshrc
+echo 'eval "$(pyenv init -)"' >> ~/.zshrc
+
+# Reload configuration
+source ~/.zshrc
+
+# Method 3: Download official installer from python.org
+# Visit https://www.python.org/downloads/macos/ to download .pkg file
+
+# Upgrade pip to latest version
+python3 -m pip install --upgrade pip
+
+# Verify final installation
+python3 --version
+pip3 --version
+
+# Create soft link (optional, for easier use of python command)
+# Note: macOS may already have python command pointing to system Python 2
+# It's recommended to use python3 command to avoid conflicts
+```
+
 ### Environment Variables Configuration
 
 Add the following content to your `~/.zshrc` or `~/.bash_profile` file:
@@ -393,13 +597,19 @@ protoc --version
 mvn --version | head -1
 java -version
 
+# Verify Python environment
+echo "=== Verifying Python Environment ==="
+python3 --version
+pip3 --version
+python3 -c "import sys; print(f'Python executable: {sys.executable}')"
+python3 -c "import sys; print(f'Python version info: {sys.version_info}')"
+
 # Verify FUSE (macFUSE)
 echo "=== Verifying FUSE ==="
 ls -la /usr/local/include/fuse/
 pkg-config --modversion fuse
 
 echo "=== Environment Configuration Complete ==="
-```
 
 ### Common Issue Troubleshooting
 
@@ -441,6 +651,41 @@ g++-11 --version
 # To set GCC as default compiler (not recommended)
 # export CC=gcc-11
 # export CXX=g++-11
+```
+
+**Issue 5: Python version issues**
+```bash
+# Check current Python version
+python3 --version
+
+# If using pyenv to manage versions, check available versions
+pyenv versions
+
+# Switch to appropriate Python version
+pyenv global 3.9.18
+
+# If pyenv is not effective, check environment variables
+echo $PYENV_ROOT
+echo $PATH | grep pyenv
+
+# Reload pyenv configuration
+source ~/.zshrc
+```
+
+**Issue 6: pip related issues**
+```bash
+# If pip3 command doesn't exist
+python3 -m ensurepip --upgrade
+
+# Upgrade pip
+python3 -m pip install --upgrade pip
+
+# If encountering permission issues, use --user flag
+python3 -m pip install --user --upgrade pip
+
+# Verify pip installation
+pip3 --version
+python3 -m pip --version
 ```
 
 ### Compilation Preparation
@@ -671,6 +916,49 @@ g++ --version | head -1
 # sudo apt install -y gcc-12 g++-12
 # sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 70
 # sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 70
+```
+
+**Issue 6: Python version too low (< 3.7)**
+```bash
+# Check current Python version
+python3 --version
+
+# Ubuntu 22.04+ provides Python 3.10+ by default, usually meeting requirements
+# If you need to install specific version, use deadsnakes PPA
+sudo apt install -y software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+
+# Install specific Python version (like Python 3.9)
+sudo apt install -y python3.9 python3.9-dev python3.9-venv python3.9-pip
+
+# Configure alternatives to manage multiple versions
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
+sudo update-alternatives --config python3  # Choose default version
+
+# Verify version
+python3 --version
+```
+
+**Issue 7: pip related issues**
+```bash
+# If pip3 command doesn't exist
+python3 -m ensurepip --upgrade
+
+# Upgrade pip to latest version
+python3 -m pip install --upgrade pip
+
+# If encountering permission issues, use --user flag
+python3 -m pip install --user --upgrade pip
+
+# Verify pip installation
+pip3 --version
+python3 -m pip --version
+
+# If you need to install pip for specific Python version
+python3.9 -m ensurepip --upgrade
+python3.9 -m pip install --upgrade pip
 ```
 
 ### Compilation Preparation

@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # 环境初始化
 
-本章节，为您详细介绍常见的不同开发环境下的环境初始化工作, 包括`rocky9`, `centos8`, `ubuntu22.04+`, `macOS`
+本章节，为您详细介绍常见的不同开发环境下的环境初始化工作, 包括`rocky9`, `centos8`, `ubuntu22.04+`, `macOS`。 由于每个人的环境不尽相同，下述提供的依赖安装方式，仅供参考。如果安装过程中存在问题，欢迎提交[issue](https://github.com/CurvineIO/curvine-doc/issues) 帮助完善文档。
 
 **依赖环境**
 - ​**GCC**: version 10 or later ([GCC Installation](https://gcc.gnu.org/install/))
@@ -15,6 +15,7 @@ sidebar_position: 2
 - ​**FUSE**: libfuse2 or libfuse3 development packages
 - ​**JDK**: version 1.8 or later (OpenJDK or Oracle JDK)
 - ​**npm**: version 9 or later ([Node.js Installation](https://nodejs.org/))
+- **Python**: version 3.7 or later
 
 
 特别的， protoc编译器版本和其支持的protoc协议的能力参考
@@ -119,6 +120,35 @@ source /etc/profile
 mvn --version
 ```
 
+### Python 环境安装
+
+⚠️ **重要：确保 Python 版本 ≥ 3.7**
+
+```bash
+# Rocky Linux 9 默认提供 Python 3.9+，通常已满足要求
+# 检查当前 Python 版本
+python3 --version
+
+# 如果系统没有 Python 3，安装 Python 3
+sudo dnf install -y python3 python3-pip python3-devel
+
+# 如果需要安装特定版本的 Python（如 3.8, 3.9, 3.10）
+# 可以使用 EPEL 或编译安装
+
+# 安装 pip 和常用工具
+sudo dnf install -y python3-pip python3-setuptools python3-wheel
+
+# 升级 pip 到最新版本
+python3 -m pip install --upgrade pip
+
+# 验证安装
+python3 --version
+pip3 --version
+
+# 创建软链接（可选，便于使用 python 命令）
+sudo alternatives --install /usr/bin/python python /usr/bin/python3 1
+```
+
 ### 环境变量配置
 
 将以下内容添加到您的 `~/.bashrc` 或 `~/.zshrc` 文件中：
@@ -176,6 +206,13 @@ protoc --version
 mvn --version | head -1
 java -version
 
+# 验证 Python 环境
+echo "=== 验证 Python 环境 ==="
+python3 --version
+pip3 --version
+python3 -c "import sys; print(f'Python executable: {sys.executable}')"
+python3 -c "import sys; print(f'Python version info: {sys.version_info}')"
+
 # 验证 FUSE
 echo "=== 验证 FUSE ==="
 ls -la /usr/include/fuse3/
@@ -223,6 +260,46 @@ gcc --version | head -1
 
 # 如需永久启用，可添加到 ~/.bashrc
 echo 'source /opt/rh/gcc-toolset-11/enable' >> ~/.bashrc
+```
+
+**问题5：Python 版本过低（< 3.7）**
+```bash
+# 检查当前 Python 版本
+python3 --version
+
+# 如果版本低于 3.7，可以从源码编译安装更新版本
+# 安装编译依赖
+sudo dnf install -y gcc openssl-devel bzip2-devel libffi-devel sqlite-devel
+
+# 下载并编译安装 Python 3.9
+cd /tmp
+wget https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz
+tar xzf Python-3.9.18.tgz
+cd Python-3.9.18
+./configure --enable-optimizations
+make altinstall  # 使用 altinstall 避免覆盖系统 Python
+
+# 验证安装
+python3.9 --version
+
+# 创建软链接
+sudo ln -sf /usr/local/bin/python3.9 /usr/bin/python3
+```
+
+**问题6：pip 安装失败或版本过旧**
+```bash
+# 重新安装 pip
+python3 -m ensurepip --upgrade
+
+# 或者使用 get-pip.py 脚本
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python3 get-pip.py
+
+# 升级到最新版本
+python3 -m pip install --upgrade pip
+
+# 验证 pip 版本
+pip3 --version
 ```
 
 ### 编译准备
@@ -337,6 +414,52 @@ mvn --version
 # source ~/.zshrc
 ```
 
+### Python 环境安装
+
+⚠️ **重要：确保 Python 版本 ≥ 3.7**
+
+```bash
+# 方法1：使用 Homebrew 安装（推荐）
+# macOS 可能预装了 Python，但版本可能较旧
+python3 --version  # 检查当前版本
+
+# 安装最新 Python 3
+brew install python
+
+# 验证安装
+python3 --version
+pip3 --version
+
+# 方法2：使用 pyenv 管理多个 Python 版本（推荐用于开发）
+brew install pyenv
+
+# 安装特定 Python 版本（如 3.9.18）
+pyenv install 3.9.18
+pyenv global 3.9.18  # 设置为全局默认版本
+
+# 配置 pyenv 环境变量（添加到 ~/.zshrc）
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.zshrc
+echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.zshrc
+echo 'eval "$(pyenv init -)"' >> ~/.zshrc
+
+# 重新加载配置
+source ~/.zshrc
+
+# 方法3：从 python.org 下载官方安装包
+# 访问 https://www.python.org/downloads/macos/ 下载 .pkg 文件安装
+
+# 升级 pip 到最新版本
+python3 -m pip install --upgrade pip
+
+# 验证最终安装
+python3 --version
+pip3 --version
+
+# 创建软链接（可选，便于使用 python 命令）
+# 注意：macOS 可能已有 python 命令指向系统 Python 2
+# 建议使用 python3 命令以避免冲突
+```
+
 ### 环境变量配置
 
 将以下内容添加到您的 `~/.zshrc` 或 `~/.bash_profile` 文件中：
@@ -395,6 +518,13 @@ protoc --version
 mvn --version | head -1
 java -version
 
+# 验证 Python 环境
+echo "=== 验证 Python 环境 ==="
+python3 --version
+pip3 --version
+python3 -c "import sys; print(f'Python executable: {sys.executable}')"
+python3 -c "import sys; print(f'Python version info: {sys.version_info}')"
+
 # 验证 FUSE（macFUSE）
 echo "=== 验证 FUSE ==="
 ls -la /usr/local/include/fuse/
@@ -443,6 +573,41 @@ g++-11 --version
 # 如需设置 GCC 为默认编译器（不推荐）
 # export CC=gcc-11
 # export CXX=g++-11
+```
+
+**问题5：Python 版本问题**
+```bash
+# 检查当前 Python 版本
+python3 --version
+
+# 如果使用 pyenv 管理版本，检查可用版本
+pyenv versions
+
+# 切换到合适的 Python 版本
+pyenv global 3.9.18
+
+# 如果 pyenv 未生效，检查环境变量
+echo $PYENV_ROOT
+echo $PATH | grep pyenv
+
+# 重新加载 pyenv 配置
+source ~/.zshrc
+```
+
+**问题6：pip 相关问题**
+```bash
+# 如果 pip3 命令不存在
+python3 -m ensurepip --upgrade
+
+# 升级 pip
+python3 -m pip install --upgrade pip
+
+# 如果遇到权限问题，使用 --user 标志
+python3 -m pip install --user --upgrade pip
+
+# 验证 pip 安装
+pip3 --version
+python3 -m pip --version
 ```
 
 ### 编译准备
@@ -557,6 +722,47 @@ source /etc/profile
 mvn --version
 ```
 
+### Python 环境安装
+
+⚠️ **重要：确保 Python 版本 ≥ 3.7**
+
+```bash
+# Ubuntu 22.04+ 默认提供 Python 3.10+，通常已满足要求
+# 检查当前 Python 版本
+python3 --version
+
+# 如果系统没有 Python 3，安装 Python 3 和相关工具
+sudo apt update
+sudo apt install -y python3 python3-pip python3-dev python3-venv
+
+# 安装额外的 Python 开发工具
+sudo apt install -y python3-setuptools python3-wheel build-essential
+
+# 如果需要安装特定版本的 Python（如 Python 3.8, 3.9）
+# 可以使用 deadsnakes PPA
+sudo apt install -y software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+
+# 安装特定 Python 版本（示例：Python 3.9）
+# sudo apt install -y python3.9 python3.9-dev python3.9-venv python3.9-pip
+
+# 升级 pip 到最新版本
+python3 -m pip install --upgrade pip
+
+# 验证安装
+python3 --version
+pip3 --version
+
+# 创建软链接（可选，便于使用 python 命令）
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
+# 如果安装了多个 Python 版本，可以配置 alternatives
+# sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+# sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
+# sudo update-alternatives --config python3  # 选择默认版本
+```
+
 ### 环境变量配置
 
 将以下内容添加到您的 `~/.bashrc` 或 `~/.zshrc` 文件中：
@@ -613,6 +819,13 @@ cargo --version
 protoc --version
 mvn --version | head -1
 java -version
+
+# 验证 Python 环境
+echo "=== 验证 Python 环境 ==="
+python3 --version
+pip3 --version
+python3 -c "import sys; print(f'Python executable: {sys.executable}')"
+python3 -c "import sys; print(f'Python version info: {sys.version_info}')"
 
 # 验证 FUSE
 echo "=== 验证 FUSE ==="
@@ -675,6 +888,49 @@ g++ --version | head -1
 # sudo apt install -y gcc-12 g++-12
 # sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 70
 # sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 70
+```
+
+**问题6：Python 版本过低（< 3.7）**
+```bash
+# 检查当前 Python 版本
+python3 --version
+
+# Ubuntu 22.04+ 默认提供 Python 3.10+，通常已满足要求
+# 如果需要安装特定版本，使用 deadsnakes PPA
+sudo apt install -y software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+
+# 安装特定 Python 版本（如 Python 3.9）
+sudo apt install -y python3.9 python3.9-dev python3.9-venv python3.9-pip
+
+# 配置 alternatives 管理多个版本
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
+sudo update-alternatives --config python3  # 选择默认版本
+
+# 验证版本
+python3 --version
+```
+
+**问题7：pip 相关问题**
+```bash
+# 如果 pip3 命令不存在
+python3 -m ensurepip --upgrade
+
+# 升级 pip 到最新版本
+python3 -m pip install --upgrade pip
+
+# 如果遇到权限问题，使用 --user 标志
+python3 -m pip install --user --upgrade pip
+
+# 验证 pip 安装
+pip3 --version
+python3 -m pip --version
+
+# 如果需要为特定 Python 版本安装 pip
+python3.9 -m ensurepip --upgrade
+python3.9 -m pip install --upgrade pip
 ```
 
 ### 编译准备
