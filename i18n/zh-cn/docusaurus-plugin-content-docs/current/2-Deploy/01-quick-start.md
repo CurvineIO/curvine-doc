@@ -180,7 +180,7 @@ bin/java-bench.sh fuse.read  # 使用fuse读数据
 
 使用命令行工具，查看文件系统状态：
 ```
-bin/curvine fs -ls /fs-bench
+bin/cv fs ls /fs-bench
 
 # 输出如下：
 Found 10 items

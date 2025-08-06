@@ -84,7 +84,7 @@ bin/cv umount /s3-testing/
 :::
 
 ```bash
-bin/curvine load s3://my-bucket/test.data
+bin/cv load s3://my-bucket/test.data
 ```
 
 成功时，load命令输出将显示jobid。您可以使用 $jobid 来检查加载状态，请参阅以下 load-status 命令：
@@ -93,7 +93,7 @@ bin/cv load-status $jobid
 ```
 
 ## hdfs兼容的命令行(deprecated)
-Curvine 兼容hdfs访问协议，通过命令`bin/curvine fs`执行`hdfs fs`命令语法完全兼容的操作，如下示例：
+Curvine 兼容hdfs访问协议，通过命令`bin/dfs fs` 执行 `hdfs fs`命令语法完全兼容的操作，如下示例：
 
 示例：
 ```
@@ -156,3 +156,4 @@ chmod, chown, getfacl
 
 :::note
 Curvine 目前暂未实现软连接的管理
+:::

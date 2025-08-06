@@ -173,7 +173,7 @@ bin/java-bench.sh fuse.read  # Read data using FUSE
 
 Use command-line tools to check file system status:
 ```bash
-bin/curvine fs -ls /fs-bench
+bin/cv fs -ls /fs-bench
 
 # Output:
 Found 10 items
