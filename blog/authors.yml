@@ -6,17 +6,18 @@ barry:
   page: true
   socials:
     github: lzjqsdd
+    x: infmaxtop
 
 david:
   name: David
   title: Founder of Curvine
   url: https://curvine.io
-  #image_url: https://infmax.top/img/author.png
   page:
     # customize the url of the author page at /blog/authors/<permalink>
     permalink: '/all-sebastien-lorber-articles'
   socials:
     github: szbr9486
+    x: szbr8896
 
 john:
   name: John

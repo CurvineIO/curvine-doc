@@ -12,3 +12,8 @@ teams:
   label: teams
   permalink: /teams
   description: teams activities of curvine
+
+benchmark:
+  label: benchmark
+  permalink: /benchmark
+  description: benchmark of curvine
