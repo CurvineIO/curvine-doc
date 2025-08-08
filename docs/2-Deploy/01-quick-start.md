@@ -37,6 +37,46 @@ Then, use the make command for full compilation. The compiled results are locate
 make all
 ```
 
+:::note
+For more make parameters, you can type `make` or `make help` to view, as shown below:
+```bash
+Curvine Build System - Available Commands:
+
+Environment:
+  make check-env                   - Check build environment dependencies
+
+Building:
+  make build [MODE=debug|release]  - Check environment, format and build the entire project (default: release)
+  make all                         - Same as 'make build'
+  make format                      - Format code using pre-commit hooks
+
+Individual Components:
+  make fuse [MODE=debug|release]   - Build curvine-fuse component only
+  make server [MODE=debug|release] - Build curvine-server component only
+  make cli [MODE=debug|release]    - Build curvine-cli component only
+  make ufs [MODE=debug|release]    - Build curvine-ufs component only
+
+Docker:
+  make docker-build                - Build using Docker compilation image
+  make docker-build-cached         - Build using cached Docker compilation image
+  make docker-build-img            - Build compilation Docker image (interactive)
+
+Other:
+  make cargo ARGS='<args>'         - Run arbitrary cargo commands
+  make help                        - Show this help message
+
+Parameters:
+  MODE=debug     - Build in debug mode (default, faster compilation)
+  MODE=release   - Build in release mode (optimized, slower compilation)
+
+Examples:
+  make build                       - Build entire project in debug mode
+  make build MODE=release          - Build entire project in release mode
+  make server MODE=release         - Build only server component in release mode
+  make cargo ARGS='test --verbose' - Run cargo test with verbose output
+```
+:::
+
 ### Docker Compilation
 
 :::tip
