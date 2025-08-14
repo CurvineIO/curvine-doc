@@ -10,6 +10,14 @@ Deployment scripts are located in the `curvine-csi/deploy` directory. Execute:
 kubectl create -f curvine-csi/deploy
 ```
 
+:::warning
+Currently, the `curvine-csi` depends on a fuse version that only supports cluster configuration file connection method. Therefore, in `deploy/configmap.yaml`, you need to fill in the `master_addrs` option with the real curvine master address.
+
+This is a temporary solution. If you want to try it out, you can test it. We are working on supporting custom parameters for fuse, and various configuration parameters for connecting to the cluster will be customized through storageclass or pv attributes. This will be released soon, stay tuned!
+
+The CSI driver is still in rapid iteration. If you encounter issues during use, welcome to submit an issue 😄!
+:::
+
 After successful deployment, you will see the following pods:
 ```bash
 NAME                     READY   STATUS    RESTARTS   AGE

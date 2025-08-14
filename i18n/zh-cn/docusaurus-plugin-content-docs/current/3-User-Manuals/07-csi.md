@@ -10,6 +10,15 @@ Curvine CSI驱动遵循标准的CSI规范，包含
 kubectl create -f curvine-csi/deploy
 ```
 
+:::warning
+当前`curvine-csi`依赖的fuse版本仅支持集群配置文件的方式来建立连接， 因此，在`deploy/configmap.yaml` 中需要您将`master_addrs` 选项填写为真实的curvine master地址。 
+
+这是临时方案，如果您用来尝鲜，可以试用起来。我们正在支持fuse的自定义参数，连接集群的各种配置参数，会通过storageclass或者pv的atrribute来自定义指定，近期会推出，敬请期待！
+
+csi驱动还在快速迭代中，如果您有使用中的问题， 欢迎提交issue😄！
+:::
+
+
 正确部署后，会看到如下pod:
 ```bash
 NAME                     READY   STATUS    RESTARTS   AGE

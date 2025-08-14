@@ -49,6 +49,22 @@ Options:
 | bin/cv fs df | 文件系统可用空间 |
 | bin/cv fs du /path | 统计目录占用空间大小 |
 
+
+特别的， `cv fs ls` 子命令支持了`hdfs` 类似的参数，包括:
+
+| 参数 | 说明 |
+|------|------|
+| -C, --path-only | 仅显示文件和目录的路径 |
+| -d, --directory | 将目录作为普通文件列出 |
+| -H, --human-readable | 以人类可读的方式显示文件大小 |
+| -q, --hide-non-printable | 用?替代不可打印字符 |
+| -R, --recursive | 递归列出目录内容 |
+| -r, --reverse | 反向排序 |
+| -t, --mtime | 按修改时间排序(最新的在前) |
+| -S, --size | 按文件大小排序 |
+| -u, --atime | 使用最后访问时间而不是修改时间来显示和排序 |
+| -h, --help | 显示帮助信息 |
+
 ### 3. `mount` 子命令
 使用`cv mount` 子命令来挂载底层存储到Curvine上.  目前支持 `s3`协议。
 

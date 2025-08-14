@@ -50,6 +50,21 @@ Use `cv fs` subcommand to execute hdfs commands. The `fs` subcommand provides ma
 | bin/cv fs df | File system available space |
 | bin/cv fs du /path | Calculate directory space usage |
 
+Specifically, the `cv fs ls` subcommand supports `hdfs`-like parameters, including:
+
+| Parameter | Description |
+|-----------|-------------|
+| -C, --path-only | Display only the paths of files and directories |
+| -d, --directory | List directories as regular files |
+| -H, --human-readable | Display file sizes in human-readable format |
+| -q, --hide-non-printable | Replace non-printable characters with ? |
+| -R, --recursive | Recursively list directory contents |
+| -r, --reverse | Reverse sort order |
+| -t, --mtime | Sort by modification time (newest first) |
+| -S, --size | Sort by file size |
+| -u, --atime | Use last access time instead of modification time for display and sorting |
+| -h, --help | Show help information |
+
 ### 3. `mount` Subcommand
 Use `cv mount` subcommand to mount underlying storage to Curvine. Currently supports `s3` protocol.
 
