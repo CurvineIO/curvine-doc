@@ -188,6 +188,32 @@ pip3 --version
 sudo alternatives --install /usr/bin/python python /usr/bin/python3 1
 ```
 
+### Python Environment Installation
+
+```bash
+# CentOS 7 comes with a lower default Python version, need to manually install Python 3.9
+# Download Python 3.9 source package
+wget https://www.python.org/ftp/python/3.9.16/Python-3.9.16.tgz
+
+# Install
+sudo yum groupinstall "Development Tools" -y
+sudo yum install openssl-devel libffi-devel bzip2-devel -y
+tar xf Python-3.9.16.tgz
+cd Python-3.9.16
+./configure --enable-optimizations
+sudo make altinstall
+
+# Verify installation
+python3.9 --version
+# Expected output: Python 3.9.16
+
+# Upgrade pip to latest version
+/usr/local/bin/python3.9 -m pip install --upgrade pip
+
+# Install project dependency libraries
+pip3.9 install -r requirements.txt
+```
+
 ### Environment Variables Configuration
 
 Add the following content to your `~/.bashrc` or `~/.zshrc` file:

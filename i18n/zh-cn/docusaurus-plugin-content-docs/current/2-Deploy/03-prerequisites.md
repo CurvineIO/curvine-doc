@@ -149,6 +149,32 @@ pip3 --version
 sudo alternatives --install /usr/bin/python python /usr/bin/python3 1
 ```
 
+### Python 环境安装
+
+```bash
+# CentOS 7 默认 Python 版本较低，需要手动安装 Python 3.9
+# 下载 Python 3.9 源码包
+wget https://www.python.org/ftp/python/3.9.16/Python-3.9.16.tgz
+
+# 安装
+sudo yum groupinstall "Development Tools" -y
+sudo yum install openssl-devel libffi-devel bzip2-devel -y
+tar xf Python-3.9.16.tgz
+cd Python-3.9.16
+./configure --enable-optimizations
+sudo make altinstall
+
+# 验证安装
+python3.9 --version
+# 预期输出：Python 3.9.16
+
+# 升级 pip 到最新版本
+/usr/local/bin/python3.9 -m pip install --upgrade pip
+
+# 安装项目依赖库
+pip3.9 install -r requirements.txt
+```
+
 ### 环境变量配置
 
 将以下内容添加到您的 `~/.bashrc` 或 `~/.zshrc` 文件中：
