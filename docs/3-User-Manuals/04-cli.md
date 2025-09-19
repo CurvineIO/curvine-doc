@@ -46,9 +46,11 @@ Use `cv fs` subcommand to execute hdfs commands. The `fs` subcommand provides ma
 | bin/cv fs get /hdfs/path /local/file | Download file from Curvine to local |
 | bin/cv fs stat /file | Query file or directory status |
 | bin/cv fs count /path | Count files in directory |
-| bin/cv fs touchz /path | Create file |
+| bin/cv fs touch /path | Create file |
 | bin/cv fs df | File system available space |
 | bin/cv fs du /path | Calculate directory space usage |
+| bin/cv fs mv src/path dst/path | Rename file or move file to target path |
+| bin/cv fs blocks /file | Display file block information |
 
 Specifically, the `cv fs ls` subcommand supports `hdfs`-like parameters, including:
 
@@ -78,9 +80,13 @@ bin/cv mount s3://s3/testing /s3-testing \
 -c s3.path_style=true
 ```
 
-Check mount list
+:::warning
+When mount executes mounting, it will check the availability of the UFS storage to be mounted and configuration, otherwise mounting will fail with `service error` prompt. Please ensure UFS is in normal state.
+:::
+
+Check mount list, mount command without parameters.
 ```bash
-bin/cv mount-list
+bin/cv mount
 ```
 
 :::warning

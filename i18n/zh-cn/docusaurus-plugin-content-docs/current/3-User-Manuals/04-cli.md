@@ -45,9 +45,11 @@ Options:
 | bin/cv fs get /hdfs/path /local/file | 从Curvine下载文件到本地 |
 | bin/cv fs stat /file | 查询文件或目录状态 |
 | bin/cv fs count /path | 统计目录下文件数量 |
-| bin/cv fs touchz /path | 创建文件 |
+| bin/cv fs touch /path | 创建文件 |
 | bin/cv fs df | 文件系统可用空间 |
 | bin/cv fs du /path | 统计目录占用空间大小 |
+| bin/cv fs mv src/path dst/path| rename文件或者移动文件到目标路径 |
+| bin/cv fs blocks /file | 显示文件块信息 | 
 
 
 特别的， `cv fs ls` 子命令支持了`hdfs` 类似的参数，包括:
@@ -78,9 +80,13 @@ bin/cv mount s3://s3/testing /s3-testing \
 -c s3.path_style=true
 ```
 
-检查挂载列表
+:::warning
+mount执行挂载的时候，会对要挂在的ufs存储以及配置可用性进行检查，否则会挂载失败提示 `service error`， 请确保ufs是正常状态。
+:::
+
+检查挂载列表, mount命令不指定参数即可。
 ```bash
-bin/cv mount-list
+bin/cv mount
 ```
 
 :::warning
@@ -140,7 +146,7 @@ bin/curvine fs -mkdir -p /dir/a
 不在列表中的命令不代表不支持，而是未经过完整测试。 `curvine` 命令行工具依赖jvm环境，推荐您使用`cv` 原生命令。 如果有常见命令需求，欢迎提交Issue.
 :::
 
-## POSIX令行
+## POSIX命令令行
 Curvine 实现了符合 POSIX 标准的 FUSE(Filesystem in Userspace) 文件系统接口，
 因此在 Linux 系统中挂载 Curvine 后，用户可以通过标准的 Linux 文件操作命令集进行交互。这一实现具有以下技术特性：
 
