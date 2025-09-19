@@ -1,0 +1,73 @@
+<svg width="600" height="500" viewBox="0 0 600 500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="600" height="500" fill="#f8f9fa" stroke="none"/>
+  
+  <!-- Flow components -->
+  <!-- Fluid Controller -->
+  <rect x="50" y="30" width="120" height="40" rx="8" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+  <text x="110" y="52" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1976d2" text-anchor="middle">Fluid Controller</text>
+  
+  <!-- FUSE Pod -->
+  <rect x="240" y="30" width="100" height="40" rx="8" fill="#e8f5e8" stroke="#388e3c" stroke-width="2"/>
+  <text x="290" y="52" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#388e3c" text-anchor="middle">FUSE Pod</text>
+  
+  <!-- Config Parser -->
+  <rect x="410" y="30" width="120" height="40" rx="8" fill="#fff3e0" stroke="#f57c00" stroke-width="2"/>
+  <text x="470" y="52" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#f57c00" text-anchor="middle">Config Parser</text>
+  
+  <!-- curvine-fuse -->
+  <rect x="410" y="100" width="120" height="40" rx="8" fill="#fce4ec" stroke="#c2185b" stroke-width="2"/>
+  <text x="470" y="122" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#c2185b" text-anchor="middle">curvine-fuse</text>
+  
+  <!-- Process steps -->
+  <g id="steps">
+    <!-- Step 1 -->
+    <rect x="50" y="180" width="500" height="30" rx="5" fill="#f0f0f0" stroke="#666" stroke-width="1"/>
+    <text x="70" y="200" font-family="Arial, sans-serif" font-size="11" fill="#333">1. 创建 Pod 并挂载配置</text>
+    
+    <!-- Step 2 -->
+    <rect x="50" y="220" width="500" height="30" rx="5" fill="#f0f0f0" stroke="#666" stroke-width="1"/>
+    <text x="70" y="240" font-family="Arial, sans-serif" font-size="11" fill="#333">2. 启动配置解析器</text>
+    
+    <!-- Step 3 -->
+    <rect x="50" y="260" width="500" height="30" rx="5" fill="#f0f0f0" stroke="#666" stroke-width="1"/>
+    <text x="70" y="280" font-family="Arial, sans-serif" font-size="11" fill="#333">3. 读取 /etc/fluid/config/config.json</text>
+    
+    <!-- Step 4 -->
+    <rect x="50" y="300" width="500" height="30" rx="5" fill="#f0f0f0" stroke="#666" stroke-width="1"/>
+    <text x="70" y="320" font-family="Arial, sans-serif" font-size="11" fill="#333">4. 解析 master-endpoints 等参数</text>
+    
+    <!-- Step 5 -->
+    <rect x="50" y="340" width="500" height="30" rx="5" fill="#f0f0f0" stroke="#666" stroke-width="1"/>
+    <text x="70" y="360" font-family="Arial, sans-serif" font-size="11" fill="#333">5. 生成 curvine-cluster.toml</text>
+    
+    <!-- Step 6 -->
+    <rect x="50" y="380" width="500" height="30" rx="5" fill="#f0f0f0" stroke="#666" stroke-width="1"/>
+    <text x="70" y="400" font-family="Arial, sans-serif" font-size="11" fill="#333">6. 生成 mount-curvine.sh 脚本</text>
+    
+    <!-- Step 7 -->
+    <rect x="50" y="420" width="500" height="30" rx="5" fill="#f0f0f0" stroke="#666" stroke-width="1"/>
+    <text x="70" y="440" font-family="Arial, sans-serif" font-size="11" fill="#333">7. 启动 curvine-fuse 客户端</text>
+    
+    <!-- Step 8 -->
+    <rect x="50" y="460" width="500" height="30" rx="5" fill="#f0f0f0" stroke="#666" stroke-width="1"/>
+    <text x="70" y="480" font-family="Arial, sans-serif" font-size="11" fill="#333">8. 挂载文件系统到目标路径</text>
+  </g>
+  
+  <!-- Flow arrows -->
+  <path d="M 170 50 L 240 50" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 340 50 L 410 50" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 470 70 L 470 100" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <!-- Vertical flow arrow -->
+  <path d="M 30 50 L 30 180" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <!-- Arrow marker -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0,0 0,6 9,3" fill="#2c3e50"/>
+    </marker>
+  </defs>
+</svg>
+
+
