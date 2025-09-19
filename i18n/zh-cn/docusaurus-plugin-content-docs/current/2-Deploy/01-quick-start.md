@@ -41,40 +41,44 @@ make all
 :::note
 更多make支持的参数，可以敲击`make` 或者 `make help`查看， 如下
 ```bash
-Curvine Build System - Available Commands:
-
 Environment:
   make check-env                   - Check build environment dependencies
 
 Building:
-  make build [MODE=debug|release]  - Check environment, format and build the entire project (default: release)
+  make build ARGS='<args>'         - Build with specific arguments passed to build.sh
   make all                         - Same as 'make build'
   make format                      - Format code using pre-commit hooks
-
-Individual Components:
-  make fuse [MODE=debug|release]   - Build curvine-fuse component only
-  make server [MODE=debug|release] - Build curvine-server component only
-  make cli [MODE=debug|release]    - Build curvine-cli component only
-  make ufs [MODE=debug|release]    - Build curvine-ufs component only
 
 Docker:
   make docker-build                - Build using Docker compilation image
   make docker-build-cached         - Build using cached Docker compilation image
   make docker-build-img            - Build compilation Docker image (interactive)
 
+CSI (Container Storage Interface):
+  make csi-build                   - Build curvine-csi Go binary
+  make csi-run                     - Run curvine-csi from source
+  make csi-docker-build            - Build curvine-csi Docker image
+  make csi-docker-push             - Push curvine-csi Docker image
+  make csi-docker                  - Build and push curvine-csi Docker image
+  make csi-docker-fast             - Build curvine-csi Docker image quickly (no push)
+  make csi-fmt                     - Format curvine-csi Go code
+  make csi-vet                     - Run go vet on curvine-csi code
+
 Other:
   make cargo ARGS='<args>'         - Run arbitrary cargo commands
   make help                        - Show this help message
 
 Parameters:
-  MODE=debug     - Build in debug mode (default, faster compilation)
-  MODE=release   - Build in release mode (optimized, slower compilation)
+  ARGS='<args>'  - Additional arguments to pass to build.sh
 
 Examples:
-  make build                       - Build entire project in debug mode
-  make build MODE=release          - Build entire project in release mode
-  make server MODE=release         - Build only server component in release mode
-  make cargo ARGS='test --verbose' - Run cargo test with verbose output
+  make build                                  - Build entire project in release mode
+  make build ARGS='-d'                       - Build entire project in debug mode
+  make build ARGS='-p server -p client'       - Build only server and client components
+  make build ARGS='-p object'                  - Build S3 object gateway
+  make build ARGS='--package core --ufs s3'   - Build core packages with S3 native SDK
+  make cargo ARGS='test --verbose'            - Run cargo test with verbose output
+  make csi-docker-fast                        - Build curvine-csi Docker image quickly
 ```
 :::
 
@@ -87,10 +91,7 @@ Examples:
 
 
 #### 1.使用curvine提供的编译镜像
-curinve在dockerhub上提供了 基于`rock9` 的编译镜像
-
-- `curvine/curvine-compile:latest` 最小化镜像，仅包含编译的各种依赖包
-- `curvine/curvine-compile:build-cached` 缓存了项目的各类crates依赖包
+curinve在dockerhub上提供了 基于`rocky9` 的编译镜像 `curvine/curvine-compile:latest`
 
 :::tip
 推荐使用curvine-compile镜像作为一个沙箱开发环境， 编译和运行都在docker容器中运行。
@@ -99,9 +100,6 @@ curinve在dockerhub上提供了 基于`rock9` 的编译镜像
 快速尝鲜，您只需执行
 ```bash
 make docker-build 
-
-#or 使用带cache的镜像编译，更快速
-make docker-build-cached
 ```
 
 **常驻开发容器**
