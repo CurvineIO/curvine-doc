@@ -4,7 +4,9 @@ sidebar_position: 2
 
 # 环境初始化
 
-本章节，为您详细介绍常见的不同开发环境下的环境初始化工作, 包括`rocky9`, `centos8`, `ubuntu22.04+`, `macOS`。 由于每个人的环境不尽相同，下述提供的依赖安装方式，仅供参考。如果安装过程中存在问题，欢迎提交[issue](https://github.com/CurvineIO/curvine-doc/issues) 帮助完善文档。
+本章节，为您详细介绍常见的不同开发环境下的环境初始化工作, 包括`rocky9`, `centos8`, `ubuntu22.04+`, `macOS`。 由于每个人的环境不尽相同，下述提供的依赖安装方式，仅供参考。如果安装过程中存在问题，欢迎提交[issue](https://github.com/CurvineIO/curvine-doc/issues) 帮助完善文档。 
+
+不推荐使用windows作为开发环境，但是我们仍提供一个[windows环境初始化](#windows10)供您参考。
 
 **依赖环境**
 - ​**GCC**: version 10 or later ([GCC Installation](https://gcc.gnu.org/install/))
@@ -149,7 +151,7 @@ pip3 --version
 sudo alternatives --install /usr/bin/python python /usr/bin/python3 1
 ```
 
-### Python 环境安装
+### Python 环境安装(Centos7等低版本)
 
 ```bash
 # CentOS 7 默认 Python 版本较低，需要手动安装 Python 3.9
@@ -962,3 +964,27 @@ python3.9 -m pip install --upgrade pip
 ### 编译准备
 
 完成上述安装后，您的 Ubuntu 22.04+ 系统就具备了编译 Curvine 项目所需的所有依赖环境。
+
+## Windows10+
+在支持window WSL的环境下，进行编译和部署。 WSL（Windows Subsystem for Linux）是 Windows 10 及以上版本提供的一项功能，允许用户在 Windows 系统中直接运行 Linux 环境，无需使用虚拟机或双系统。
+
+在terminal 或者  powsershell中执行
+```
+wsl --install
+```
+
+这个命令会自动：
+- 启用必要的 Windows 功能
+- 下载并安装 WSL 2
+- 安装默认的 Linux 发行版（通常是 Ubuntu）
+
+重启电脑安装完成后，系统会提示重启，重启后 WSL 即安装完成, 首次启动重启后，在开始菜单找到并启动已安装的 Linux 发行版（如 Ubuntu），首次启动会完成初始化并要求设置用户名和密码.
+
+windows下建议的git环境配置
+```bash
+git config core.autocrlf false
+git config core.eol lf
+git config core.ignorecase false
+git config core.symlinks true
+```
+完成上述配置后，你可以和使用ubuntu一样的方式进行环境配置， 参考 [Ubuntu 22.04环境配置](#ubuntu-2204-环境安装)

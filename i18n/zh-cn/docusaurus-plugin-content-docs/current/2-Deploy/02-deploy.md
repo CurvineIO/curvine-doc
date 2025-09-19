@@ -44,9 +44,9 @@ curvine没有最小资源要求，使用很小的资源就支撑极高的并发�
 
 执行如下命令，创建一个安装包：
 ``` 
-sh build/build.sh -r zip
+make dist
 ```
-编译成功后，在build/dist目录下会生成一个curvine.zip文件，这个文件就是curvine的安装包。
+编译成功后，会在项目根目录生成一个tar.gz包，这个文件就是curvine的安装包。
 可以用这个安装包部署或者构建镜像。
 
 ### 配置文件修改
@@ -114,6 +114,10 @@ log_dir = "logs"
 file_name = "curvine.log"
 
 ```
+
+:::danger
+journal配置的master_addrs的hostname，一定要和master启动的hostname保持一致， 否则会无法启动
+:::
 
 如果需要使用java hadoop 客户端，修改curvine-site.xml中fs.cv.master_addrs值，示例如下：
 ```
