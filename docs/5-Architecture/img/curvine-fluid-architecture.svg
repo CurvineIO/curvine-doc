@@ -1,0 +1,107 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8f9fa" stroke="none"/>
+  
+  <!-- Kubernetes Cluster Container -->
+  <rect x="20" y="20" width="760" height="450" rx="10" fill="none" stroke="#2c3e50" stroke-width="2"/>
+  <text x="40" y="45" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">Kubernetes 集群</text>
+  
+  <!-- Application Pod -->
+  <rect x="50" y="80" width="200" height="180" rx="8" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+  <text x="130" y="105" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1976d2" text-anchor="middle">应用程序 Pod</text>
+  
+  <!-- Application -->
+  <rect x="70" y="120" width="160" height="40" rx="5" fill="#bbdefb" stroke="#1976d2" stroke-width="1"/>
+  <text x="150" y="142" font-family="Arial, sans-serif" font-size="12" fill="#1976d2" text-anchor="middle">应用程序</text>
+  
+  <!-- PVC -->
+  <rect x="70" y="180" width="160" height="40" rx="5" fill="#bbdefb" stroke="#1976d2" stroke-width="1"/>
+  <text x="150" y="202" font-family="Arial, sans-serif" font-size="12" fill="#1976d2" text-anchor="middle">PVC (curvine-data)</text>
+  
+  <!-- Fluid System -->
+  <rect x="300" y="80" width="200" height="240" rx="8" fill="#e8f5e8" stroke="#388e3c" stroke-width="2"/>
+  <text x="400" y="105" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#388e3c" text-anchor="middle">Fluid 系统</text>
+  
+  <!-- Dataset -->
+  <rect x="320" y="120" width="160" height="40" rx="5" fill="#c8e6c9" stroke="#388e3c" stroke-width="1"/>
+  <text x="400" y="135" font-family="Arial, sans-serif" font-size="11" fill="#388e3c" text-anchor="middle">Dataset</text>
+  <text x="400" y="150" font-family="Arial, sans-serif" font-size="11" fill="#388e3c" text-anchor="middle">(数据源定义)</text>
+  
+  <!-- ThinRuntime -->
+  <rect x="320" y="180" width="160" height="40" rx="5" fill="#c8e6c9" stroke="#388e3c" stroke-width="1"/>
+  <text x="400" y="195" font-family="Arial, sans-serif" font-size="11" fill="#388e3c" text-anchor="middle">ThinRuntime</text>
+  <text x="400" y="210" font-family="Arial, sans-serif" font-size="11" fill="#388e3c" text-anchor="middle">(运行时配置)</text>
+  
+  <!-- ThinRuntime Profile -->
+  <rect x="320" y="240" width="160" height="40" rx="5" fill="#c8e6c9" stroke="#388e3c" stroke-width="1"/>
+  <text x="400" y="255" font-family="Arial, sans-serif" font-size="11" fill="#388e3c" text-anchor="middle">ThinRuntime Profile</text>
+  <text x="400" y="270" font-family="Arial, sans-serif" font-size="11" fill="#388e3c" text-anchor="middle">(镜像配置)</text>
+  
+  <!-- FUSE Pod -->
+  <rect x="50" y="350" width="450" height="80" rx="8" fill="#fff3e0" stroke="#f57c00" stroke-width="2"/>
+  <text x="275" y="375" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#f57c00" text-anchor="middle">FUSE Pod</text>
+  
+  <!-- Curvine FUSE Client -->
+  <rect x="80" y="390" width="140" height="30" rx="5" fill="#ffe0b2" stroke="#f57c00" stroke-width="1"/>
+  <text x="150" y="408" font-family="Arial, sans-serif" font-size="11" fill="#f57c00" text-anchor="middle">curvine-fuse 客户端</text>
+  
+  <!-- Config Parser -->
+  <rect x="280" y="390" width="140" height="30" rx="5" fill="#ffe0b2" stroke="#f57c00" stroke-width="1"/>
+  <text x="350" y="408" font-family="Arial, sans-serif" font-size="11" fill="#f57c00" text-anchor="middle">配置解析器</text>
+  
+  <!-- External Curvine Cluster -->
+  <rect x="20" y="500" width="760" height="80" rx="10" fill="#fce4ec" stroke="#c2185b" stroke-width="2"/>
+  <text x="400" y="525" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#c2185b" text-anchor="middle">外部 Curvine 集群</text>
+  
+  <!-- Master Node -->
+  <rect x="80" y="540" width="120" height="30" rx="5" fill="#f8bbd9" stroke="#c2185b" stroke-width="1"/>
+  <text x="140" y="558" font-family="Arial, sans-serif" font-size="11" fill="#c2185b" text-anchor="middle">Master 节点</text>
+  
+  <!-- Worker Node 1 -->
+  <rect x="240" y="540" width="120" height="30" rx="5" fill="#f8bbd9" stroke="#c2185b" stroke-width="1"/>
+  <text x="300" y="558" font-family="Arial, sans-serif" font-size="11" fill="#c2185b" text-anchor="middle">Worker 节点 1</text>
+  
+  <!-- Worker Node 2 -->
+  <rect x="400" y="540" width="120" height="30" rx="5" fill="#f8bbd9" stroke="#c2185b" stroke-width="1"/>
+  <text x="460" y="558" font-family="Arial, sans-serif" font-size="11" fill="#c2185b" text-anchor="middle">Worker 节点 2</text>
+  
+  <!-- Arrows -->
+  <!-- App to PVC -->
+  <path d="M 150 160 L 150 180" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowblue)"/>
+  
+  <!-- PVC to FUSE Pod -->
+  <path d="M 150 220 L 150 350" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowblue)"/>
+  
+  <!-- Fluid System internal connections -->
+  <path d="M 400 160 L 400 180" stroke="#388e3c" stroke-width="2" marker-end="url(#arrowgreen)"/>
+  <path d="M 400 220 L 400 240" stroke="#388e3c" stroke-width="2" marker-end="url(#arrowgreen)"/>
+  
+  <!-- Fluid to FUSE Pod -->
+  <path d="M 400 280 L 400 350" stroke="#388e3c" stroke-width="2" marker-end="url(#arrowgreen)"/>
+  
+  <!-- FUSE components connection -->
+  <path d="M 220 405 L 280 405" stroke="#f57c00" stroke-width="2" marker-end="url(#arroworange)"/>
+  
+  <!-- FUSE Pod to Curvine Cluster -->
+  <path d="M 275 430 L 275 500" stroke="#f57c00" stroke-width="2" marker-end="url(#arroworange)"/>
+  
+  <!-- Curvine cluster internal connections -->
+  <path d="M 200 555 L 240 555" stroke="#c2185b" stroke-width="2" marker-end="url(#arrowpink)"/>
+  <path d="M 360 555 L 400 555" stroke="#c2185b" stroke-width="2" marker-end="url(#arrowpink)"/>
+  
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrowblue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0,0 0,6 9,3" fill="#1976d2"/>
+    </marker>
+    <marker id="arrowgreen" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0,0 0,6 9,3" fill="#388e3c"/>
+    </marker>
+    <marker id="arroworange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0,0 0,6 9,3" fill="#f57c00"/>
+    </marker>
+    <marker id="arrowpink" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0,0 0,6 9,3" fill="#c2185b"/>
+    </marker>
+  </defs>
+</svg>
