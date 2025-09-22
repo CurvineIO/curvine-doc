@@ -6,6 +6,28 @@ sidebar_position: 0
 
 This chapter introduces how to quickly start a Curvine cluster and perform read/write data testing.
 
+## Download Release Binary Package
+
+Download the pre-compiled Curvine package from https://github.com/CurvineIO/curvine/releases. Currently, only x86 environments based on Rocky9 are provided. For other environments, you need to compile from source. Refer to [Download and Compile Curvine](#download-and-compile-curvine).
+
+The directory structure after extraction is as follows:
+```
+.
+├── bin
+├── build-version
+├── conf
+├── lib
+└── webui
+```
+
+Execute `./bin/restart-all.sh` to start all services on a single machine, including:
+- curvine-master
+- curvine-worker
+- curvine-fuse
+- webui
+
+By default, FUSE is mounted under the `/curvine-fuse` path. For service status monitoring, refer to [Start Local Cluster](#start-local-cluster).
+
 ## Download and Compile Curvine
 
 **Supported Linux Distributions**

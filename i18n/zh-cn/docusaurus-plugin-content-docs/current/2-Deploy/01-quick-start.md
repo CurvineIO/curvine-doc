@@ -5,6 +5,28 @@ sidebar_position: 0
 # 快速开始
 本章节将介绍如何快速启动curvine集群，并且进行读写数据测试。
 
+## 下载Release binary包
+下载预编译好的curvine包，参见 https://github.com/CurvineIO/curvine/releases， 目前仅提供基于rocky9的x86环境， 其他环境需要自行编译，参考[下载和编译curvine](#下载和编译curvine)
+
+解压后的目录结构如下
+```
+.
+├── bin
+├── build-version
+├── conf
+├── lib
+└── webui
+```
+
+执行 `./bin/restart-all.sh` 便可以在单机上启动所有的服务，包括
+- curvine-master
+- curvine-worker
+- curvine-fuse
+- webui
+
+默认fuse挂载在`/curvine-fuse` 路径下,  服务状态监测可以参考[启动本地集群](#启动本地集群)
+
+
 ## 下载和编译curvine
 
 **支持的linux发行版**
