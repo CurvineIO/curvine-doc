@@ -18,11 +18,24 @@ sidebar_position: 0
 └── webui
 ```
 
-执行 `./bin/restart-all.sh` 便可以在单机上启动所有的服务，包括
+
+执行 
+```
+export CURVINE_MASTER_HOSTNAME=localhost # 也可以设置为ip。
+./bin/restart-all.sh
+````
+
+便可以在单机上启动所有的服务，包括
 - curvine-master
 - curvine-worker
 - curvine-fuse
 - webui
+
+:::warning
+`CURVINE_MASTER_HOSTNAME` 在单机环境下设置为`localhost`，正式部署生产需要获取本机的hostname，相关配置在conf/curvine-env.sh中。
+
+如果您是在k8s等容器环境下设置，请一定要确认容器的hostname是可解析或者可访问的
+:::
 
 默认fuse挂载在`/curvine-fuse` 路径下,  服务状态监测可以参考[启动本地集群](#启动本地集群)
 
