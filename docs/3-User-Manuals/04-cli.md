@@ -30,8 +30,10 @@ Use `cv report` subcommand to view cluster status, `cv report -h` to view availa
 | Command Format                 | Description                                    |
 |-------------------------------|------------------------------------------------|
 | bin/cv report            | Output cluster summary information             |
-| bin/cv report capacity   | Output cluster summary and detailed capacity information for each worker |
-| bin/cv report info       | Output cluster and worker node information     |
+| bin/cv json         | Output detailed cluster information in JSON format                    |
+| bin/cv report capacity | Output cluster summary and detailed capacity information for each worker |
+| bin/cv report used    | Output used capacity information for each worker          |
+| bin/cv report available    | Output available capacity information for each worker          |
 
 ### 2. `fs` Subcommand
 Use `cv fs` subcommand to execute hdfs commands. The `fs` subcommand provides mainstream file operation functionality, command formats and descriptions are as follows:
@@ -65,10 +67,26 @@ Specifically, the `cv fs ls` subcommand supports `hdfs`-like parameters, includi
 | -t, --mtime | Sort by modification time (newest first) |
 | -S, --size | Sort by file size |
 | -u, --atime | Use last access time instead of modification time for display and sorting |
+| -l, --long-format | Display detailed information of files and directories |
 | -h, --help | Show help information |
 
 ### 3. `mount` Subcommand
 Use `cv mount` subcommand to mount underlying storage to Curvine. Currently supports `s3` protocol.
+
+`cv mount` subcommand supports the following configuration parameters:
+
+| Parameter | Description |
+|-----------|-------------|
+| --config key=value | Set key-value configuration parameters |
+| --conf /path | Specify configuration file path |
+| --update | Update existing mount point configuration |
+| --mnt-type TYPE | Set mount type |
+| --consistency-strategy STRATEGY | Set consistency strategy |
+| --ttl-ms DURATION | Set data TTL time, in milliseconds |
+| --ttl-action ACTION | Set action after TTL expiration |
+| --replicas N | Set replica count |
+| --block-size SIZE | Set block size |
+| --storage-type TYPE | Set storage type |
 
 Example: Mount `s3://testing` to `/s3-testing`
 ```bash
@@ -106,13 +124,14 @@ Before loading data, you need to mount the underlying storage to curvine first
 :::
 
 ```bash
-bin/curvine load s3://my-bucket/test.data
+bin/cv load s3://my-bucket/test.data
 ```
 
 When successful, the load command output will show jobid. You can use $jobid to check load status, see the following load-status command:
 ```bash
 bin/cv load-status $jobid
 ```
+You can use `-w,--watch` parameter to monitor the status of loading tasks
 
 ## HDFS-Compatible Commands (deprecated)
 
@@ -149,7 +168,8 @@ Commands not listed in the table do not necessarily mean they are unsupported, b
 
 ## POSIX Commands
 
-Curvine implements a POSIX-compliant FUSE (Filesystem in Userspace) interface. After mounting Curvine in Linux systems, users can interact through standard Linux file operation commands. This implementation has the following technical characteristics:
+Curvine implements a POSIX-compliant FUSE (Filesystem in Userspace) interface.
+After mounting Curvine in Linux systems, users can interact through standard Linux file operation commands. This implementation has the following technical characteristics:
 
 **System Compatibility:**
 1. Complies with FUSE 3.0 interface specifications and is compatible with FUSE 2.0

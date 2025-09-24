@@ -29,8 +29,10 @@ Options:
 | 命令格式                       | 功能描述                             |
 |----------------------------|------------------------------------|
 | bin/cv report         | 输出集群概要信息                    |
+| bin/cv json         | 输出JSON格式的集群详细信息                    |
 | bin/cv report capacity | 输出集群概要和每个worker的容量详细信息  |
-| bin/cv report info    | 输出集群和worker节点信息          |
+| bin/cv report used    | 输出每个worker的已用容量信息          |
+| bin/cv report available    | 输出每个worker的可用容量信息          |
 
 ### 2. `fs` 子命令
 使用`cv fs` 子命令来执行hdfs命令. `fs` 子命令提供了主流的文件操作功能, 命令格式和功能描述如下:
@@ -65,10 +67,26 @@ Options:
 | -t, --mtime | 按修改时间排序(最新的在前) |
 | -S, --size | 按文件大小排序 |
 | -u, --atime | 使用最后访问时间而不是修改时间来显示和排序 |
+| -l, --long-format | 显示文件和目录的详细信息 |
 | -h, --help | 显示帮助信息 |
 
 ### 3. `mount` 子命令
 使用`cv mount` 子命令来挂载底层存储到Curvine上.  目前支持 `s3`协议。
+
+`cv mount` 子命令支持的配置参数包括:
+
+| 参数 | 说明 |
+|------|------|
+| --config key=value | 设置键值对配置参数 |
+| --conf /path | 指定配置文件路径 |
+| --update | 更新已存在的挂载点配置 |
+| --mnt-type TYPE | 设置挂载类型 |
+| --consistency-strategy STRATEGY | 设置一致性策略 |
+| --ttl-ms DURATION | 设置数据TTL时间，单位为毫秒 |
+| --ttl-action ACTION | 设置TTL过期后的动作 |
+| --replicas N | 设置副本数 |
+| --block-size SIZE | 设置块大小 |
+| --storage-type TYPE | 设置存储类型 |
 
 示例：将 `s3://testing` 挂载到 `/s3-testing`
 ```bash
@@ -113,6 +131,7 @@ bin/cv load s3://my-bucket/test.data
 ```bash
 bin/cv load-status $jobid
 ```
+您可以使用 `-w,--watch`参数来监控加载任务的状态
 
 ## hdfs兼容的命令行(deprecated)
 Curvine 兼容hdfs访问协议，通过命令`bin/dfs fs` 执行 `hdfs fs`命令语法完全兼容的操作，如下示例：
