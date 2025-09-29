@@ -99,10 +99,10 @@ s3://bucket/warehouse/tpch_500g.db/orders \
 
 | 参数 | 类型 | 默认值 | 说明 | 示例 |
 |------|------|--------|------|------|
-| `--ttl-ms` | duration | `7d` | 缓存数据过期时间 | `24h`, `7d`, `30d` |
+| `--ttl-ms` | duration | `0` | 缓存数据过期时间 | `24h`, `7d`, `30d` |
 | `--ttl-action` | enum | `none` | 过期策略：`delete`/`none` | `delete` |
 | `--replicas` | int | `1` | 数据副本数（1-5） | `3` |
-| `--block-size` | size | `64MB` | 缓存块大小 | `64MB`, `128MB`, `256MB` |
+| `--block-size` | size | `128MB` | 缓存块大小 | `64MB`, `128MB`, `256MB` |
 | `--consistency-strategy` | enum | `always` | 一致性策略 | `none`/`always`/`period` |
 | `--storage-type` | enum | `disk` | 存储介质类型 | `mem`/`ssd`/`disk` |
 
@@ -139,41 +139,23 @@ bin/cv load s3:/bucket/warehouse/critical-dataset -w
 
 Curvine 的自动缓存系统相比传统方案具有显著优势：
 
-#### 🔥 传统缓存系统的痛点
-
-```mermaid
-graph LR
-    A[用户请求] --> B[检查缓存]
-    B --> C[缓存Miss]
-    C --> D[读取UFS]
-    D --> E[同步缓存Block]
-    E --> F[返回数据]
-    
-    subgraph "问题"
-        G[重复加载]
-        H[数据不完整]
-        I[一致性问题]
-    end
-```
-
 #### ✨ Curvine 智能缓存架构
 
 ```mermaid
 graph TB
-    A[访问请求] --> B[智能调度器]
-    B --> C{缓存状态检查}
-    C -->|Hit| D[直接返回]
-    C -->|Miss| E[文件级任务提交]
+    A[访问请求] --> C{缓存状态检查}
+    C -->|Hit| D[直读缓存]
+    C -->|Miss| K{异步加载}
+    K-->|AsyncLoad| E[提交Load文件任务]
+    K-->|Read| L[直读UFS]
     E --> F[分布式任务调度]
-    F --> G[避重复加载]
-    G --> H[完整性保证]
-    H --> I[一致性检查]
-    I --> J[缓存数据]
+    F --> G[一致性&完整性&唯一性检查]
+    G--> J[缓存数据]
 ```
 
 #### 核心优势对比
 
-| 特性 | 传统系统 | Curvine | 优势说明 |
+| 特性 | 开源竞品 | Curvine | 优势说明 |
 |------|----------|---------|----------|
 | **加载粒度** | Block级别 | File/Directory级别 | 避免碎片化，保证完整性 |
 | **重复处理** | 存在重复加载 | 智能去重 | 节省带宽和存储资源 |

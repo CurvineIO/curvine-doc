@@ -99,10 +99,10 @@ s3://bucket/warehouse/tpch_500g.db/orders \
 
 | Parameter | Type | Default | Description | Example |
 |-----------|------|---------|-------------|---------|
-| `--ttl-ms` | duration | `7d` | Cache data expiration time | `24h`, `7d`, `30d` |
+| `--ttl-ms` | duration | `0` | Cache data expiration time | `24h`, `7d`, `30d` |
 | `--ttl-action` | enum | `none` | Expiration policy: `delete`/`none` | `delete` |
 | `--replicas` | int | `1` | Number of data replicas (1-5) | `3` |
-| `--block-size` | size | `64MB` | Cache block size | `64MB`, `128MB`, `256MB` |
+| `--block-size` | size | `128MB` | Cache block size | `64MB`, `128MB`, `256MB` |
 | `--consistency-strategy` | enum | `always` | Consistency strategy | `none`/`always`/`period` |
 | `--storage-type` | enum | `disk` | Storage medium type | `mem`/`ssd`/`disk` |
 
@@ -139,41 +139,23 @@ bin/cv load s3:/bucket/warehouse/critical-dataset -w
 
 Curvine's automatic caching system has significant advantages over traditional solutions:
 
-#### 🔥 Pain Points of Traditional Caching Systems
-
-```mermaid
-graph LR
-    A[User Request] --> B[Check Cache]
-    B --> C[Cache Miss]
-    C --> D[Read UFS]
-    D --> E[Synchronize Cache Block]
-    E --> F[Return Data]
-    
-    subgraph "Issues"
-        G[Duplicate Loading]
-        H[Incomplete Data]
-        I[Consistency Problems]
-    end
-```
-
 #### ✨ Curvine Intelligent Cache Architecture
 
 ```mermaid
 graph TB
-    A[Access Request] --> B[Intelligent Scheduler]
-    B --> C{Cache Status Check}
-    C -->|Hit| D[Direct Return]
-    C -->|Miss| E[File-level Task Submission]
+    A[Access Request] --> C{Cache Status Check}
+    C -->|Hit| D[Read Cache Directly]
+    C -->|Miss| K{Async Load}
+    K -->|AsyncLoad| E[Submit Load File Task]
+    K -->|Read| L[Read UFS Directly]
     E --> F[Distributed Task Scheduling]
-    F --> G[Avoid Duplicate Loading]
-    G --> H[Integrity Guarantee]
-    H --> I[Consistency Check]
-    I --> J[Cache Data]
+    F --> G[Consistency & Integrity & Uniqueness Check]
+    G --> J[Cache Data]
 ```
 
 #### Core Advantage Comparison
 
-| Feature | Traditional System | Curvine | Advantage Description |
+| Feature | Open Source Competitors | Curvine | Advantage Description |
 |---------|--------------------|---------|-----------------------|
 | **Loading Granularity** | Block-level | File/Directory-level | Avoid fragmentation, ensure integrity |
 | **Duplicate Processing** | Exists duplicate loading | Intelligent deduplication | Save bandwidth and storage resources |
