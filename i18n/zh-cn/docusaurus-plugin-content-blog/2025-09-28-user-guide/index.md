@@ -141,17 +141,7 @@ Curvine 的自动缓存系统相比传统方案具有显著优势：
 
 #### ✨ Curvine 智能缓存架构
 
-```mermaid
-graph TB
-    A[访问请求] --> C{缓存状态检查}
-    C -->|Hit| D[直读缓存]
-    C -->|Miss| K{异步加载}
-    K-->|AsyncLoad| E[提交Load文件任务]
-    K-->|Read| L[直读UFS]
-    E --> F[分布式任务调度]
-    F --> G[一致性&完整性&唯一性检查]
-    G--> J[缓存数据]
-```
+![curvine](./curvine.png)
 
 #### 核心优势对比
 
@@ -485,25 +475,7 @@ Curvine 与主流大数据框架无缝集成，提供透明的缓存加速能力
 
 #### 🔧 工作原理
 
-```mermaid
-sequenceDiagram
-    participant App as Java应用
-    participant Proxy as S3AProxyFileSystem
-    participant Curvine as Curvine集群
-    participant S3 as 原生S3
-
-    App->>Proxy: 打开文件(s3a://bucket/data/file.parquet)
-    Proxy->>Curvine: 查询路径挂载状态
-    alt 路径已挂载
-        Curvine-->>Proxy: 返回cv://路径
-        Proxy->>Curvine: 使用缓存访问
-        Curvine-->>App: 高速返回数据
-    else 路径未挂载
-        Curvine-->>Proxy: 路径未挂载
-        Proxy->>S3: 使用原生S3访问
-        S3-->>App: 返回数据
-    end
-```
+![Working Principle](./WorkingPrinciple.png)
 
 #### 🚀 使用示例
 
@@ -623,23 +595,7 @@ Curvine 提供了智能路径替换插件，可以做到无侵入性实现缓存
 
 #### 插件工作流程
 
-```mermaid
-sequenceDiagram
-    participant User as 用户
-    participant Trino as Trino引擎
-    participant Plugin as Curvine插件
-    participant Master as Curvine Master
-    participant Storage as 底层存储
-
-    User->>Trino: SELECT * FROM table
-    Trino->>Plugin: 解析SQL，提取路径
-    Plugin->>Master: 查询路径挂载状态
-    Master-->>Plugin: 返回挂载信息
-    Plugin->>Plugin: 决策是否重写路径
-    Plugin-->>Trino: 返回重写后的路径
-    Trino->>Storage: 使用cv://协议访问数据
-    Storage-->>User: 返回查询结果
-```
+![Plugin Workflow](./PluginWorkflow.png)
 
 spark 插件使用实例：
 ```
