@@ -192,6 +192,12 @@ df -h, du -sh, stat
 
 # 权限管理
 chmod, chown, getfacl
+
+# 符号链接操作
+ln -s, readlink
+
+# 扩展属性操作
+getfattr, setfattr, listxatt
 ```
 
 
