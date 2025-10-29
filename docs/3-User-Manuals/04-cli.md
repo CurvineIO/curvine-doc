@@ -194,6 +194,12 @@ df -h, du -sh, stat
 
 # Permission management
 chmod, chown, getfacl
+
+# Symbolic link operations
+ln -s, readlink
+
+# Extended attribute operations
+getfattr, setfattr, listxattr
 ```
 
 
