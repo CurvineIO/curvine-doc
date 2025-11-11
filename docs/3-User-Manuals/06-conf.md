@@ -31,6 +31,8 @@ This chapter provides detailed descriptions of Curvine configuration options.
 | master.max_block_size | 100 * 1024 * 1024 * 1024 | Maximum block_size |
 | master.min_replication | 1 | Minimum number of replicas |
 | master.max_replication | 100 | Maximum number of replicas |
+| master.block_replication_enabled | false | Whether to enable block replica count limit |
+| master.block_replication_concurrency_limit | 1000 | Maximum number of concurrent replication tasks on Master side |
 | master.max_path_len | 8000 | Maximum path length |
 | master.max_path_depth | 1000 | Maximum path depth |
 | master.retry_cache_enable | true | Whether to enable filesystem request retry cache |
@@ -100,6 +102,8 @@ This chapter provides detailed descriptions of Curvine configuration options.
 | worker.worker_threads | CPU cores * 2 | Number of Worker worker threads |
 | worker.io_timeout | 10m | Worker network read/write data timeout |
 | worker.io_close_idle | false | Whether to close idle connections, defaults to false since client doesn't implement heartbeat mechanism; uses keepalive to check connection validity |
+| worker.block_replication_concurrency_limit | 100 | Maximum number of concurrent replication tasks on Worker side |
+| worker.block_replication_chunk_size | 1024 * 1024 | Data chunk size during replication |
 | worker.scheduler_threads | 2 | Number of background scheduling task threads |
 | worker.executor_threads | 10 | Number of background asynchronous task threads |
 | worker.executor_channel_size | 1000 | Background asynchronous task queue size |
