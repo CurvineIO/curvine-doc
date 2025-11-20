@@ -30,6 +30,8 @@
 | master.max_block_size            | 100 * 1024 * 1024 * 1024             | 最大block_size大小                                   |
 | master.min_replication           | 1                                    | 最小副本数                                            |
 | master.max_replication           | 100                                  | 最大副本数                                            |
+| master.block_replication_enabled | false                                | 是否启用block副本数限制                                |
+| master.block_replication_concurrency_limit     | 1000                   | Master 端并发复制任务最大数量                   
 | master.max_path_len              | 8000                                 | 最大路径长度                                           |
 | master.max_path_depth            | 1000                                 | 最大路径深度                                           |
 | master.retry_cache_enable        | true                                 | 是否启用文件系统请求重试缓存                                   |
@@ -99,6 +101,8 @@
 | worker.worker_threads        | cpu核心数 * 2                         | Worker 工作线程数量                                |
 | worker.io_timeout            | 10m                                | Worker 网络读写数据超时时间                            |
 | worker.io_close_idle         | false                              | 是否关闭空闲连接，因客户端未实现心跳机制，默认不关闭；用keepalive检查连接有效性 |
+| worker.block_replication_concurrency_limit | 100                  | Worker 端并发复制任务最大数量                           |
+| worker.block_replication_chunk_size | 1024 * 1024                 | 复制时的数据块大小                                     |
 | worker.scheduler_threads     | 2                                  | 后台调度任务线程数量                                   |
 | worker.executor_threads      | 10                                 | 后台异步任务线程数量                                   |
 | worker.executor_channel_size | 1000                               | 后台异步任务队列大小                                   |
