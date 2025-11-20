@@ -35,3 +35,16 @@ Curvine 为高性能、高并发以及海量数据缓存设计，可以在很多
 - **为大数据计算场景提供高速缓存，降低数据读写时间。**
 - **存储大数据计算过程中间结果（shuffle），实现计算、存储的完全分离。**
 - **多云数据缓存，提高跨云、跨区域数据访问效率**
+
+## 🧩 模块化架构
+
+Curvine 采用模块化设计，主要由以下核心组件构成：
+
+- **orpc**: 一个支持异步 RPC 调用的高性能网络通信框架
+- **curvine-common**: 包含协议定义、错误处理和通用工具的共享库
+- **curvine-server**: 服务端组件，包含 Master 和 Worker 实现
+- **curvine-client**: 提供与服务器交互 API 的客户端库
+- **curvine-fuse**: FUSE 文件系统接口，支持将 Curvine 挂载为本地文件系统
+- **curvine-libsdk**: 支持多语言访问的 SDK 库
+- **curvine-web**: Web 管理界面和 API
+- **curvine-tests**: 测试框架与性能基准测试工具
