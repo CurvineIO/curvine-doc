@@ -42,6 +42,7 @@ Clients, command line tools, fuse, etc. can all access the UFS file system throu
 
 :::tip
 Curvine does not cache UFS metadata, so there is no data consistency issue when accessing. Accessing UFS through Curvine is no different from accessing UFS directly.
+When Curvine cache data read fails, it automatically falls back to reading data from UFS.
 :::
 
 ## Disabling Unified Access
