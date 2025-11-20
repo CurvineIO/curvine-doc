@@ -5,7 +5,7 @@ This section introduces the command-line tools supported by Curvine and their us
 ## Rust Native Command Line Tool `cv`
 You can directly execute `cv` command to get help:
 ```bash
-Usage: cv <COMMAND>
+Usage: curvine-cli <COMMAND>
 
 Commands:
   fs
@@ -15,6 +15,7 @@ Commands:
   cancel-load  Cancel loading task
   mount        mount ufs to curvine
   umount       unmount ufs
+  node         Node command
   version      show cli version
   help         Print this message or the help of the given subcommand(s)
 
@@ -35,7 +36,17 @@ Use `cv report` subcommand to view cluster status, `cv report -h` to view availa
 | bin/cv report used    | Output used capacity information for each worker          |
 | bin/cv report available    | Output available capacity information for each worker          |
 
-### 2. `fs` Subcommand
+### 2. `node` Subcommand
+
+Use `cv node` subcommand to manage workers in the cluster, `cv node -h` to view available parameters.
+
+| Parameter                     | Description                             |
+|-------------------------------|-----------------------------------------|
+| -l, --list                    | List all worker nodes                   |
+| --add-decommission            | Add decommission nodes                  |
+| --remove-decommission         | Remove decommission nodes               |
+
+### 3. `fs` Subcommand
 Use `cv fs` subcommand to execute hdfs commands. The `fs` subcommand provides mainstream file operation functionality, command formats and descriptions are as follows:
 
 | Command Format                 | Description                                    |
@@ -70,7 +81,7 @@ Specifically, the `cv fs ls` subcommand supports `hdfs`-like parameters, includi
 | -l, --long-format | Display detailed information of files and directories |
 | -h, --help | Show help information |
 
-### 3. `mount` Subcommand
+### 4. `mount` Subcommand
 Use `cv mount` subcommand to mount underlying storage to Curvine. Currently supports `s3` protocol.
 
 `cv mount` subcommand supports the following configuration parameters:
@@ -116,7 +127,7 @@ Unmount underlying storage:
 bin/cv umount /s3-testing/
 ```
 
-### 4. load Subcommand
+### 5. load Subcommand
 Use `cv load` subcommand to load UFS data into Curvine.
 
 :::warning

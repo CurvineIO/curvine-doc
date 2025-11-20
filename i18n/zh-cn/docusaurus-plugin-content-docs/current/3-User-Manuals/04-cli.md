@@ -4,7 +4,7 @@
 ## Rust原生命令行工具`cv`
 您可以直接执行 `cv` 命令获得帮助;
 ```bash
-Usage: cv <COMMAND>
+Usage: curvine-cli <COMMAND>
 
 Commands:
   fs
@@ -14,6 +14,7 @@ Commands:
   cancel-load  Cancel loading task
   mount        mount ufs to curvine
   umount       unmount ufs
+  node         Node command
   version      show cli version
   help         Print this message or the help of the given subcommand(s)
 
@@ -34,7 +35,17 @@ Options:
 | bin/cv report used    | 输出每个worker的已用容量信息          |
 | bin/cv report available    | 输出每个worker的可用容量信息          |
 
-### 2. `fs` 子命令
+### 2. `node` 子命令
+
+使用`cv node` 子命令来管理集群中的worker， `cv node -h` 查看可用参数。
+
+| 参数                     | 说明                             |
+|----------------------------|------------------------------------|
+| -l, --list                  | 列出所有worker节点                    |
+| --add-decommission         | 添加退役节点                    |
+| --remove-decommission | 移除退役节点                    |
+
+### 3. `fs` 子命令
 使用`cv fs` 子命令来执行hdfs命令. `fs` 子命令提供了主流的文件操作功能, 命令格式和功能描述如下:
 
 | 命令格式                       | 功能描述                             |
@@ -70,7 +81,7 @@ Options:
 | -l, --long-format | 显示文件和目录的详细信息 |
 | -h, --help | 显示帮助信息 |
 
-### 3. `mount` 子命令
+### 4. `mount` 子命令
 使用`cv mount` 子命令来挂载底层存储到Curvine上.  目前支持 `s3`协议。
 
 `cv mount` 子命令支持的配置参数包括:
@@ -116,7 +127,7 @@ bin/cv mount
 bin/cv umount /s3-testing/
 ```
 
-### 4. `load` 子命令
+### 5. `load` 子命令
 使用`cv load` 子命令来加载UFS数据到Curvine.
 
 :::warning
@@ -197,7 +208,7 @@ chmod, chown, getfacl
 ln -s, readlink
 
 # 扩展属性操作
-getfattr, setfattr, listxatt
+getfattr, setfattr, listxattr
 ```
 
 
