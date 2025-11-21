@@ -152,21 +152,21 @@ $ kubectl exec curvine-test-pod -n default -- /usr/bin/cat /usr/share/nginx/html
 
 Using Helm chart to deploy the Curvine CSI (Container Storage Interface) driver on a Kubernetes cluster.
 
-## Prerequisites
+### Prerequisites
 
 - Kubernetes 1.19+
 - Helm 3.0+
 
-## Installation
+### Installation
 
-### Add Helm Repository (if available)
+#### Add Helm Repository (if available)
 
 ```bash
 helm repo add curvine https://charts.curvine.io
 helm repo update
 ```
 
-### Install from Local Chart
+#### Install from Local Chart
 
 ```bash
 # Install with default values
@@ -179,7 +179,7 @@ helm install curvine-csi ./curvine-csi -f custom-values.yaml
 helm install curvine-csi ./curvine-csi --namespace curvine-system --create-namespace
 ```
 
-## Configuration
+### Configuration
 
 The following table lists the configurable parameters and their default values:
 
@@ -198,9 +198,9 @@ The following table lists the configurable parameters and their default values:
 | `rbac.create` | Create RBAC resources | `true` |
 | `configMap.name` | ConfigMap name | `curvine-config` |
 
-## Customization
+### Customization
 
-### Custom Curvine Configuration
+#### Custom Curvine Configuration
 
 You can customize the Curvine configuration by modifying the `configMap.data.curvineClusterToml` value:
 
@@ -219,7 +219,7 @@ configMap:
       file_name = "curvine.log"
 ```
 
-### Custom Images
+#### Custom Images
 
 ```yaml
 image:
@@ -235,7 +235,7 @@ controller:
       image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
 ```
 
-### Node Tolerations
+#### Node Tolerations
 
 ```yaml
 node:
@@ -248,7 +248,7 @@ node:
       effect: "NoSchedule"
 ```
 
-## Usage
+### Usage
 
 After installation, create a StorageClass:
 
@@ -279,22 +279,22 @@ spec:
   storageClassName: curvine-csi
 ```
 
-## Uninstallation
+### Uninstallation
 
 ```bash
 helm uninstall curvine-csi
 ```
 
-## Troubleshooting
+### Troubleshooting
 
-### Check CSI Driver Status
+#### Check CSI Driver Status
 
 ```bash
 kubectl get csidriver curvine
 kubectl get pods -l app.kubernetes.io/name=curvine-csi
 ```
 
-### Check Logs
+#### Check Logs
 
 ```bash
 # Controller logs
@@ -304,7 +304,7 @@ kubectl logs -l app=curvine-csi-controller -c csi-plugin
 kubectl logs -l app=curvine-csi-node -c csi-plugin
 ```
 
-### Common Issues
+#### Common Issues
 
 1. **CSI Driver not registered**: Check if the node-driver-registrar sidecar is running
 2. **Mount failures**: Verify Curvine cluster connectivity and configuration
