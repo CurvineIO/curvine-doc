@@ -154,21 +154,21 @@ $ kubectl exec curvine-test-pod -n default -- /usr/bin/cat /usr/share/nginx/html
 
 使用 Helm Chart 在 Kubernetes 集群上部署 Curvine CSI（容器存储接口）驱动程序。
 
-## 前置条件
+### 前置条件
 
 - Kubernetes 1.19+
 - Helm 3.0+
 
-## 安装
+### 安装
 
-### 添加 Helm 仓库（如果可用）
+#### 添加 Helm 仓库（如果可用）
 
 ```bash
 helm repo add curvine https://charts.curvine.io
 helm repo update
 ```
 
-### 从本地 Chart 安装
+#### 从本地 Chart 安装
 
 ```bash
 # 使用默认值安装
@@ -181,7 +181,7 @@ helm install curvine-csi ./curvine-csi -f custom-values.yaml
 helm install curvine-csi ./curvine-csi --namespace curvine-system --create-namespace
 ```
 
-## 配置
+### 配置
 
 下表列出了可配置的参数及其默认值：
 
@@ -200,9 +200,9 @@ helm install curvine-csi ./curvine-csi --namespace curvine-system --create-names
 | `rbac.create` | 创建 RBAC 资源 | `true` |
 | `configMap.name` | ConfigMap 名称 | `curvine-config` |
 
-## 自定义配置
+### 自定义配置
 
-### 自定义 Curvine 配置
+#### 自定义 Curvine 配置
 
 您可以通过修改 `configMap.data.curvineClusterToml` 值来自定义 Curvine 配置：
 
@@ -221,7 +221,7 @@ configMap:
       file_name = "curvine.log"
 ```
 
-### 自定义镜像
+#### 自定义镜像
 
 ```yaml
 image:
@@ -237,7 +237,7 @@ controller:
       image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
 ```
 
-### 节点容忍度
+#### 节点容忍度
 
 ```yaml
 node:
@@ -250,7 +250,7 @@ node:
       effect: "NoSchedule"
 ```
 
-## 使用方法
+### 使用方法
 
 安装后，创建 StorageClass：
 
@@ -281,22 +281,22 @@ spec:
   storageClassName: curvine-csi
 ```
 
-## 卸载
+### 卸载
 
 ```bash
 helm uninstall curvine-csi
 ```
 
-## 故障排除
+### 故障排除
 
-### 检查 CSI 驱动状态
+#### 检查 CSI 驱动状态
 
 ```bash
 kubectl get csidriver curvine
 kubectl get pods -l app.kubernetes.io/name=curvine-csi
 ```
 
-### 检查日志
+#### 检查日志
 
 ```bash
 # 控制器日志
@@ -306,7 +306,7 @@ kubectl logs -l app=curvine-csi-controller -c csi-plugin
 kubectl logs -l app=curvine-csi-node -c csi-plugin
 ```
 
-### 常见问题
+#### 常见问题
 
 1. **CSI 驱动未注册**：检查 node-driver-registrar sidecar 是否正在运行
 2. **挂载失败**：验证 Curvine 集群连接性和配置
