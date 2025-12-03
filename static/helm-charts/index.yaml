@@ -5,7 +5,7 @@ entries:
       appVersion: "0.2.0"
       created: "2025-11-27T09:16:42.000000000Z"
       description: A Helm chart for deploying Curvine distributed multi-level cache system cluster on Kubernetes
-      digest: d7f203e1516e59b2c205caae3b9e483eefbec3e3957569caa5eed0ed5c5556d6
+      digest: 50d86a5a59d242142d1614cdf2e66271326970fd0ada89970018ba1ec5eec236
       home: https://github.com/CurvineIO/curvine
       icon: https://curvineio.github.io/img/curvine_logo.png
       keywords:
