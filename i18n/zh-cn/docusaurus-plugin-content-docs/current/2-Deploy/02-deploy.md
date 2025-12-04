@@ -180,17 +180,18 @@ helm repo update
 
 ###### 选项 A：从 Helm 仓库安装（推荐）
 
+>**提示**：当前helm提供的版本基于main分支版本，仅在预发模式下使用，如需安装需要指定--devel 
 ```bash
 # 使用默认配置安装
-helm install curvine curvine/curvine -n curvine --create-namespace
+helm install curvine curvine/curvine -n curvine --create-namespace --devel
 
 # 使用自定义副本数安装
-helm install curvine curvine/curvine -n curvine --create-namespace \
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set master.replicas=5 \
   --set worker.replicas=10
 
 # 使用自定义 values 文件安装
-helm install curvine curvine/curvine -n curvine --create-namespace \
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   -f https://curvineio.github.io/helm/charts/examples/values-prod.yaml
 ```
 ###### 选项 B：从本地 Chart 安装
@@ -450,7 +451,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # 从 Helm 仓库安装
-helm install curvine curvine/curvine -n curvine --create-namespace \
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set master.replicas=1 \
   --set worker.replicas=1
 
@@ -462,7 +463,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # 从 Helm 仓库安装
-helm install curvine curvine/curvine -n curvine --create-namespace \
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set master.replicas=5 \
   --set worker.replicas=10 \
   --set master.storage.meta.storageClass=fast-ssd \
@@ -483,7 +484,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # 从 Helm 仓库安装
-helm install curvine curvine/curvine -n curvine --create-namespace \
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set master.replicas=5 \
   --set worker.replicas=10 \
   --set master.storage.meta.storageClass=fast-ssd \
@@ -639,11 +640,11 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # 扩展 Worker 副本数（从 Helm 仓库）
-helm upgrade curvine curvine/curvine -n curvine \
+helm upgrade curvine curvine/curvine -n curvine --devel \
   --set worker.replicas=15
 
 # 升级镜像版本（从 Helm 仓库）
-helm upgrade curvine curvine/curvine -n curvine \
+helm upgrade curvine curvine/curvine -n curvine --devel \
   --set image.tag=v1.1.0
 
 # 使用新 values 文件升级（从本地 Chart，在 helm-charts 目录运行）
