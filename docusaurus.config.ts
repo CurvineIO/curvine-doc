@@ -9,6 +9,11 @@ const config: Config = {
   tagline: 'High Speed Distribute Cacheing System',
   favicon: 'img/curvine_logo.ico',
 
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
+
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
