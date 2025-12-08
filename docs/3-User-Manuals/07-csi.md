@@ -1,76 +1,334 @@
-# CSI Driver
-To facilitate quick integration with Curvine in cloud-native environments, Curvine provides CSI driver support. Your Pod containers can access Curvine through `PV` (Persistent Volume) without requiring application modifications, enabling the use of Curvine's caching capabilities.
+# K8S CSI Driver
+To facilitate quick integration with Curvine in cloud-native environments, Curvine provides CSI driver support. Your Pod containers can access Curvine through `PV` (Persistent Volume) without requiring application modifications, enabling seamless use of Curvine's caching capabilities.
 
 The Curvine CSI driver follows the standard CSI specification and includes:
-- `CSI Controller`, deployed in `Deployment` mode or `Statefulset` mode
+- `CSI Controller`, deployed in `Deployment` or `Statefulset` mode
 - `CSI Node Plugin`, deployed in `DaemonSet` mode
 
-Deployment scripts are located in the `curvine-csi/deploy` directory. Execute:
-```bash
-kubectl create -f curvine-csi/deploy
-```
+## Architecture Overview
 
-:::warning
-Currently, the `curvine-csi` depends on a fuse version that only supports cluster configuration file connection method. Therefore, in `deploy/configmap.yaml`, you need to fill in the `master_addrs` option with the real curvine master address.
+The Curvine CSI driver adopts the standard CSI architecture with two main components:
 
-This is a temporary solution. If you want to try it out, you can test it. We are working on supporting custom parameters for fuse, and various configuration parameters for connecting to the cluster will be customized through storageclass or pv attributes. This will be released soon, stay tuned!
-
-The CSI driver is still in rapid iteration. If you encounter issues during use, welcome to submit an issue 😄!
-:::
-
-After successful deployment, you will see the following pods:
-```bash
-NAME                     READY   STATUS    RESTARTS   AGE
-curvine-controller-0     4/4     Running   0          4h32m
-curvine-csi-node-jbvmt   3/3     Running   0          4h32m
-```
-
-![csi-arch](img/csi-arch.png)
-
-:::warning
-The Curvine CSI driver depends on fuse, which is established by the CSI node plugin. Since CSI driver upgrades will interrupt the fuse service, proceed with caution.
-:::
-
-## Deploy CSI
-First, deploy the CSI driver in the k8s cluster and ensure that the CSI node plugin is running properly.
-
-## PVC+Static PV
-You can manually create a static PV and bind the PVC to the static PV. Example:
-```yaml
+```mermaid
 ---
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: curvine-pv
-  labels:
-    type: curvine
-spec:
-  storageClassName: curvine-sc
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Delete
-  csi:
-    driver: curvine
-    volumeHandle: curvine-volume-1
-    volumeAttributes:
-      curvinePath: "/"
-      type: "Directory" # Using Directory type requires that the path must already exist
+config:
+  theme: 'base'
+---
+
+graph TB
+    subgraph "Kubernetes Cluster"
+        subgraph "Control Plane"
+            Controller[CSI Controller<br/>Deployment]
+            Provisioner[csi-provisioner]
+            Attacher[csi-attacher]
+            Controller --> Provisioner
+            Controller --> Attacher
+        end
+        
+        subgraph "Worker Nodes"
+            Node1[CSI Node Plugin<br/>DaemonSet]
+            Node2[CSI Node Plugin<br/>DaemonSet]
+            Registrar1[node-driver-registrar]
+            Registrar2[node-driver-registrar]
+            Node1 --> Registrar1
+            Node2 --> Registrar2
+        end
+        
+        Pod1[Application Pod]
+        Pod2[Application Pod]
+        
+        Pod1 -.Mount.-> Node1
+        Pod2 -.Mount.-> Node2
+    end
+    
+    subgraph "Curvine Cluster"
+        Master[Master Nodes<br/>8995]
+        Storage[Storage Nodes]
+        Master --> Storage
+    end
+    
+    Node1 -.FUSE Mount.-> Master
+    Node2 -.FUSE Mount.-> Master
 ```
 
-:::note 
-The following fields are required:
-- `volumeAttributes.curvinePath` must be `/`, as currently Curvine fuse only supports mounting the root path
-- `volumeAttributes.type` as `Directory` indicates the path already exists. `DirectoryOrCreate` indicates the path will be automatically created if it doesn't exist
+### Core Components
+
+1. **CSI Controller**
+   - Runs in the Control Plane
+   - Responsible for Volume creation, deletion, Attach/Detach operations
+   - Includes csi-provisioner and csi-attacher sidecars
+
+2. **CSI Node Plugin**
+   - Runs as DaemonSet on each Worker Node
+   - Responsible for mounting Curvine storage to Pods
+   - Uses FUSE technology for filesystem mounting
+
+3. **FUSE Mounting Mechanism**
+   - Directly mounts Curvine filesystem paths
+   - Same paths share FUSE process, saving resources
+   - Supports concurrent access by multiple Pods
+
+---
+
+## Prerequisites
+
+### Environment Requirements
+
+- Kubernetes 1.19+
+- Helm 3.0+
+- Accessible Curvine cluster (Master node address and port)
+- Cluster administrator privileges
+
+### Environment Check
+
+```bash
+# Check Kubernetes version
+kubectl version --short
+
+# Check Helm version
+helm version --short
+
+# Check node status
+kubectl get nodes
+```
+
+---
+
+## I. Installing Curvine CSI
+
+### 1.1 Get Helm Chart
+
+```bash
+helm repo add curvine https://curvineio.github.io/helm-charts
+helm repo update
+helm search repo curvine --devel
+helm install curvine-csi curvine/curvine-csi \ 
+    --namespace curvine-system \ 
+    --create-namespace --devel \ 
+    --version 0.0.1-dev+7ffc6a2
+```
+
+
+:::tip
+The current Curvine Helm repository provides pre-release versions:
+- Use `--devel` to view them, and replace the `--version` in the command above with your desired version
+- curvine-csi is installed by default in the `curvine-system` namespace via Helm
+- Official release versions will be provided progressively
 :::
 
-## PVC+Dynamic PV
-To use dynamic PV, you need to define a `StorageClass` first.
+### 1.2 Configure Custom Parameters (Optional)
+curvine-csi supports rich customization parameters. If your network environment has restrictions, you can use custom images and other methods.
 
-`StorageClass` example:
+For example, create a `custom-values.yaml` file:
 
 ```yaml
+# Image configuration
+image:
+  repository: ghcr.io/curvineio/curvine-csi
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Controller configuration
+controller:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Node configuration
+node:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+```
+
+Install with custom parameters using Helm:
+```bash
+helm install curvine-csi curvine/curvine-csi \ 
+    --namespace curvine-system \ 
+    --create-namespace --devel \ 
+  --values custom-values.yaml
+
+# Check installation status
+helm status curvine-csi -n curvine-system
+```
+
+### 1.4 Upgrade and Uninstall
+
+```bash
+# Upgrade
+helm upgrade curvine curvine/curvine-csi -n curvine-system --devel --version xxxxx
+
+# Uninstall
+helm uninstall curvine-csi -n curvine-system
+
+# Complete cleanup (including namespace)
+kubectl delete namespace curvine-system
+```
+
+---
+
+## II. Verification and Status Check
+
+### 2.1 Check CSI Driver Registration
+
+```bash
+# Check if CSI Driver is registered successfully
+kubectl get csidriver curvine
+
+# Example output:
+# NAME      ATTACHREQUIRED   PODINFOONMOUNT   STORAGECAPACITY
+# curvine   false            false            false
+```
+
+**Parameter Explanation:**
+- `ATTACHREQUIRED: false` - No Attach operation needed (direct FUSE mount)
+- `PODINFOONMOUNT: false` - No Pod information needed during mount
+
+### 2.2 Check Controller Status
+
+```bash
+# Check Controller Deployment
+kubectl get deployment -n curvine-system curvine-csi-controller
+
+# Check Controller Pod
+kubectl get pods -n curvine-system -l app=curvine-csi-controller
+
+# Check Controller logs
+kubectl logs -n curvine-system \
+  -l app=curvine-csi-controller \
+  -c csi-plugin \
+  --tail=50
+
+# Check Provisioner Sidecar logs
+kubectl logs -n curvine-system \
+  -l app=curvine-csi-controller \
+  -c csi-provisioner \
+  --tail=50
+```
+
+### 2.3 Check Node Plugin Status
+
+```bash
+# Check Node DaemonSet
+kubectl get daemonset -n curvine-system curvine-csi-node
+
+# Check all Node Plugin Pods
+kubectl get pods -n curvine-system -l app=curvine-csi-node -o wide
+
+# Check specific Node logs
+kubectl logs -n curvine-system curvine-csi-node-xxxxx -c csi-plugin
+
+# Check Node Registrar logs
+kubectl logs -n curvine-system curvine-csi-node-xxxxx -c node-driver-registrar
+```
+
+## III. StorageClass Explained
+
+StorageClass is a resource in Kubernetes that defines storage types, used for automatic creation of dynamic PVs.
+
+### 3.1 StorageClass Configuration Example
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: curvine-sc
+provisioner: curvine                      # CSI driver name
+reclaimPolicy: Delete                     # Reclaim policy
+volumeBindingMode: Immediate              # Binding mode
+allowVolumeExpansion: true                # Allow expansion
+parameters:
+  # Required: Curvine cluster connection information
+  master-addrs: "master1:8995,master2:8995,master3:8995"
+  
+  # Required: Filesystem path prefix
+  fs-path: "/k8s-volumes"
+  
+  # Optional: Path creation strategy
+  path-type: "DirectoryOrCreate"
+  
+  # Optional: FUSE parameters
+  io-threads: "4"
+  worker-threads: "8"
+```
+
+### 3.2 Parameter Details
+
+#### Core Parameters
+
+| Parameter | Required | Description | Example |
+|-----|------|------|------|
+| `master-addrs` | ✅ | Curvine Master node address list, comma-separated | `"10.0.0.1:8995,10.0.0.2:8995"` |
+| `fs-path` | ✅ | Path prefix for dynamic PVs, actual path is `fs-path + pv-name` | `"/k8s-volumes"` |
+| `path-type` | ❌ | Path creation strategy, defaults to `Directory` | `"DirectoryOrCreate"` |
+| `io-threads` | ❌ | FUSE IO thread count | `"4"` |
+| `worker-threads` | ❌ | FUSE worker thread count | `"8"` |
+
+#### Path Creation Strategy (path-type)
+
+- **`Directory`** (default)
+  - Path must already exist
+  - Recommended for production environments
+  - Ensures path is pre-created by administrators
+
+- **`DirectoryOrCreate`**
+  - Automatically creates path if it doesn't exist
+  - Suitable for testing and development environments
+  - Note permission issues
+
+#### Reclaim Policy (reclaimPolicy)
+
+- **`Delete`** (recommended for dynamic PVs)
+  - Automatically deletes PV and storage data when PVC is deleted
+  - Suitable for temporary data and testing environments
+
+- **`Retain`**
+  - PV is retained after PVC deletion
+  - Data needs manual cleanup
+  - Suitable for important data protection
+
+#### Binding Mode (volumeBindingMode)
+
+- **`Immediate`** (default)
+  - PV is bound immediately after PVC creation
+  - Suitable for single AZ clusters
+
+- **`WaitForFirstConsumer`**
+  - Waits for Pod scheduling before binding PV
+  - Suitable for multi-AZ clusters, ensures PV is available on the Pod's node
+
+### 3.3 Dynamic PV Path Generation Rules
+
+```
+Actual mount path = fs-path + "/" + pv-name
+```
+
+**Example:**
+```yaml
+# StorageClass configuration
+fs-path: "/k8s-volumes"
+
+# Auto-generated PV name
+pv-name: "pvc-1234-5678-abcd"
+
+# Final Curvine path
+Actual path: "/k8s-volumes/pvc-1234-5678-abcd"
+```
+
+### 3.4 Create StorageClass
+
+```bash
+# Create StorageClass
+kubectl apply -f - <<EOF
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -80,232 +338,593 @@ reclaimPolicy: Delete
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 parameters:
-  curvinePath: "/"
-  type: "DirectoryOrCreate" #"DirectoryOrCreate" or "Directory"
+  master-addrs: "m0:8995,m1:8995,m2:8995"
+  fs-path: "/k8s-volumes"
+  path-type: "DirectoryOrCreate"
+EOF
+
+# View StorageClass
+kubectl get storageclass curvine-sc
+
+# Set as default StorageClass (optional)
+kubectl patch storageclass curvine-sc \
+  -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 ```
 
-PVC example:
+:::tip
+Replace the `master-addrs` in the example above with your actual master addresses.
+:::
+
+### 3.5 Multiple StorageClass Scenarios
+
+You can create multiple StorageClasses for different scenarios:
+
 ```yaml
+# Production environment - strict mode
 ---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: curvine-prod
+provisioner: curvine
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  master-addrs: "prod-master1:8995,prod-master2:8995"
+  fs-path: "/production"
+  path-type: "Directory"
+
+# Development environment - relaxed mode
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: curvine-dev
+provisioner: curvine
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+parameters:
+  master-addrs: "dev-master:8995"
+  fs-path: "/development"
+  path-type: "DirectoryOrCreate"
+```
+
+---
+
+## IV. Static PV Usage
+
+Static PV is used to mount existing data directories in Curvine, suitable for the following scenarios:
+- Multiple clusters sharing the same data
+- Need for precise control over data paths
+
+### 4.1 Working Principle
+
+```
+Curvine cluster has existing data
+    ↓
+Administrator creates PV, specifying curvine-path
+    ↓
+User creates PVC, binds to specified PV
+    ↓
+Pod mounts PVC
+```
+
+### 4.2 Create Static PV
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: curvine-pv-existing-data
+  labels:
+    type: curvine-static
+spec:
+  storageClassName: curvine-sc
+  capacity:
+    storage: 100Gi                    # Declared capacity
+  accessModes:
+    - ReadWriteMany                   # Supports multi-Pod read-write
+  persistentVolumeReclaimPolicy: Retain  # Retain data
+  csi:
+    driver: curvine
+    volumeHandle: "existing-data-volume-001"  # Unique identifier
+    volumeAttributes:
+      # Required: Curvine Master address
+      master-addrs: "m0:8995,m1:8995,m2:8995"
+      
+      # Required: Complete path in Curvine
+      curvine-path: "/production/user-data"
+      
+      # Recommended: Use Directory to ensure path exists
+      path-type: "Directory"
+      
+      # Optional: FUSE parameters
+      io-threads: "4"
+      worker-threads: "8"
+```
+
+**Parameter Explanation:**
+- `volumeHandle`: Any unique string, used to identify the PV
+- `curvine-path`: Complete path in Curvine filesystem, must already exist
+- `path-type: Directory`: Requires path to exist (recommended)
+
+### 4.3 Create Static PVC
+
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: curvine-pvc
+  name: curvine-pvc-existing-data
+  namespace: default
 spec:
   storageClassName: curvine-sc
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
-      storage: 5Gi
+      storage: 100Gi
+  # Key: Specify the PV name to bind
+  volumeName: curvine-pv-existing-data
 ```
 
-After creating the PVC, a PV will be automatically created with the status `Bound`, as shown below:
+### 4.4 Verify Binding
+
 ```bash
-$ kubectl get pvc
-NAME          STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-curvine-pvc   Bound    pvc-fce87a49-828f-43d2-8360-7901b0b5f886   5Gi        RWO            curvine-sc     <unset>                 16s
+# Check PV status
+kubectl get pv curvine-pv-existing-data
+# STATUS should be Bound
+
+# Check PVC status
+kubectl get pvc curvine-pvc-existing-data
+# STATUS should be Bound
+
+# Check detailed information
+kubectl describe pvc curvine-pvc-existing-data
 ```
 
-## Creating a Pod
-Mount the Curvine volume to a pod. Example:
+### 4.5 Using Static PV in Pod
+
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: curvine-csi-pod
-  labels:
-    app: curvine-csi-pod
+  name: static-pv-test
 spec:
   containers:
-    - name: web-server
-      image: nginx
-      ports:
-        - containerPort: 80
-          name: "http-server"
-      volumeMounts:
-        - mountPath: "/usr/share/nginx/html"
-          name: curvine-storage
+  - name: app
+    image: nginx:alpine
+    volumeMounts:
+    - name: data
+      mountPath: /data
   volumes:
-    - name: curvine-storage
-      persistentVolumeClaim:
-        claimName: curvine-pvc
+  - name: data
+    persistentVolumeClaim:
+      claimName: curvine-pvc-existing-data
 ```
 
-## Verification
-On a cluster with Curvine running, you can manually create a file in the root path, such as 'index.html'. You can use the `fuse` feature; by default, the fuse mounted by Curvine is at the `/curvine-fuse` path.
+## V. Dynamic PV Usage
 
-```bash
-$ ls /curvine-fuse
-index.html
+Dynamic PV is the most commonly used method, automatically created and managed by the CSI Controller.
+
+### 5.1 Working Principle
+
+```
+User creates PVC, specifying StorageClass
+    ↓
+CSI Provisioner automatically creates PV
+    ↓
+Auto-generates Curvine path: fs-path + pv-name
+    ↓
+PVC automatically binds to PV
+    ↓
+Pod mounts PVC for use
 ```
 
-Check in the pod:
-```bash
-$ kubectl exec curvine-test-pod -n default -- /usr/bin/cat /usr/share/nginx/html/index.html
-<html>
-        hello curvine csi
-</html>
-```
+### 5.2 Create Dynamic PVC
 
-## Curvine CSI Driver Helm Chart
-
-Using Helm chart to deploy the Curvine CSI (Container Storage Interface) driver on a Kubernetes cluster.
-
-### Prerequisites
-
-- Kubernetes 1.19+
-- Helm 3.0+
-
-### Installation
-
-#### Add Helm Repository (if available)
-
-```bash
-helm repo add curvine https://charts.curvine.io
-helm repo update
-```
-
-#### Install from Local Chart
-
-```bash
-# Install with default values
-helm install curvine-csi ./curvine-csi
-
-# Install with custom values
-helm install curvine-csi ./curvine-csi -f custom-values.yaml
-
-# Install in specific namespace
-helm install curvine-csi ./curvine-csi --namespace curvine-system --create-namespace
-```
-
-### Configuration
-
-The following table lists the configurable parameters and their default values:
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `global.namespace` | Namespace to deploy resources | `default` |
-| `image.repository` | Curvine CSI image repository | `curvine/curvine-csi` |
-| `image.tag` | Curvine CSI image tag | `latest` |
-| `image.pullPolicy` | Image pull policy | `Always` |
-| `csiDriver.name` | CSI driver name | `curvine` |
-| `csiDriver.attachRequired` | Whether attach is required | `true` |
-| `csiDriver.podInfoOnMount` | Whether pod info on mount | `false` |
-| `controller.replicas` | Number of controller replicas | `1` |
-| `controller.priorityClassName` | Priority class for controller | `system-cluster-critical` |
-| `node.priorityClassName` | Priority class for node | `system-node-critical` |
-| `rbac.create` | Create RBAC resources | `true` |
-| `configMap.name` | ConfigMap name | `curvine-config` |
-
-### Customization
-
-#### Custom Curvine Configuration
-
-You can customize the Curvine configuration by modifying the `configMap.data.curvineClusterToml` value:
-
-```yaml
-configMap:
-  data:
-    curvineClusterToml: |
-      [client]
-      master_addrs = [
-          { hostname = "your-master-host", port = 8995 }
-      ]
-      
-      [log]
-      level = "debug"
-      log_dir = "stdout"
-      file_name = "curvine.log"
-```
-
-#### Custom Images
-
-```yaml
-image:
-  repository: your-registry/curvine-csi
-  tag: v1.0.0
-  pullPolicy: IfNotPresent
-
-controller:
-  sidecars:
-    provisioner:
-      image: registry.k8s.io/sig-storage/csi-provisioner:v3.6.0
-    attacher:
-      image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
-```
-
-#### Node Tolerations
-
-```yaml
-node:
-  tolerations:
-    - key: "node-role.kubernetes.io/master"
-      operator: "Exists"
-      effect: "NoSchedule"
-    - key: "node-role.kubernetes.io/control-plane"
-      operator: "Exists"
-      effect: "NoSchedule"
-```
-
-### Usage
-
-After installation, create a StorageClass:
-
-```yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: curvine-csi
-provisioner: curvine
-parameters:
-  # Add Curvine-specific parameters
-volumeBindingMode: WaitForFirstConsumer
-```
-
-Create a PVC:
+Dynamic PVC requires specifying a storageclass, without specifying volumeName:
 
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: test-pvc
+  name: my-dynamic-pvc
+  namespace: default
 spec:
+  storageClassName: curvine-sc    # Specify StorageClass
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteOnce               # or ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi               # Request capacity
+```
+
+### 5.3 Automatic Path Generation Example
+
+```yaml
+# StorageClass configuration
+fs-path: "/k8s-volumes"
+
+# PVC name
+name: my-dynamic-pvc
+
+# Auto-generated PV
+# volumeHandle: pvc-1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6
+
+# Actual Curvine path
+# /k8s-volumes/pvc-1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6
+
+# You can use Curvine's cv command to check if the volume was created correctly in the Curvine cluster
+./bin/cv fs ls /
+```
+
+### 5.4 Dynamic PV Complete Example
+
+```bash
+# 1. Create dynamic PVC
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-data-pvc
+  namespace: default
+spec:
+  storageClassName: curvine-sc
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+EOF
+
+# 2. Check PVC status (should automatically Bound)
+kubectl get pvc app-data-pvc
+kubectl describe pvc app-data-pvc
+
+# 3. Check auto-created PV
+kubectl get pv
+
+# 4. Create Pod using PVC
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dynamic-pv-test
+spec:
+  containers:
+  - name: app
+    image: nginx:alpine
+    volumeMounts:
+    - name: data
+      mountPath: /usr/share/nginx/html
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: app-data-pvc
+EOF
+
+# 5. Test write and read
+kubectl exec dynamic-pv-test -- sh -c 'echo "Hello Curvine" > /usr/share/nginx/html/index.html'
+kubectl exec dynamic-pv-test -- cat /usr/share/nginx/html/index.html
+```
+
+## VI. Using Dynamic PV in Deployment
+
+Deployment is suitable for stateless applications where multiple replicas share the same storage.
+
+### 6.1 Architecture Pattern
+
+```
+           Deployment (3 replicas)
+               /      |      \
+            Pod-1  Pod-2  Pod-3
+               \      |      /
+                Single PVC (RWX)
+                      |
+              Curvine Volume (Shared)
+```
+
+### 6.2 Complete Example
+
+```yaml
+# deployment-with-pvc.yaml
+---
+# 1. Create shared PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-data-pvc
+  namespace: default
+spec:
+  storageClassName: curvine-sc
+  accessModes:
+    - ReadWriteMany
   resources:
     requests:
       storage: 10Gi
-  storageClassName: curvine-csi
+
+---
+# 2. Create Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: shared-storage
+          mountPath: /usr/share/nginx/html
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+      volumes:
+      - name: shared-storage
+        persistentVolumeClaim:
+          claimName: shared-data-pvc  # Share the same PVC
+
+---
+# 3. Create Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-service
+  namespace: default
+spec:
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
 ```
 
-### Uninstallation
+### 6.3 Deploy and Verify
 
 ```bash
-helm uninstall curvine-csi
+# 1. Deploy application
+kubectl apply -f deployment-with-pvc.yaml
+
+# 2. Check PVC status
+kubectl get pvc shared-data-pvc
+
+# 3. Check all Pods
+kubectl get pods -l app=web-app -o wide
+
+# 4. Verify all Pods mounted the same PVC
+kubectl get pods -l app=web-app -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.volumes[0].persistentVolumeClaim.claimName}{"\n"}{end}'
+
+# 5. Write data in one Pod
+POD1=$(kubectl get pod -l app=web-app -o jsonpath='{.items[0].metadata.name}')
+kubectl exec $POD1 -- sh -c 'echo "Hello from Pod 1" > /usr/share/nginx/html/test.html'
+
+# 6. Read data in another Pod (verify sharing)
+POD2=$(kubectl get pod -l app=web-app -o jsonpath='{.items[1].metadata.name}')
+kubectl exec $POD2 -- cat /usr/share/nginx/html/test.html
+# Should output: Hello from Pod 1
+
+# 7. Verify Service access
+kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl http://web-app-service/test.html
 ```
 
-### Troubleshooting
+## VII. Using Dynamic PV in StatefulSet
 
-#### Check CSI Driver Status
+StatefulSet is suitable for stateful applications, where each Pod has independent persistent storage.
+
+### 7.1 Architecture Pattern
+
+```
+        StatefulSet (3 replicas)
+            |         |         |
+         Pod-0     Pod-1     Pod-2
+            |         |         |
+         PVC-0     PVC-1     PVC-2
+            |         |         |
+          PV-0      PV-1      PV-2
+            |         |         |
+     /path/pvc-0  /path/pvc-1  /path/pvc-2
+```
+
+### 7.2 Complete Example
+
+```yaml
+# statefulset-web-app.yaml
+---
+# 1. Headless Service (required)
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-service
+  namespace: default
+spec:
+  clusterIP: None                # Headless Service
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    name: web
+
+---
+# 2. StatefulSet with VolumeClaimTemplates
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web-app
+  namespace: default
+spec:
+  serviceName: web-app-service   # Must specify Service
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: data                # Must match volumeClaimTemplates name
+          mountPath: /usr/share/nginx/html
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Write hello world message with pod name
+          echo "<h1>Hello from $(hostname)</h1>" > /usr/share/nginx/html/index.html
+          echo "<p>This is my persistent storage!</p>" >> /usr/share/nginx/html/index.html
+          echo "<p>Created at: $(date)</p>" >> /usr/share/nginx/html/index.html
+          # Start nginx
+          nginx -g 'daemon off;'
+  # Key: VolumeClaimTemplates
+  volumeClaimTemplates:
+  - metadata:
+      name: data                    # PVC name prefix
+    spec:
+      storageClassName: curvine-sc
+      accessModes:
+        - ReadWriteOnce             # Independent storage for each Pod
+      resources:
+        requests:
+          storage: 1Gi
+```
+
+### 7.3 Deploy and Verify
 
 ```bash
-kubectl get csidriver curvine
-kubectl get pods -l app.kubernetes.io/name=curvine-csi
+# 1. Deploy StatefulSet
+kubectl apply -f statefulset-web-app.yaml
+
+# 2. Watch Pod creation order (created sequentially)
+kubectl get pods -l app=web-app -w
+
+# 3. Check PVCs (auto-created, one per Pod)
+kubectl get pvc
+# Example output:
+# data-web-app-0   Bound    pvc-xxx   1Gi       RWO
+# data-web-app-1   Bound    pvc-yyy   1Gi       RWO
+# data-web-app-2   Bound    pvc-zzz   1Gi       RWO
+
+# 4. Check PVs (auto-created)
+kubectl get pv
+
+# 5. Verify each Pod has independent storage
+for i in 0 1 2; do
+  echo "=== Pod web-app-$i ==="
+  kubectl exec web-app-$i -- cat /usr/share/nginx/html/index.html
+done
+
+# 6. Write custom data to Pod-0
+kubectl exec web-app-0 -- sh -c \
+  'echo "<p>Custom data from Pod-0</p>" >> /usr/share/nginx/html/index.html'
+
+# 7. Verify Pod-0's data
+kubectl exec web-app-0 -- cat /usr/share/nginx/html/index.html
+
+# 8. Verify Pod-1 doesn't have Pod-0's custom data (independent storage)
+kubectl exec web-app-1 -- cat /usr/share/nginx/html/index.html
+
+# 9. Test persistence: Data remains after deleting Pod-0
+kubectl delete pod web-app-0
+# Wait for Pod to be recreated
+kubectl wait --for=condition=Ready pod/web-app-0 --timeout=60s
+# Verify data still exists
+kubectl exec web-app-0 -- cat /usr/share/nginx/html/index.html
 ```
 
-#### Check Logs
+### 7.4 StatefulSet Features
+
+#### PVC Naming Convention
+
+```
+PVC name = volumeClaimTemplate.name + "-" + StatefulSet.name + "-" + Pod ordinal
+
+Example:
+data-web-app-0
+data-web-app-1
+data-web-app-2
+```
+
+#### Pod and PVC Lifecycle
 
 ```bash
-# Controller logs
-kubectl logs -l app=curvine-csi-controller -c csi-plugin
+# 1. Delete Pod, PVC is not deleted
+kubectl delete pod web-app-0
+# Pod is recreated and automatically binds back to the original PVC, data is retained
 
-# Node logs
-kubectl logs -l app=curvine-csi-node -c csi-plugin
+# 2. Delete StatefulSet, retain PVCs (recommended)
+kubectl delete statefulset web-app --cascade=orphan
+# PVCs and data are retained
+
+# 3. Delete StatefulSet and Pods, but retain PVCs
+kubectl delete statefulset web-app
+# PVCs need manual deletion
+
+# 4. Manually delete PVC
+kubectl delete pvc data-web-app-0
 ```
 
-#### Common Issues
+#### Scaling
 
-1. **CSI Driver not registered**: Check if the node-driver-registrar sidecar is running
-2. **Mount failures**: Verify Curvine cluster connectivity and configuration
-3. **Permission issues**: Ensure proper RBAC permissions are granted
+```bash
+# 1. Scale up (increase replicas)
+kubectl scale statefulset web-app --replicas=5
+# Automatically creates web-app-3, web-app-4 and corresponding PVCs
+
+# 2. Scale down (decrease replicas)
+kubectl scale statefulset web-app --replicas=2
+# web-app-2 is deleted, but PVC data-web-app-2 is retained
+
+# 3. Scale up again
+kubectl scale statefulset web-app --replicas=3
+# web-app-2 is recreated and binds back to data-web-app-2, data is restored
+```
+
+#### FUSE Process Sharing
+
+```yaml
+# Conditions for multiple PVs to share a FUSE process:
+# 1. Same master-addrs
+# 2. Same curvine-path
+
+# Example: These two PVs will share a FUSE process
+PV1:
+  master-addrs: "10.0.0.1:8995"
+  curvine-path: "/shared-data"
+
+PV2:
+  master-addrs: "10.0.0.1:8995"
+  curvine-path: "/shared-data"
+
+# These two PVs will have independent FUSE processes
+PV3:
+  curvine-path: "/data-1"
+
+PV4:
+  curvine-path: "/data-2"
+```
