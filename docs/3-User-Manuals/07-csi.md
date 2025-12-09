@@ -699,6 +699,10 @@ spec:
   type: ClusterIP
 ```
 
+:::tip
+For Deployment applications, Kubernetes is natively positioned for stateless services, meaning all replica Pods by default read and write to the same PV path. If your application requires different path isolation on Curvine, you can try using OpenKruise's `CloneSets` as an alternative, which supports VolumeClaimTemplates. Reference: https://openkruise.io/zh/docs/user-manuals/cloneset
+:::
+
 ### 6.3 Deploy and Verify
 
 ```bash
