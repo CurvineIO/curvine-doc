@@ -928,3 +928,144 @@ PV3:
 PV4:
   curvine-path: "/data-2"
 ```
+
+## Appendix
+### Helm Custom Parameters
+#### Global Settings
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `global.namespace` | string | `curvine-system` | Namespace where CSI driver is deployed |
+
+#### Image Settings
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `image.repository` | string | `ghcr.io/curvineio/curvine-csi` | CSI driver image repository address |
+| `image.tag` | string | `latest` | CSI driver image tag version |
+| `image.pullPolicy` | string | `Always` | Image pull policy (Always/IfNotPresent/Never) |
+
+#### CSI Driver Settings
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `csiDriver.name` | string | `curvine` | CSI driver name identifier |
+| `csiDriver.attachRequired` | boolean | `false` | Whether attach operation is required (volume attachment to node) |
+| `csiDriver.podInfoOnMount` | boolean | `false` | Whether Pod information is required during mount |
+
+#### Controller Settings
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `controller.name` | string | `curvine-csi-controller` | Controller Deployment name |
+| `controller.replicas` | int | `1` | Number of Controller replicas |
+| `controller.priorityClassName` | string | `system-cluster-critical` | Controller priority class name (high priority) |
+| `controller.container.name` | string | `csi-plugin` | Main container name |
+| `controller.container.command` | array | `["/opt/curvine/csi"]` | Container start command |
+| `controller.container.args` | array | See values.yaml | Container start arguments |
+| `controller.container.env.CSI_ENDPOINT` | string | `unix:///csi/csi.sock` | CSI socket endpoint address |
+| `controller.container.livenessProbe.failureThreshold` | int | `5` | Liveness probe failure threshold |
+| `controller.container.livenessProbe.initialDelaySeconds` | int | `10` | Liveness probe initial delay seconds |
+| `controller.container.livenessProbe.periodSeconds` | int | `10` | Liveness probe check period (seconds) |
+| `controller.container.livenessProbe.timeoutSeconds` | int | `3` | Liveness probe timeout (seconds) |
+| `controller.container.ports.healthz` | int | `9909` | Health check port |
+| `controller.container.securityContext.privileged` | boolean | `true` | Whether to run in privileged mode |
+| `controller.container.securityContext.capabilities.add` | array | `[SYS_ADMIN]` | Added Linux Capabilities |
+| `controller.tolerations` | array | See values.yaml | Pod toleration configuration (allows CriticalAddons scheduling) |
+
+#### Controller Sidecar Container Configuration
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `controller.sidecars.provisioner.image` | string | `quay.io/k8scsi/csi-provisioner:v1.6.0` | Provisioner sidecar image |
+| `controller.sidecars.provisioner.args` | array | See values.yaml | Provisioner arguments (timeout 60s, log level v5) |
+| `controller.sidecars.attacher.image` | string | `registry.k8s.io/sig-storage/csi-attacher:v4.5.0` | Attacher sidecar image |
+| `controller.sidecars.attacher.args` | array | See values.yaml | Attacher arguments (log level v5) |
+| `controller.sidecars.livenessProbe.image` | string | `registry.k8s.io/sig-storage/livenessprobe:v2.11.0` | LivenessProbe sidecar image |
+| `controller.sidecars.livenessProbe.args` | array | See values.yaml | LivenessProbe arguments |
+| `controller.sidecars.livenessProbe.env.HEALTH_PORT` | string | `"9909"` | Health check port |
+
+#### Node Settings
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `node.name` | string | `curvine-csi-node` | Node DaemonSet name |
+| `node.priorityClassName` | string | `system-node-critical` | Node priority class name (node critical level) |
+| `node.dnsPolicy` | string | `ClusterFirstWithHostNet` | DNS policy (cluster first + host network) |
+| `node.container.name` | string | `csi-plugin` | Main container name |
+| `node.container.command` | array | `["/opt/curvine/csi"]` | Container start command |
+| `node.container.args` | array | See values.yaml | Container start arguments |
+| `node.container.env.CSI_ENDPOINT` | string | `unix:///csi/csi.sock` | CSI socket endpoint address |
+| `node.container.livenessProbe.failureThreshold` | int | `5` | Liveness probe failure threshold |
+| `node.container.livenessProbe.initialDelaySeconds` | int | `10` | Liveness probe initial delay seconds |
+| `node.container.livenessProbe.periodSeconds` | int | `10` | Liveness probe check period (seconds) |
+| `node.container.livenessProbe.timeoutSeconds` | int | `3` | Liveness probe timeout (seconds) |
+| `node.container.ports.healthz` | int | `9909` | Health check port |
+| `node.container.securityContext.privileged` | boolean | `true` | Whether to run in privileged mode |
+| `node.container.lifecycle.preStop` | object | See values.yaml | Container pre-stop hook (cleanup socket files) |
+| `node.tolerations` | array | `[{operator: Exists}]` | Pod toleration configuration (tolerates all taints) |
+
+#### Node Sidecar Container Configuration
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `node.sidecars.nodeDriverRegistrar.image` | string | `quay.io/k8scsi/csi-node-driver-registrar:v2.1.0` | Node driver registrar image |
+| `node.sidecars.nodeDriverRegistrar.args` | array | See values.yaml | Registrar arguments (log level v5) |
+| `node.sidecars.nodeDriverRegistrar.env.ADDRESS` | string | `/csi/csi.sock` | CSI socket address |
+| `node.sidecars.nodeDriverRegistrar.env.DRIVER_REG_SOCK_PATH` | string | `/var/lib/kubelet/csi-plugins/csi.curvine.io/csi.sock` | Driver registration path in Kubelet |
+| `node.sidecars.livenessProbe.image` | string | `registry.k8s.io/sig-storage/livenessprobe:v2.11.0` | LivenessProbe sidecar image |
+| `node.sidecars.livenessProbe.args` | array | See values.yaml | LivenessProbe arguments |
+| `node.sidecars.livenessProbe.env.ADDRESS` | string | `/csi/csi.sock` | CSI socket address |
+| `node.sidecars.livenessProbe.env.HEALTH_PORT` | string | `"9909"` | Health check port |
+
+#### Node Host Path Configuration
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `node.hostPaths.pluginDir.path` | string | `/var/lib/kubelet/csi-plugins/csi.curvine.io/` | CSI plugin directory path |
+| `node.hostPaths.pluginDir.type` | string | `DirectoryOrCreate` | Path type (create if not exists) |
+| `node.hostPaths.kubeletDir.path` | string | `/var/lib/kubelet` | Kubelet working directory path |
+| `node.hostPaths.kubeletDir.type` | string | `DirectoryOrCreate` | Path type (create if not exists) |
+| `node.hostPaths.registrationDir.path` | string | `/var/lib/kubelet/plugins_registry/` | Plugin registration directory path |
+| `node.hostPaths.registrationDir.type` | string | `Directory` | Path type (must exist) |
+
+#### Service Account Settings
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `serviceAccount.controller.name` | string | `curvine-csi-controller-sa` | Controller service account name |
+| `serviceAccount.node.name` | string | `curvine-csi-node-sa` | Node service account name |
+
+#### RBAC Configuration
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `rbac.create` | boolean | `true` | Whether to create RBAC resources (ClusterRole/ClusterRoleBinding) |
+
+#### ConfigMap Configuration (Curvine Cluster Configuration)
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `configMap.name` | string | `curvine-config` | ConfigMap name |
+| `configMap.defaultMode` | octal | `0755` | File default permission mode |
+| `configMap.data.curvineClusterToml` | string | See values.yaml | Curvine cluster configuration file (TOML format) |
+| `configMap.data.curvineEnvSh` | string | See values.yaml | Curvine environment variables script |
+
+#### Curvine Cluster Configuration Parameters in ConfigMap
+
+| Configuration Item | Type | Default | Description |
+|-------|------|--------|------|
+| `client.master_addrs` | array | `[{hostname: "localhost", port: 8995}]` | Curvine Master node address list |
+| `log.level` | string | `"info"` | Log level (debug/info/warn/error) |
+| `log.log_dir` | string | `"stdout"` | Log output directory (stdout for standard output) |
+| `log.file_name` | string | `"curvine.log"` | Log file name |
+
+#### StorageClass Parameters (Configured at Usage Time)
+
+| Parameter Name | Required | Type | Default | Description |
+|--------|---------|------|--------|------|
+| `master-addrs` | **Required** | string | None | Curvine Master node addresses, format: `host:port,host:port` |
+| `fs-path` | **Required** | string | None | Filesystem path prefix, each PV creates: `fs-path + pv-name` |
+| `path-type` | Optional | string | `Directory` | Path creation strategy: `DirectoryOrCreate` or `Directory` |
+| `io-threads` | Optional | string | None | FUSE IO thread count |
+| `worker-threads` | Optional | string | None | FUSE worker thread count |
