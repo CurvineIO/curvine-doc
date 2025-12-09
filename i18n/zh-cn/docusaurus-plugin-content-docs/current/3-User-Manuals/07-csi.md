@@ -698,6 +698,10 @@ spec:
   type: ClusterIP
 ```
 
+:::tip
+对于Devployment应用，kubernetes原生定位于无状态服务，也就是所有的副本pod默认都读写的是同一个pv的路径。 如果你的应用程序又需要在curvine上有不同的路径隔离， 也可以尝试使用 社区的open kruise的`CloneSets` 作为替代，支持VolumeCliamTemplates， 参考 https://openkruise.io/zh/docs/user-manuals/cloneset
+:::
+
 ### 6.3 部署和验证
 
 ```bash
