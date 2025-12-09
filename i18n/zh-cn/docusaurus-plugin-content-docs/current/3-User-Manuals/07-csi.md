@@ -927,3 +927,144 @@ PV3:
 PV4:
   curvine-path: "/data-2"
 ```
+
+## 附录
+### Helm自定义参数
+#### 全局配置 (Global Settings)
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `global.namespace` | string | `curvine-system` | CSI驱动部署的命名空间 |
+
+#### 镜像配置 (Image Settings)
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `image.repository` | string | `ghcr.io/curvineio/curvine-csi` | CSI驱动镜像仓库地址 |
+| `image.tag` | string | `latest` | CSI驱动镜像标签版本 |
+| `image.pullPolicy` | string | `Always` | 镜像拉取策略 (Always/IfNotPresent/Never) |
+
+#### CSI驱动配置 (CSI Driver Settings)
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `csiDriver.name` | string | `curvine` | CSI驱动名称标识 |
+| `csiDriver.attachRequired` | boolean | `false` | 是否需要attach操作（卷附加到节点） |
+| `csiDriver.podInfoOnMount` | boolean | `false` | 挂载时是否需要Pod信息 |
+
+#### Controller配置 (Controller Settings)
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `controller.name` | string | `curvine-csi-controller` | Controller Deployment名称 |
+| `controller.replicas` | int | `1` | Controller副本数量 |
+| `controller.priorityClassName` | string | `system-cluster-critical` | Controller优先级类名（高优先级） |
+| `controller.container.name` | string | `csi-plugin` | 主容器名称 |
+| `controller.container.command` | array | `["/opt/curvine/csi"]` | 容器启动命令 |
+| `controller.container.args` | array | 见values.yaml | 容器启动参数 |
+| `controller.container.env.CSI_ENDPOINT` | string | `unix:///csi/csi.sock` | CSI套接字端点地址 |
+| `controller.container.livenessProbe.failureThreshold` | int | `5` | 存活探针失败次数阈值 |
+| `controller.container.livenessProbe.initialDelaySeconds` | int | `10` | 存活探针初始延迟秒数 |
+| `controller.container.livenessProbe.periodSeconds` | int | `10` | 存活探针检查周期（秒） |
+| `controller.container.livenessProbe.timeoutSeconds` | int | `3` | 存活探针超时时间（秒） |
+| `controller.container.ports.healthz` | int | `9909` | 健康检查端口 |
+| `controller.container.securityContext.privileged` | boolean | `true` | 是否以特权模式运行 |
+| `controller.container.securityContext.capabilities.add` | array | `[SYS_ADMIN]` | 添加的Linux Capabilities |
+| `controller.tolerations` | array | 见values.yaml | Pod容忍度配置（允许CriticalAddons调度） |
+
+#### Controller Sidecar容器配置
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `controller.sidecars.provisioner.image` | string | `quay.io/k8scsi/csi-provisioner:v1.6.0` | Provisioner sidecar镜像 |
+| `controller.sidecars.provisioner.args` | array | 见values.yaml | Provisioner参数（超时60s，日志级别v5） |
+| `controller.sidecars.attacher.image` | string | `registry.k8s.io/sig-storage/csi-attacher:v4.5.0` | Attacher sidecar镜像 |
+| `controller.sidecars.attacher.args` | array | 见values.yaml | Attacher参数（日志级别v5） |
+| `controller.sidecars.livenessProbe.image` | string | `registry.k8s.io/sig-storage/livenessprobe:v2.11.0` | LivenessProbe sidecar镜像 |
+| `controller.sidecars.livenessProbe.args` | array | 见values.yaml | LivenessProbe参数 |
+| `controller.sidecars.livenessProbe.env.HEALTH_PORT` | string | `"9909"` | 健康检查端口 |
+
+#### Node配置 (Node Settings)
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `node.name` | string | `curvine-csi-node` | Node DaemonSet名称 |
+| `node.priorityClassName` | string | `system-node-critical` | Node优先级类名（节点关键级别） |
+| `node.dnsPolicy` | string | `ClusterFirstWithHostNet` | DNS策略（集群优先+主机网络） |
+| `node.container.name` | string | `csi-plugin` | 主容器名称 |
+| `node.container.command` | array | `["/opt/curvine/csi"]` | 容器启动命令 |
+| `node.container.args` | array | 见values.yaml | 容器启动参数 |
+| `node.container.env.CSI_ENDPOINT` | string | `unix:///csi/csi.sock` | CSI套接字端点地址 |
+| `node.container.livenessProbe.failureThreshold` | int | `5` | 存活探针失败次数阈值 |
+| `node.container.livenessProbe.initialDelaySeconds` | int | `10` | 存活探针初始延迟秒数 |
+| `node.container.livenessProbe.periodSeconds` | int | `10` | 存活探针检查周期（秒） |
+| `node.container.livenessProbe.timeoutSeconds` | int | `3` | 存活探针超时时间（秒） |
+| `node.container.ports.healthz` | int | `9909` | 健康检查端口 |
+| `node.container.securityContext.privileged` | boolean | `true` | 是否以特权模式运行 |
+| `node.container.lifecycle.preStop` | object | 见values.yaml | 容器停止前钩子（清理socket文件） |
+| `node.tolerations` | array | `[{operator: Exists}]` | Pod容忍度配置（容忍所有污点） |
+
+#### Node Sidecar容器配置
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `node.sidecars.nodeDriverRegistrar.image` | string | `quay.io/k8scsi/csi-node-driver-registrar:v2.1.0` | Node驱动注册器镜像 |
+| `node.sidecars.nodeDriverRegistrar.args` | array | 见values.yaml | 注册器参数（日志级别v5） |
+| `node.sidecars.nodeDriverRegistrar.env.ADDRESS` | string | `/csi/csi.sock` | CSI套接字地址 |
+| `node.sidecars.nodeDriverRegistrar.env.DRIVER_REG_SOCK_PATH` | string | `/var/lib/kubelet/csi-plugins/csi.curvine.io/csi.sock` | Kubelet中驱动注册路径 |
+| `node.sidecars.livenessProbe.image` | string | `registry.k8s.io/sig-storage/livenessprobe:v2.11.0` | LivenessProbe sidecar镜像 |
+| `node.sidecars.livenessProbe.args` | array | 见values.yaml | LivenessProbe参数 |
+| `node.sidecars.livenessProbe.env.ADDRESS` | string | `/csi/csi.sock` | CSI套接字地址 |
+| `node.sidecars.livenessProbe.env.HEALTH_PORT` | string | `"9909"` | 健康检查端口 |
+
+#### Node主机路径配置
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `node.hostPaths.pluginDir.path` | string | `/var/lib/kubelet/csi-plugins/csi.curvine.io/` | CSI插件目录路径 |
+| `node.hostPaths.pluginDir.type` | string | `DirectoryOrCreate` | 路径类型（不存在则创建） |
+| `node.hostPaths.kubeletDir.path` | string | `/var/lib/kubelet` | Kubelet工作目录路径 |
+| `node.hostPaths.kubeletDir.type` | string | `DirectoryOrCreate` | 路径类型（不存在则创建） |
+| `node.hostPaths.registrationDir.path` | string | `/var/lib/kubelet/plugins_registry/` | 插件注册目录路径 |
+| `node.hostPaths.registrationDir.type` | string | `Directory` | 路径类型（必须存在） |
+
+#### 服务账户配置 (Service Account Settings)
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `serviceAccount.controller.name` | string | `curvine-csi-controller-sa` | Controller服务账户名称 |
+| `serviceAccount.node.name` | string | `curvine-csi-node-sa` | Node服务账户名称 |
+
+#### RBAC配置
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `rbac.create` | boolean | `true` | 是否创建RBAC资源（ClusterRole/ClusterRoleBinding） |
+
+#### ConfigMap配置 (Curvine Cluster Configuration)
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `configMap.name` | string | `curvine-config` | ConfigMap名称 |
+| `configMap.defaultMode` | octal | `0755` | 文件默认权限模式 |
+| `configMap.data.curvineClusterToml` | string | 见values.yaml | Curvine集群配置文件（TOML格式） |
+| `configMap.data.curvineEnvSh` | string | 见values.yaml | Curvine环境变量脚本 |
+
+#### ConfigMap中的Curvine集群配置参数
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|-------|------|--------|------|
+| `client.master_addrs` | array | `[{hostname: "localhost", port: 8995}]` | Curvine Master节点地址列表 |
+| `log.level` | string | `"info"` | 日志级别 (debug/info/warn/error) |
+| `log.log_dir` | string | `"stdout"` | 日志输出目录（stdout表示标准输出） |
+| `log.file_name` | string | `"curvine.log"` | 日志文件名 |
+
+#### StorageClass参数 (使用时配置)
+
+| 参数名 | 是否必需 | 类型 | 默认值 | 说明 |
+|--------|---------|------|--------|------|
+| `master-addrs` | **必需** | string | 无 | Curvine Master节点地址，格式: `host:port,host:port` |
+| `fs-path` | **必需** | string | 无 | 文件系统路径前缀，每个PV会创建: `fs-path + pv-name` |
+| `path-type` | 可选 | string | `Directory` | 路径创建策略: `DirectoryOrCreate` 或 `Directory` |
+| `io-threads` | 可选 | string | 无 | FUSE IO线程数量 |
+| `worker-threads` | 可选 | string | 无 | FUSE工作线程数量 |
