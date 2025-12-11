@@ -195,19 +195,19 @@ helm install curvine curvine/curvine -n curvine --create-namespace \
 ```
 ###### 选项 B：从本地 Chart 安装
 
->**注意**：从 `helm-charts` 目录（`helm` 文件夹的父目录）运行这些命令 
+>**注意**：从 `helm-charts` 目录（`curvine-runtime` 文件夹的父目录）运行这些命令 
 ```bash
 # 使用默认配置安装
-helm install curvine ./helm -n curvine --create-namespace
+helm install curvine ./curvine-runtime -n curvine --create-namespace
 
 # 使用自定义副本数安装
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set master.replicas=5 \
   --set worker.replicas=10
 
 # 使用自定义 values 文件安装
-helm install curvine ./helm -n curvine --create-namespace \
-  -f ./helm/examples/values-prod.yaml
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-prod.yaml
 ```
 ##### 3. 验证部署
 
@@ -374,7 +374,7 @@ helm get values curvine -n curvine -o yaml
 helm get manifest curvine -n curvine
 
 # 查看 Chart 的 values.yaml
-cat ./helm/values.yaml
+cat ./curvine-runtime/values.yaml
 
 # 查看特定参数
 helm get values curvine -n curvine | grep master.replicas
@@ -385,7 +385,7 @@ helm get values curvine -n curvine | grep master.replicas
 
 ```bash
 # 为高负载场景增加 Master 资源
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set master.resources.requests.cpu=2000m \
   --set master.resources.requests.memory=4Gi \
   --set master.resources.limits.cpu=4000m \
@@ -395,7 +395,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # 在特定节点上运行 Master
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set 'master.nodeSelector.node-type=master' \
   --set 'worker.nodeSelector.node-type=worker'
 ```
@@ -403,7 +403,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # 默认已启用，但可根据需要禁用
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set worker.privileged=false
 ```
 ###### 为 Worker 配置多个数据目录
@@ -426,21 +426,21 @@ helm install curvine ./helm -n curvine --create-namespace \
 #         storageClass: "slow-hdd"
 #         mountPath: "/data/data2"
 
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   -f values-multi-data.yaml
 ```
 ###### 调整日志级别
 
 ```bash
 # 设置日志级别为 DEBUG 用于故障排查
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set config.log.level=DEBUG
 ```
 ###### 配置外部 Master Service
 
 ```bash
 # 通过 LoadBalancer 暴露 Master Service
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set service.masterExternal.enabled=true \
   --set service.masterExternal.type=LoadBalancer
 ```
@@ -455,8 +455,8 @@ helm install curvine curvine/curvine -n curvine --create-namespace \
   --set worker.replicas=1
 
 # 从本地 Chart 安装（在 helm-charts 目录运行）
-helm install curvine ./helm -n curvine --create-namespace \
-  -f ./helm/examples/values-dev.yaml
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-dev.yaml
 ```
 ##### 生产环境（高可用）
 
@@ -469,15 +469,15 @@ helm install curvine curvine/curvine -n curvine --create-namespace \
   --set master.storage.journal.storageClass=fast-ssd
 
 # 从本地 Chart 安装（在 helm-charts 目录运行）
-helm install curvine ./helm -n curvine --create-namespace \
-  -f ./helm/examples/values-prod.yaml
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-prod.yaml
 ```
 ##### 裸机环境（使用 hostPath）
 
 ```bash
 # 从本地 Chart 安装（在 helm-charts 目录运行）
-helm install curvine ./helm -n curvine --create-namespace \
-  -f ./helm/examples/values-baremetal.yaml
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-baremetal.yaml
 ```
 ##### 自定义配置
 
@@ -491,7 +491,7 @@ helm install curvine curvine/curvine -n curvine --create-namespace \
   --set worker.storage.dataDirs[0].size=500Gi
 
 # 从本地 Chart 安装（在 helm-charts 目录运行）
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set master.replicas=5 \
   --set worker.replicas=10 \
   --set master.storage.meta.storageClass=fast-ssd \
@@ -570,13 +570,13 @@ worker:
 
 ```bash
 # 使用默认存储类（最快的启动方式）
-helm install curvine ./helm -n curvine --create-namespace
+helm install curvine ./curvine-runtime -n curvine --create-namespace
 ```
 ###### 云环境配置快速 SSD
 
 ```bash
 # AWS/GCP/Azure 快速 SSD 存储
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set master.storage.meta.storageClass=fast-ssd \
   --set master.storage.journal.storageClass=fast-ssd \
   --set 'worker.storage.dataDirs[0].storageClass=fast-ssd' \
@@ -620,14 +620,14 @@ helm install curvine ./helm -n curvine --create-namespace \
 #         hostPath: "/mnt/hdd/worker"
 #         mountPath: "/data/hdd"
 
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   -f values-baremetal-multi.yaml
 ```
 ###### 混合云和本地存储
 
 ```bash
 # Master 使用云 PVC，Worker 使用本地 hostPath
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set master.storage.meta.storageClass=cloud-ssd \
   --set master.storage.journal.storageClass=cloud-ssd \
   --set 'worker.storage.dataDirs[0].storageClass=""' \
@@ -647,8 +647,8 @@ helm upgrade curvine curvine/curvine -n curvine \
   --set image.tag=v1.1.0
 
 # 使用新 values 文件升级（从本地 Chart，在 helm-charts 目录运行）
-helm upgrade curvine ./helm -n curvine \
-  -f ./helm/values-new.yaml
+helm upgrade curvine ./curvine-runtime -n curvine \
+  -f ./curvine-runtime/values-new.yaml
 ```
 >**注意**：
 >1.升级期间无法修改 Master 副本数和日志存储类。要修改请删除并重新部署集群。
@@ -659,14 +659,14 @@ helm upgrade curvine ./helm -n curvine \
 
 ```bash
 # 将 Worker 副本数从 3 增加到 10
-helm upgrade curvine ./helm -n curvine \
+helm upgrade curvine ./curvine-runtime -n curvine \
   --set worker.replicas=10
 ```
 ###### 增加资源限制
 
 ```bash
 # 提升 Master 资源以获得更好的性能
-helm upgrade curvine ./helm -n curvine \
+helm upgrade curvine ./curvine-runtime -n curvine \
   --set master.resources.limits.cpu=4000m \
   --set master.resources.limits.memory=8Gi
 ```
@@ -674,21 +674,21 @@ helm upgrade curvine ./helm -n curvine \
 
 ```bash
 # 升级到新的 Curvine 版本
-helm upgrade curvine ./helm -n curvine \
+helm upgrade curvine ./curvine-runtime -n curvine \
   --set image.tag=v1.2.0
 ```
 ###### 启用调试日志
 
 ```bash
 # 临时启用调试日志用于故障排查
-helm upgrade curvine ./helm -n curvine \
+helm upgrade curvine ./curvine-runtime -n curvine \
   --set config.log.level=DEBUG
 ```
 ###### 更改存储配置
 
 ```bash
 # 迁移到更快的存储类
-helm upgrade curvine ./helm -n curvine \
+helm upgrade curvine ./curvine-runtime -n curvine \
   --set master.storage.meta.storageClass=ultra-ssd \
   --set master.storage.journal.storageClass=ultra-ssd
 ```
