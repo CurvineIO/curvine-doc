@@ -3,7 +3,7 @@ entries:
   curvine:
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-12-10T04:24:59.937767437Z"
+    created: "2025-12-11T02:16:47.812866678Z"
     description: A Helm chart for deploying Curvine distributed multi-level cache
       system cluster on Kubernetes
     digest: 50d86a5a59d242142d1614cdf2e66271326970fd0ada89970018ba1ec5eec236
@@ -26,7 +26,7 @@ entries:
     version: 0.2.1-dev+5c20fea
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-12-10T04:24:59.938804079Z"
+    created: "2025-12-11T02:16:47.813601831Z"
     description: A Helm chart for deploying Curvine distributed multi-level cache
       system cluster on Kubernetes
     digest: b0e1ae2a6e6bba0475373d6e0ac457a0f612658a3928c24bff3f7db66fd43cfd
@@ -49,7 +49,7 @@ entries:
     version: 0.2.1-dev+71bb50b
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-12-10T04:24:59.939765582Z"
+    created: "2025-12-11T02:16:47.814344799Z"
     description: A Helm chart for deploying Curvine distributed multi-level cache
       system cluster on Kubernetes
     digest: f86a8080aa1b7266221e302a13bb73034ba7be9eb961f06413eac6c14ca16fec
@@ -72,7 +72,7 @@ entries:
     version: 0.2.1-dev+7ffc6a2
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-12-10T04:24:59.94045969Z"
+    created: "2025-12-11T02:16:47.815023788Z"
     description: A Helm chart for deploying Curvine distributed multi-level cache
       system cluster on Kubernetes
     digest: 4f4073f41c578a75e2060540129082d21e836f05eab73a6744e1c8890e8dfe4a
@@ -95,7 +95,7 @@ entries:
     version: 0.2.1-dev+a8b1301
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-12-10T04:24:59.936162951Z"
+    created: "2025-12-11T02:16:47.81126732Z"
     description: A Helm chart for deploying Curvine distributed multi-level cache
       system cluster on Kubernetes
     digest: 584c44d2b2ecebd1a8cfff4bff9a6557334b080e1eda72bd77772e53e755c276
@@ -118,10 +118,10 @@ entries:
     version: 0.2.0-dev+36b63d9
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-12-10T04:24:59.936991237Z"
+    created: "2025-12-11T02:16:47.812121135Z"
     description: A Helm chart for deploying Curvine distributed multi-level cache
       system cluster on Kubernetes
-    digest: 5b71ec19807442dbfe5525e7b12a3df80845baf446fe594fb59211da7240e7bc
+    digest: 1cdfb16a1c5acafd7a3c3c75e593223ce1869acf32172d6c2a487a318ac87720
     home: https://github.com/CurvineIO/curvine
     icon: https://curvineio.github.io/img/curvine_logo.png
     keywords:
@@ -142,7 +142,7 @@ entries:
   curvine-csi:
   - apiVersion: v2
     appVersion: latest
-    created: "2025-12-10T04:24:59.943451299Z"
+    created: "2025-12-11T02:16:47.817861131Z"
     description: A Helm chart for Curvine CSI Driver
     digest: 594371e66100c467ad50eb30fff6af1ec37eaac6f6238722feb5e1269c5567bc
     home: https://github.com/CurvineIO/curvine
@@ -163,7 +163,7 @@ entries:
     version: 0.0.1-dev+7ffc6a2
   - apiVersion: v2
     appVersion: latest
-    created: "2025-12-10T04:24:59.94109617Z"
+    created: "2025-12-11T02:16:47.815698739Z"
     description: A Helm chart for Curvine CSI Driver
     digest: 7a17492b534d3b21ad803dc983272541abcc8c20a32025719aac5ade024c9da2
     home: https://github.com/CurvineIO/curvine
@@ -184,9 +184,9 @@ entries:
     version: 0.0.0-dev+36b63d9
   - apiVersion: v2
     appVersion: latest
-    created: "2025-12-10T04:24:59.942730362Z"
+    created: "2025-12-11T02:16:47.816386835Z"
     description: A Helm chart for Curvine CSI Driver
-    digest: 64c3f5ed4221231064a5b797d603afc6fd56fc5f38757e1587780e01977d65c5
+    digest: 2a9ac233b3854d9ae16f3ba6a5dfdc089fd3cb2f6ed4a267e394bf989a03ba6f
     home: https://github.com/CurvineIO/curvine
     keywords:
     - storage
@@ -203,4 +203,4 @@ entries:
     urls:
     - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-csi-0.0.0-dev.tgz
     version: 0.0.0-dev
-generated: "2025-12-10T04:24:59.935202029Z"
+generated: "2025-12-11T02:16:47.81030916Z"
