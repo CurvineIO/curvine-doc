@@ -193,20 +193,20 @@ helm install curvine curvine/curvine -n curvine --create-namespace --devel \
 
 ###### Option B: Install from Local Chart
 
->**Note**: Run these commands from the `helm-charts` directory (parent directory of `helm` folder)
+>**Note**: Run these commands from the `helm-charts` directory (parent directory of `curvine-runtime` folder)
 
 ```bash
 # Install with default configuration
-helm install curvine ./helm -n curvine --create-namespace
+helm install curvine ./curvine-runtime -n curvine --create-namespace
 
 # Install with custom replica count
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set master.replicas=5 \
   --set worker.replicas=10
 
 # Install with custom values file
-helm install curvine ./helm -n curvine --create-namespace \
-  -f ./helm/examples/values-prod.yaml
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-prod.yaml
 ```
 
 ##### 3. Verify Deployment
@@ -376,7 +376,7 @@ helm get values curvine -n curvine -o yaml
 helm get manifest curvine -n curvine
 
 # View Chart's values.yaml
-cat ./helm/values.yaml
+cat ./curvine-runtime/values.yaml
 
 # View specific parameters
 helm get values curvine -n curvine | grep master.replicas
@@ -388,7 +388,7 @@ helm get values curvine -n curvine | grep master.replicas
 
 ```bash
 # Increase Master resources for high-load scenarios
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set master.resources.requests.cpu=2000m \
   --set master.resources.requests.memory=4Gi \
   --set master.resources.limits.cpu=4000m \
@@ -399,7 +399,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # Run Master on specific nodes
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set 'master.nodeSelector.node-type=master' \
   --set 'worker.nodeSelector.node-type=worker'
 ```
@@ -408,7 +408,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # Enabled by default, but can be disabled if needed
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set worker.privileged=false
 ```
 
@@ -432,7 +432,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 #         storageClass: "slow-hdd"
 #         mountPath: "/data/data2"
 
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   -f values-multi-data.yaml
 ```
 
@@ -440,7 +440,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # Set log level to DEBUG for troubleshooting
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set config.log.level=DEBUG
 ```
 
@@ -448,7 +448,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # Expose Master Service via LoadBalancer
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set service.masterExternal.enabled=true \
   --set service.masterExternal.type=LoadBalancer
 ```
@@ -464,8 +464,8 @@ helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set worker.replicas=1
 
 # Install from local Chart (run in helm-charts directory)
-helm install curvine ./helm -n curvine --create-namespace \
-  -f ./helm/examples/values-dev.yaml
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-dev.yaml
 ```
 
 ##### Production Environment (High Availability)
@@ -479,16 +479,16 @@ helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set master.storage.journal.storageClass=fast-ssd
 
 # Install from local Chart (run in helm-charts directory)
-helm install curvine ./helm -n curvine --create-namespace \
-  -f ./helm/examples/values-prod.yaml
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-prod.yaml
 ```
 
 ##### Bare Metal Environment (Using hostPath)
 
 ```bash
 # Install from local Chart (run in helm-charts directory)
-helm install curvine ./helm -n curvine --create-namespace \
-  -f ./helm/examples/values-baremetal.yaml
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-baremetal.yaml
 ```
 
 ##### Custom Configuration
@@ -503,7 +503,7 @@ helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set worker.storage.dataDirs[0].size=500Gi
 
 # Install from local Chart (run in helm-charts directory)
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set master.replicas=5 \
   --set worker.replicas=10 \
   --set master.storage.meta.storageClass=fast-ssd \
@@ -586,14 +586,14 @@ worker:
 
 ```bash
 # Use default storage class (fastest startup method)
-helm install curvine ./helm -n curvine --create-namespace
+helm install curvine ./curvine-runtime -n curvine --create-namespace
 ```
 
 ###### Cloud Environment Fast SSD Configuration
 
 ```bash
 # AWS/GCP/Azure fast SSD storage
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set master.storage.meta.storageClass=fast-ssd \
   --set master.storage.journal.storageClass=fast-ssd \
   --set 'worker.storage.dataDirs[0].storageClass=fast-ssd' \
@@ -638,7 +638,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 #         hostPath: "/mnt/hdd/worker"
 #         mountPath: "/data/hdd"
 
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   -f values-baremetal-multi.yaml
 ```
 
@@ -646,7 +646,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # Master uses cloud PVC, Worker uses local hostPath
-helm install curvine ./helm -n curvine --create-namespace \
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
   --set master.storage.meta.storageClass=cloud-ssd \
   --set master.storage.journal.storageClass=cloud-ssd \
   --set 'worker.storage.dataDirs[0].storageClass=""' \
@@ -667,8 +667,8 @@ helm upgrade curvine curvine/curvine -n curvine --devel \
   --set image.tag=v1.1.0
 
 # Upgrade with new values file (from local Chart, run in helm-charts directory)
-helm upgrade curvine ./helm -n curvine \
-  -f ./helm/values-new.yaml
+helm upgrade curvine ./curvine-runtime -n curvine \
+  -f ./curvine-runtime/values-new.yaml
 ```
 
 >**Note**:
@@ -681,7 +681,7 @@ helm upgrade curvine ./helm -n curvine \
 
 ```bash
 # Increase Worker replicas from 3 to 10
-helm upgrade curvine ./helm -n curvine \
+helm upgrade curvine ./curvine-runtime -n curvine \
   --set worker.replicas=10
 ```
 
@@ -689,7 +689,7 @@ helm upgrade curvine ./helm -n curvine \
 
 ```bash
 # Increase Master resources for better performance
-helm upgrade curvine ./helm -n curvine \
+helm upgrade curvine ./curvine-runtime -n curvine \
   --set master.resources.limits.cpu=4000m \
   --set master.resources.limits.memory=8Gi
 ```
@@ -698,7 +698,7 @@ helm upgrade curvine ./helm -n curvine \
 
 ```bash
 # Upgrade to new Curvine version
-helm upgrade curvine ./helm -n curvine \
+helm upgrade curvine ./curvine-runtime -n curvine \
   --set image.tag=v1.2.0
 ```
 
@@ -706,7 +706,7 @@ helm upgrade curvine ./helm -n curvine \
 
 ```bash
 # Temporarily enable debug logging for troubleshooting
-helm upgrade curvine ./helm -n curvine \
+helm upgrade curvine ./curvine-runtime -n curvine \
   --set config.log.level=DEBUG
 ```
 
@@ -714,7 +714,7 @@ helm upgrade curvine ./helm -n curvine \
 
 ```bash
 # Migrate to faster storage class
-helm upgrade curvine ./helm -n curvine \
+helm upgrade curvine ./curvine-runtime -n curvine \
   --set master.storage.meta.storageClass=ultra-ssd \
   --set master.storage.journal.storageClass=ultra-ssd
 ```
