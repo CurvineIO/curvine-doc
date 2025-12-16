@@ -175,17 +175,19 @@ helm repo update
 
 ###### Option A: Install from Helm Repository (Recommended)
 
+>**Note**: The current Helm version provided is based on the main branch and is intended for pre-release use only. To install, you must specify the --devel flag
+
 ```bash
 # Install with default configuration
-helm install curvine curvine/curvine -n curvine --create-namespace
+helm install curvine curvine/curvine -n curvine --create-namespace --devel
 
 # Install with custom replica count
-helm install curvine curvine/curvine -n curvine --create-namespace \
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set master.replicas=5 \
   --set worker.replicas=10
 
 # Install with custom values file
-helm install curvine curvine/curvine -n curvine --create-namespace \
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   -f https://curvineio.github.io/helm/charts/examples/values-prod.yaml
 ```
 
@@ -457,7 +459,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # Install from Helm repository
-helm install curvine curvine/curvine -n curvine --create-namespace \
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set master.replicas=1 \
   --set worker.replicas=1
 
@@ -470,7 +472,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # Install from Helm repository
-helm install curvine curvine/curvine -n curvine --create-namespace \
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set master.replicas=5 \
   --set worker.replicas=10 \
   --set master.storage.meta.storageClass=fast-ssd \
@@ -493,7 +495,7 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # Install from Helm repository
-helm install curvine curvine/curvine -n curvine --create-namespace \
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
   --set master.replicas=5 \
   --set worker.replicas=10 \
   --set master.storage.meta.storageClass=fast-ssd \
@@ -657,11 +659,11 @@ helm install curvine ./helm -n curvine --create-namespace \
 
 ```bash
 # Scale Worker replicas (from Helm repository)
-helm upgrade curvine curvine/curvine -n curvine \
+helm upgrade curvine curvine/curvine -n curvine --devel \
   --set worker.replicas=15
 
 # Upgrade image version (from Helm repository)
-helm upgrade curvine curvine/curvine -n curvine \
+helm upgrade curvine curvine/curvine -n curvine --devel \
   --set image.tag=v1.1.0
 
 # Upgrade with new values file (from local Chart, run in helm-charts directory)
