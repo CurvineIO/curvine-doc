@@ -667,6 +667,14 @@ spec:
         volumeMounts:
         - name: shared-storage
           mountPath: /usr/share/nginx/html
+        command:
+        - /bin/sh
+        - -c
+        - |
+          if [ ! -f /usr/share/nginx/html/index.html ]; then
+            echo "<h1>App initialized by command</h1>" > /usr/share/nginx/html/index.html
+          fi
+          exec nginx -g 'daemon off;'
         livenessProbe:
           httpGet:
             path: /
