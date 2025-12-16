@@ -37,8 +37,6 @@ This is for reference only. Actual requirements depend on your specific business
 
 ## Deployment
 
-### Build From Source
-
 Compile the software installation package. For compilation instructions, refer to [Quick Start](01-quick-start.md).
 
 Execute the following command to create an installation package:
