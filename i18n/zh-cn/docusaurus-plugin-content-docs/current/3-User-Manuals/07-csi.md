@@ -103,7 +103,7 @@ helm repo add curvine https://curvineio.github.io/helm-charts
 helm repo update
 helm search repo curvine --devel
 helm install curvine-csi curvine/curvine-csi \ 
-    --namespace curvine-system \ 
+    --namespace curvine \ 
     --create-namespace --devel \ 
     --version 0.0.1-dev+7ffc6a2
 ```
@@ -112,7 +112,7 @@ helm install curvine-csi curvine/curvine-csi \
 :::tip
 当前curvine helm仓库提供的为预发版本
 - 需要使用`--devel`可以查看到，上述命令`--version` 切换为自己需要的版本， 后续陆续提供正式release版本
-- curvine-csi 通过helm 默认安装在`curvine-system` namespace下
+- curvine-csi 通过helm 默认安装在`curvine` namespace下
 :::
 
 ### 1.2 配置自定义参数（可选）
@@ -152,25 +152,25 @@ node:
 helm指定自定义参数
 ```bash
 helm install curvine-csi curvine/curvine-csi \ 
-    --namespace curvine-system \ 
+    --namespace curvine \ 
     --create-namespace --devel \ 
   --values custom-values.yaml
 
 # 查看安装状态
-helm status curvine-csi -n curvine-system
+helm status curvine-csi -n curvine
 ```
 
 ### 1.4 升级和卸载
 
 ```bash
 # 升级
-helm upgrade curvine curvine/curvine-csi -n curvine-system --devel --version xxxxx
+helm upgrade curvine curvine/curvine-csi -n curvine --devel --version xxxxx
 
 # 卸载
-helm uninstall curvine-csi -n curvine-system
+helm uninstall curvine-csi -n curvine
 
 # 完全清理（包括 namespace）
-kubectl delete namespace curvine-system
+kubectl delete namespace curvine
 ```
 
 ---
@@ -196,19 +196,19 @@ kubectl get csidriver curvine
 
 ```bash
 # 查看 Controller Deployment
-kubectl get deployment -n curvine-system curvine-csi-controller
+kubectl get deployment -n curvine curvine-csi-controller
 
 # 查看 Controller Pod
-kubectl get pods -n curvine-system -l app=curvine-csi-controller
+kubectl get pods -n curvine -l app=curvine-csi-controller
 
 # 查看 Controller 日志
-kubectl logs -n curvine-system \
+kubectl logs -n curvine \
   -l app=curvine-csi-controller \
   -c csi-plugin \
   --tail=50
 
 # 查看 Provisioner Sidecar 日志
-kubectl logs -n curvine-system \
+kubectl logs -n curvine \
   -l app=curvine-csi-controller \
   -c csi-provisioner \
   --tail=50
@@ -218,16 +218,16 @@ kubectl logs -n curvine-system \
 
 ```bash
 # 查看 Node DaemonSet
-kubectl get daemonset -n curvine-system curvine-csi-node
+kubectl get daemonset -n curvine curvine-csi-node
 
 # 查看所有 Node Plugin Pod
-kubectl get pods -n curvine-system -l app=curvine-csi-node -o wide
+kubectl get pods -n curvine -l app=curvine-csi-node -o wide
 
 # 查看特定 Node 的日志
-kubectl logs -n curvine-system curvine-csi-node-xxxxx -c csi-plugin
+kubectl logs -n curvine curvine-csi-node-xxxxx -c csi-plugin
 
 # 查看 Node Registrar 日志
-kubectl logs -n curvine-system curvine-csi-node-xxxxx -c node-driver-registrar
+kubectl logs -n curvine curvine-csi-node-xxxxx -c node-driver-registrar
 ```
 
 ## 三、StorageClass 详解
@@ -946,7 +946,7 @@ PV4:
 
 | 参数路径 | 类型 | 默认值 | 说明 |
 |---------|------|--------|------|
-| `global.namespace` | string | `curvine-system` | CSI驱动部署的命名空间 |
+| `global.namespace` | string | `curvine` | CSI驱动部署的命名空间 |
 
 #### 镜像配置 (Image Settings)
 
