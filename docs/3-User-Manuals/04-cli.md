@@ -212,8 +212,3 @@ ln -s, readlink
 # Extended attribute operations
 getfattr, setfattr, listxattr
 ```
-
-
-:::note
-Curvine currently does not support soft link management
-:::
