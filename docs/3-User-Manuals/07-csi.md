@@ -103,7 +103,7 @@ helm repo add curvine https://curvineio.github.io/helm-charts
 helm repo update
 helm search repo curvine --devel
 helm install curvine-csi curvine/curvine-csi \ 
-    --namespace curvine-system \ 
+    --namespace curvine \ 
     --create-namespace --devel \ 
     --version 0.0.1-dev+7ffc6a2
 ```
@@ -112,7 +112,7 @@ helm install curvine-csi curvine/curvine-csi \
 :::tip
 The current Curvine Helm repository provides pre-release versions:
 - Use `--devel` to view them, and replace the `--version` in the command above with your desired version
-- curvine-csi is installed by default in the `curvine-system` namespace via Helm
+- curvine-csi is installed by default in the `curvine` namespace via Helm
 - Official release versions will be provided progressively
 :::
 
@@ -153,25 +153,25 @@ node:
 Install with custom parameters using Helm:
 ```bash
 helm install curvine-csi curvine/curvine-csi \ 
-    --namespace curvine-system \ 
+    --namespace curvine \ 
     --create-namespace --devel \ 
   --values custom-values.yaml
 
 # Check installation status
-helm status curvine-csi -n curvine-system
+helm status curvine-csi -n curvine
 ```
 
 ### 1.4 Upgrade and Uninstall
 
 ```bash
 # Upgrade
-helm upgrade curvine curvine/curvine-csi -n curvine-system --devel --version xxxxx
+helm upgrade curvine curvine/curvine-csi -n curvine --devel --version xxxxx
 
 # Uninstall
-helm uninstall curvine-csi -n curvine-system
+helm uninstall curvine-csi -n curvine
 
 # Complete cleanup (including namespace)
-kubectl delete namespace curvine-system
+kubectl delete namespace curvine
 ```
 
 ---
@@ -197,19 +197,19 @@ kubectl get csidriver curvine
 
 ```bash
 # Check Controller Deployment
-kubectl get deployment -n curvine-system curvine-csi-controller
+kubectl get deployment -n curvine curvine-csi-controller
 
 # Check Controller Pod
-kubectl get pods -n curvine-system -l app=curvine-csi-controller
+kubectl get pods -n curvine -l app=curvine-csi-controller
 
 # Check Controller logs
-kubectl logs -n curvine-system \
+kubectl logs -n curvine \
   -l app=curvine-csi-controller \
   -c csi-plugin \
   --tail=50
 
 # Check Provisioner Sidecar logs
-kubectl logs -n curvine-system \
+kubectl logs -n curvine \
   -l app=curvine-csi-controller \
   -c csi-provisioner \
   --tail=50
@@ -219,16 +219,16 @@ kubectl logs -n curvine-system \
 
 ```bash
 # Check Node DaemonSet
-kubectl get daemonset -n curvine-system curvine-csi-node
+kubectl get daemonset -n curvine curvine-csi-node
 
 # Check all Node Plugin Pods
-kubectl get pods -n curvine-system -l app=curvine-csi-node -o wide
+kubectl get pods -n curvine -l app=curvine-csi-node -o wide
 
 # Check specific Node logs
-kubectl logs -n curvine-system curvine-csi-node-xxxxx -c csi-plugin
+kubectl logs -n curvine curvine-csi-node-xxxxx -c csi-plugin
 
 # Check Node Registrar logs
-kubectl logs -n curvine-system curvine-csi-node-xxxxx -c node-driver-registrar
+kubectl logs -n curvine curvine-csi-node-xxxxx -c node-driver-registrar
 ```
 
 ## III. StorageClass Explained
@@ -947,7 +947,7 @@ PV4:
 
 | Parameter Path | Type | Default | Description |
 |---------|------|--------|------|
-| `global.namespace` | string | `curvine-system` | Namespace where CSI driver is deployed |
+| `global.namespace` | string | `curvine` | Namespace where CSI driver is deployed |
 
 #### Image Settings
 
