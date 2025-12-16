@@ -210,8 +210,3 @@ ln -s, readlink
 # 扩展属性操作
 getfattr, setfattr, listxattr
 ```
-
-
-:::note
-Curvine 目前暂未实现软连接的管理
-:::
