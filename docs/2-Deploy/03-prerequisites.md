@@ -14,7 +14,7 @@ This chapter provides detailed environment initialization instructions for diffe
 - **LLVM**: version 12 or later ([Installation Guide](https://llvm.org/docs/GettingStarted.html))
 - **FUSE**: libfuse2 or libfuse3 development packages
 - **JDK**: version 1.8 or later (OpenJDK or Oracle JDK)
-- **npm**: version 9 or later ([Node.js Installation](https://nodejs.org/))
+- **npm**: version 11.7.0 or later ([Node.js Installation](https://nodejs.org/))
 - **Python**: version 3.7 or later
 
 In particular, the protoc compiler version and its supported protocol capabilities reference:
