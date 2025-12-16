@@ -47,14 +47,14 @@ After successful compilation, a `curvine.zip` file will be generated in the `bui
 
 ### Configuration File Modification
 
-The environment variable configuration file is located at `config/env.sh`. This file is a bash script used to configure Curvine's environment variables.
+The environment variable configuration file is located at `conf/curvine-env.sh`. This file is a bash script used to configure Curvine's environment variables.
 The environment variable that needs to be modified is `LOCAL_HOSTNAME`, which is very important as it specifies the hostname for Curvine. The Curvine cluster relies on it to identify cluster members.
 It's recommended to set it to the local hostname:
 ```bash
 export LOCAL_HOSTNAME=$(hostname)
 ```
 
-Curvine's configuration file is located at `config/curvine.toml`. This is a TOML format configuration file containing various Curvine configurations. The configurations that typically need modification are:
+Curvine's configuration file is located at `conf/curvine-cluster.toml`. This is a TOML format configuration file containing various Curvine configurations. The configurations that typically need modification are:
 1. Configure master node addresses
 2. Configure worker storage directories
 

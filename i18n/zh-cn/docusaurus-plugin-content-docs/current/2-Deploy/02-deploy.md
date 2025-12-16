@@ -49,14 +49,14 @@ make dist
 可以用这个安装包部署或者构建镜像。
 
 ### 配置文件修改
-环境变量配置文件在config/env.sh，这个文件是一个bash脚本，用于配置curvine的环境变量。
+环境变量配置文件在conf/curvine-env.sh，这个文件是一个bash脚本，用于配置curvine的环境变量。
 需要修改的环境变量为 LOCAL_HOSTNAME，该环境变量非常重要，用于指定curvine的主机名，curvine集群需要依靠它识别集群成员。
 建议修改为本机hostname：
 ```
 export LOCAL_HOSTNAME=$(hostname)
 ```
 
-curvine的配置文件在config/curvine.toml，这个文件是一个toml格式的配置文件，配置文件中包含了curvine的各种配置，通常需要修改的配置如下：
+curvine的配置文件在conf/curvine-cluster.toml，这个文件是一个toml格式的配置文件，配置文件中包含了curvine的各种配置，通常需要修改的配置如下：
 1. 配置master节点地址
 2. 配置worker存储目录。
 
