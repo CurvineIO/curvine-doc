@@ -159,9 +159,11 @@ If you encounter network environment issues or cannot conveniently use the offic
 The downloaded code includes various Dockerfiles for building compilation images in the `curvine-docker/compile` directory. You can choose the appropriate file to build a compilation image. Here's an example using Rocky9 to build a compilation image and start a container for compilation:
 
 ```bash
-cd curvine
+cd curvine/curvine-docker/compile
 
 docker build -f curvine-docker/compile/Dockerfile_rocky9 -t curvine-compile:rocky9 .
+
+cd ../..
 
 docker run -itd --name curvine-compile \
   -u root --privileged=true \

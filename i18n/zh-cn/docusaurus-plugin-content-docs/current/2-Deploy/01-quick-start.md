@@ -162,9 +162,11 @@ docker exec -it curvine-compile /bin/bash
 如下以rocky9为例，构建一个编译镜像，并且启动一个容器，进行编译：
 
 ```bash
-cd curvine
+cd curvine/curvine-docker/compile
 
 docker build -f curvine-docker/compile/Dockerfile_rocky9 -t curvine-compile:rocky9 .
+
+cd ../..
 
 docker run -itd --name curvine-compile \
   -u root --privileged=true \
