@@ -11,7 +11,7 @@
 - [💾 Intelligent Caching Strategies](#-intelligent-caching-strategies)
 - [🔄 Data Consistency Guarantees](#-data-consistency-guarantees)
 - [🤖 AI/ML Scenario Applications](#-aiml-scenario-applications)
-- [🗄️ Big Data Ecosystem Integration](#-big-data-ecosystem-integration)
+- [🗄️ Big Data Ecosystem Integration](#️-big-data-ecosystem-integration)
 - [💡 Best Practices](#-best-practices)
 - [🎯 Summary](#-summary)
 

@@ -336,19 +336,19 @@
   },
   "homepage.hero.getStarted": {
     "message": "快速开始",
-    "description": "Get Started button text"
+    "description": "Get started button text"
   },
   "homepage.hero.learnMore": {
     "message": "了解更多",
-    "description": "Learn More button text"
+    "description": "Learn more button text"
   },
   "homepage.features.title": {
     "message": "核心特性",
-    "description": "Core Features section title"
+    "description": "Features section title"
   },
   "homepage.features.subtitle": {
     "message": "Curvine 通过创新架构和先进技术提供卓越性能。",
-    "description": "Core Features section subtitle"
+    "description": "Features section subtitle"
   },
   "homepage.features.highPerformance.title": {
     "message": "高性能",
@@ -360,11 +360,11 @@
   },
   "homepage.features.distributed.title": {
     "message": "分布式架构",
-    "description": "Distributed Architecture feature title"
+    "description": "Distributed architecture feature title"
   },
   "homepage.features.distributed.description": {
     "message": "原生分布式设计，支持水平扩展，具备自动故障转移和数据复制功能。",
-    "description": "Distributed Architecture feature description"
+    "description": "Distributed architecture feature description"
   },
   "homepage.features.governance.title": {
     "message": "数据治理",
@@ -376,11 +376,11 @@
   },
   "homepage.cta.title": {
     "message": "准备开始使用 Curvine？",
-    "description": "Call to action section title"
+    "description": "CTA section title"
   },
   "homepage.cta.subtitle": {
     "message": "立即下载并体验 Curvine 带来的高性能分布式缓存系统。",
-    "description": "Call to action section subtitle"
+    "description": "CTA section subtitle"
   },
   "homepage.cta.downloadNow": {
     "message": "立即下载",
@@ -392,51 +392,51 @@
   },
   "homepage.features.performance.title": {
     "message": "极致性能",
-    "description": "Performance feature title"
+    "description": "High performance feature title"
   },
   "homepage.features.performance.description": {
     "message": "基于 Rust 构建，提供微秒级延迟和百万级 QPS，优化内存使用和 CPU 效率。",
-    "description": "Performance feature description"
+    "description": "High performance feature description"
   },
   "homepage.features.memory.title": {
     "message": "智能内存管理",
-    "description": "Memory Management feature title"
+    "description": "Memory efficiency feature title"
   },
   "homepage.features.memory.description": {
     "message": "先进的内存管理策略，支持多级缓存、智能淘汰算法和内存压缩技术。",
-    "description": "Memory Management feature description"
+    "description": "Memory efficiency feature description"
   },
   "homepage.usecases.title": {
     "message": "应用场景",
-    "description": "Use Cases section title"
+    "description": "Use cases section title"
   },
   "homepage.usecases.subtitle": {
     "message": "Curvine 适用于各种高性能计算和数据密集型应用场景。",
-    "description": "Use Cases section subtitle"
+    "description": "Use cases section subtitle"
   },
   "homepage.usecases.ai.title": {
     "message": "AI/ML 训练",
-    "description": "AI/ML Training use case title"
+    "description": "AI training acceleration use case title"
   },
   "homepage.usecases.ai.description": {
     "message": "为机器学习训练提供高速数据访问，支持大规模数据集的快速加载和特征缓存。",
-    "description": "AI/ML Training use case description"
+    "description": "AI training acceleration use case description"
   },
   "homepage.usecases.inference.title": {
     "message": "实时推理",
-    "description": "Real-time Inference use case title"
+    "description": "Large model inference use case title"
   },
   "homepage.usecases.inference.description": {
     "message": "为实时推理服务提供毫秒级响应，支持模型缓存和预测结果缓存。",
-    "description": "Real-time Inference use case description"
+    "description": "Large model inference use case description"
   },
   "homepage.usecases.olap.title": {
     "message": "OLAP 分析",
-    "description": "OLAP Analytics use case title"
+    "description": "OLAP engine use case title"
   },
   "homepage.usecases.olap.description": {
     "message": "加速在线分析处理，支持复杂查询的结果缓存和聚合数据的快速访问。",
-    "description": "OLAP Analytics use case description"
+    "description": "OLAP engine use case description"
   },
   "homepage.usecases.bigdata.title": {
     "message": "大数据计算",
@@ -448,11 +448,11 @@
   },
   "homepage.performance.title": {
     "message": "性能指标",
-    "description": "Performance Metrics section title"
+    "description": "Performance section title"
   },
   "homepage.performance.subtitle": {
     "message": "Curvine 在各项性能指标上都表现卓越。",
-    "description": "Performance Metrics section subtitle"
+    "description": "Performance section subtitle"
   },
   "homepage.performance.latency": {
     "message": "延迟",
@@ -460,7 +460,7 @@
   },
   "homepage.performance.ops": {
     "message": "QPS",
-    "description": "Operations per second performance metric"
+    "description": "Operations per second metric"
   },
   "homepage.performance.uptime": {
     "message": "可用性",
@@ -468,42 +468,42 @@
   },
   "homepage.gettingstarted.title": {
     "message": "快速上手",
-    "description": "Getting Started section title"
+    "description": "Getting started section title"
   },
   "homepage.gettingstarted.subtitle": {
     "message": "三步即可开始使用 Curvine 分布式缓存系统。",
-    "description": "Getting Started section subtitle"
+    "description": "Getting started section subtitle"
   },
   "homepage.gettingstarted.step1.title": {
     "message": "1. 安装 Curvine",
-    "description": "Getting Started step 1 title"
+    "description": "Step 1 title"
   },
   "homepage.gettingstarted.step1.description": {
     "message": "使用包管理器或从源码编译安装 Curvine 服务端和客户端。",
-    "description": "Getting Started step 1 description"
+    "description": "Step 1 description"
   },
   "homepage.gettingstarted.step2.title": {
     "message": "2. 配置集群",
-    "description": "Getting Started step 2 title"
+    "description": "Step 2 title"
   },
   "homepage.gettingstarted.step2.description": {
     "message": "配置 Curvine 集群，设置节点发现、数据复制和故障转移策略。",
-    "description": "Getting Started step 2 description"
+    "description": "Step 2 description"
   },
   "homepage.gettingstarted.step3.title": {
     "message": "3. 开始使用",
-    "description": "Getting Started step 3 title"
+    "description": "Step 3 title"
   },
   "homepage.gettingstarted.step3.description": {
     "message": "通过 SDK 或 REST API 连接到 Curvine 集群，开始存储和访问数据。",
-    "description": "Getting Started step 3 description"
+    "description": "Step 3 description"
   },
   "homepage.cta.download": {
     "message": "立即下载",
-    "description": "Download button text in CTA section"
+    "description": "Download button text"
   },
   "homepage.cta.github": {
     "message": "查看 GitHub",
-    "description": "GitHub button text in CTA section"
+    "description": "GitHub button text"
   }
 }

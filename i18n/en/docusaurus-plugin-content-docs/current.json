@@ -2,5 +2,65 @@
   "version.label": {
     "message": "Latest 🚧",
     "description": "The label for version current"
+  },
+  "sidebar.tutorialSidebar.category.Overview": {
+    "message": "Overview",
+    "description": "The label for category Overview in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Deploy": {
+    "message": "Deploy",
+    "description": "The label for category Deploy in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Deploy Curvine Cluster": {
+    "message": "Deploy Curvine Cluster",
+    "description": "The label for category Deploy Curvine Cluster in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Preparation": {
+    "message": "Preparation",
+    "description": "The label for category Preparation in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Distributed Mode": {
+    "message": "Distributed Mode",
+    "description": "The label for category Distributed Mode in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.User Manuals": {
+    "message": "User Manuals",
+    "description": "The label for category User Manuals in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Key Features": {
+    "message": "Key Features",
+    "description": "The label for category Key Features in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Operations": {
+    "message": "Operations",
+    "description": "The label for category Operations in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Access": {
+    "message": "Access",
+    "description": "The label for category Access in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.K8S CSI Driver": {
+    "message": "K8S CSI Driver",
+    "description": "The label for category K8S CSI Driver in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Benchmark": {
+    "message": "Benchmark",
+    "description": "The label for category Benchmark in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Architecture": {
+    "message": "Architecture",
+    "description": "The label for category Architecture in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Architecture.link.generated-index.description": {
+    "message": "Curvine design doc",
+    "description": "The generated-index page description for category Architecture in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Contributor Guide": {
+    "message": "Contributor Guide",
+    "description": "The label for category Contributor Guide in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Contributor Guide.link.generated-index.description": {
+    "message": "Contrinute to curvine",
+    "description": "The generated-index page description for category Contributor Guide in sidebar tutorialSidebar"
   }
 }

@@ -1,0 +1,614 @@
+---
+sidebar_position: 0
+---
+
+# k8s部署
+本章节介绍如何在 Kubernetes 上部署 Curvine 分布式存储集群的生产级 Helm Chart。
+
+## 前置条件
+
+* Kubernetes 1.20+
+* Helm 3.0+
+* PV 供应器（如果使用 PVC 存储）
+
+## 快速开始
+
+### 1. 将镜像载入 Kubernetes 集群
+
+参考[docker编译](../1-Preparation/02-compile.md#docker编译)构建镜像，将镜像导入到 Kubernetes 集群中。
+
+### 2. 添加 Helm 仓库（可选）
+
+```bash
+# 如果 Chart 已发布到仓库
+helm repo add curvine https://curvineio.github.io/helm-charts
+helm repo update
+```
+### 3. 安装 Chart
+
+#### 选项 A：从 Helm 仓库安装（推荐）
+
+>**提示**：当前helm提供的版本基于main分支版本，仅在预发模式下使用，如需安装需要指定--devel 
+```bash
+# 使用默认配置安装
+helm install curvine curvine/curvine -n curvine --create-namespace --devel
+
+# 使用自定义副本数安装
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
+  --set master.replicas=5 \
+  --set worker.replicas=10
+
+# 使用自定义 values 文件安装
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
+  -f https://curvineio.github.io/helm/charts/examples/values-prod.yaml
+```
+#### 选项 B：从本地 Chart 安装
+
+>**注意**：从 `helm-charts` 目录（`curvine-runtime` 文件夹的父目录）运行这些命令 
+```bash
+# 使用默认配置安装
+helm install curvine ./curvine-runtime -n curvine --create-namespace
+
+# 使用自定义副本数安装
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  --set master.replicas=5 \
+  --set worker.replicas=10
+
+# 使用自定义 values 文件安装
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-prod.yaml
+```
+### 4. 验证部署
+
+```bash
+# 检查 Pod 状态
+kubectl get pods -n curvine
+
+# 查看 Services
+kubectl get svc -n curvine
+
+# 查看 PersistentVolumeClaims
+kubectl get pvc -n curvine
+
+# 运行 Helm 测试
+helm test curvine -n curvine
+```
+### 5. 访问集群
+
+```bash
+# 端口转发访问 Master Web UI
+kubectl port-forward -n curvine svc/curvine-master 9000:9000
+
+# 访问 http://localhost:9000
+```
+## 配置
+
+### 查看当前配置
+
+```bash
+# 查看所有当前值
+helm get values curvine -n curvine
+
+# 以 YAML 格式查看特定版本的值
+helm get values curvine -n curvine -o yaml
+
+# 查看渲染后的清单
+helm get manifest curvine -n curvine
+
+# 查看 Chart 的 values.yaml
+cat ./curvine-runtime/values.yaml
+
+# 查看特定参数
+helm get values curvine -n curvine | grep master.replicas
+```
+
+### 常见参数使用示例
+
+#### 调整资源限制
+
+```bash
+# 为高负载场景增加 Master 资源
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  --set master.resources.requests.cpu=2000m \
+  --set master.resources.requests.memory=4Gi \
+  --set master.resources.limits.cpu=4000m \
+  --set master.resources.limits.memory=8Gi
+```
+#### 配置节点亲和性
+
+```bash
+# 在特定节点上运行 Master
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  --set 'master.nodeSelector.node-type=master' \
+  --set 'worker.nodeSelector.node-type=worker'
+```
+#### 启用 Worker 特权模式
+
+```bash
+# 默认已启用，但可根据需要禁用
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  --set worker.privileged=false
+```
+#### 为 Worker 配置多个数据目录
+
+```bash
+# 创建 values-multi-data.yaml，内容如下：
+# worker:
+#   storage:
+#     dataDirs:
+#       - name: "data1"
+#         type: "SSD"
+#         enabled: true
+#         size: "100Gi"
+#         storageClass: "fast-ssd"
+#         mountPath: "/data/data1"
+#       - name: "data2"
+#         type: "HDD"
+#         enabled: true
+#         size: "500Gi"
+#         storageClass: "slow-hdd"
+#         mountPath: "/data/data2"
+
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f values-multi-data.yaml
+```
+#### 调整日志级别
+
+```bash
+# 设置日志级别为 DEBUG 用于故障排查
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  --set config.log.level=DEBUG
+```
+#### 配置外部 Master Service
+
+```bash
+# 通过 LoadBalancer 暴露 Master Service
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  --set service.masterExternal.enabled=true \
+  --set service.masterExternal.type=LoadBalancer
+```
+
+### 配置参数
+
+#### 全局参数
+
+|参数|说明|默认值|
+|:----|:----|:----|
+|global.clusterDomain|Kubernetes 集群域|cluster.local|
+
+#### 集群参数
+
+|参数|说明|默认值|
+|:----|:----|:----|
+|cluster.id|集群标识符|curvine|
+|cluster.formatMaster|启动时格式化 Master 数据|false|
+|cluster.formatWorker|启动时格式化 Worker 数据|false|
+|cluster.formatJournal|启动时格式化日志数据|false|
+
+#### 镜像配置
+
+|参数|说明|默认值|
+|:----|:----|:----|
+|image.repository|容器镜像仓库|docker.io/curvine|
+|image.tag|容器镜像标签|latest|
+|image.pullPolicy|镜像拉取策略|IfNotPresent|
+|image.pullSecrets|镜像拉取密钥|[]|
+
+#### Master 配置
+
+|参数|说明|默认值|
+|:----|:----|:----|
+|master.replicas|Master 副本数（必须为奇数：1, 3, 5, 7…）|3|
+|master.rpcPort|RPC 端口|8995|
+|master.journalPort|日志/Raft 端口|8996|
+|master.webPort|Web UI 端口|9000|
+|master.web1Port|额外 Web 端口|9001|
+|master.storage.meta.enabled|启用元数据存储|true|
+|master.storage.meta.storageClass|元数据存储类|"" (默认)|
+|master.storage.meta.size|元数据存储大小|10Gi|
+|master.storage.meta.hostPath|元数据主机路径（无 storageClass 时使用）|""|
+|master.storage.meta.mountPath|元数据挂载路径|/opt/curvine/data/meta|
+|master.storage.journal.enabled|启用日志存储|true|
+|master.storage.journal.storageClass|日志存储类|"" (默认)|
+|master.storage.journal.size|日志存储大小|50Gi|
+|master.storage.journal.hostPath|日志主机路径（无 storageClass 时使用）|""|
+|master.storage.journal.mountPath|日志挂载路径|/opt/curvine/data/journal|
+|master.resources.requests.cpu|CPU 请求|1000m|
+|master.resources.requests.memory|内存请求|2Gi|
+|master.resources.limits.cpu|CPU 限制|2000m|
+|master.resources.limits.memory|内存限制|4Gi|
+|master.nodeSelector|节点选择器标签|{}|
+|master.tolerations|Pod 容忍度|[]|
+|master.affinity|Pod 亲和性规则|{}|
+|master.labels|额外标签|{}|
+|master.annotations|额外注解|{}|
+|master.extraEnv|额外环境变量|[]|
+|master.extraVolumes|额外卷|[]|
+|master.extraVolumeMounts|额外卷挂载|[]|
+
+#### Worker 配置
+
+|参数|说明|默认值|
+|:----|:----|:----|
+|worker.replicas|Worker 副本数|3|
+|worker.rpcPort|RPC 端口|8997|
+|worker.webPort|Web UI 端口|9001|
+|worker.hostNetwork|使用主机网络|false|
+|worker.dnsPolicy|DNS 策略|ClusterFirst|
+|worker.privileged|特权模式（FUSE 需要）|true|
+|worker.storage.dataDirs[0].name|数据目录名称|data1|
+|worker.storage.dataDirs[0].type|存储类型（SSD/HDD）|SSD|
+|worker.storage.dataDirs[0].enabled|启用数据目录|true|
+|worker.storage.dataDirs[0].size|数据目录大小|10Gi|
+|worker.storage.dataDirs[0].storageClass|存储类|"" (默认)|
+|worker.storage.dataDirs[0].hostPath|主机路径（无 storageClass 时使用）|""|
+|worker.storage.dataDirs[0].mountPath|挂载路径|/data/data1|
+|worker.resources.requests.cpu|CPU 请求|2000m|
+|worker.resources.requests.memory|内存请求|4Gi|
+|worker.resources.limits.cpu|CPU 限制|4000m|
+|worker.resources.limits.memory|内存限制|8Gi|
+|worker.nodeSelector|节点选择器标签|{}|
+|worker.tolerations|Pod 容忍度|[]|
+|worker.antiAffinity.enabled|启用 Pod 反亲和性|true|
+|worker.antiAffinity.type|反亲和性类型（required/preferred）|preferred|
+|worker.labels|额外标签|{}|
+|worker.annotations|额外注解|{}|
+|worker.extraEnv|额外环境变量|[]|
+|worker.extraVolumes|额外卷|[]|
+|worker.extraVolumeMounts|额外卷挂载|[]|
+
+#### Service 配置
+
+|参数|说明|默认值|
+|:----|:----|:----|
+|service.master.type|Master Service 类型|ClusterIP|
+|service.master.annotations|Master Service 注解|{}|
+|service.masterExternal.enabled|启用外部 Master Service|false|
+|service.masterExternal.type|外部 Service 类型|ClusterIP|
+|service.masterExternal.annotations|外部 Service 注解|{}|
+|service.masterExternal.nodePort|NodePort 配置|{}|
+|service.masterExternal.loadBalancerIP|LoadBalancer IP|""|
+|service.masterExternal.loadBalancerSourceRanges|LoadBalancer 源范围|[]|
+
+#### Service Account & RBAC
+
+|参数|说明|默认值|
+|:----|:----|:----|
+|serviceAccount.create|创建 Service Account|true|
+|serviceAccount.name|Service Account 名称|"" (自动生成)|
+|serviceAccount.annotations|Service Account 注解|{}|
+|rbac.create|创建 RBAC 资源|true|
+
+#### Curvine 配置
+
+|参数|说明|默认值|
+|:----|:----|:----|
+|config.master.metaDir|Master 元数据目录|/opt/curvine/data/meta|
+|config.journal.enable|启用日志|true|
+|config.journal.journalDir|日志目录|/opt/curvine/data/journal|
+|config.client.blockSizeStr|客户端块大小|64MB|
+|config.log.level|日志级别（INFO/DEBUG/WARN/ERROR）|INFO|
+|config.log.logDir|日志目录|/opt/curvine/logs|
+|configOverrides.master|Master 配置覆盖|{}|
+|configOverrides.journal|日志配置覆盖|{}|
+|configOverrides.worker|Worker 配置覆盖|{}|
+|configOverrides.client|客户端配置覆盖|{}|
+|configOverrides.log|日志配置覆盖|{}|
+
+完整的参数列表请参考 `values.yaml`。
+
+## 配置示例
+
+### 开发环境（最小化）
+
+```bash
+# 从 Helm 仓库安装
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
+  --set master.replicas=1 \
+  --set worker.replicas=1
+
+# 从本地 Chart 安装（在 helm-charts 目录运行）
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-dev.yaml
+```
+### 生产环境（高可用）
+
+```bash
+# 从 Helm 仓库安装
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
+  --set master.replicas=5 \
+  --set worker.replicas=10 \
+  --set master.storage.meta.storageClass=fast-ssd \
+  --set master.storage.journal.storageClass=fast-ssd
+
+# 从本地 Chart 安装（在 helm-charts 目录运行）
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-prod.yaml
+```
+### 裸机环境（使用 hostPath）
+
+```bash
+# 从本地 Chart 安装（在 helm-charts 目录运行）
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f ./curvine-runtime/examples/values-baremetal.yaml
+```
+### 自定义配置
+
+```bash
+# 从 Helm 仓库安装
+helm install curvine curvine/curvine -n curvine --create-namespace --devel \
+  --set master.replicas=5 \
+  --set worker.replicas=10 \
+  --set master.storage.meta.storageClass=fast-ssd \
+  --set worker.storage.dataDirs[0].storageClass=fast-ssd \
+  --set worker.storage.dataDirs[0].size=500Gi
+
+# 从本地 Chart 安装（在 helm-charts 目录运行）
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  --set master.replicas=5 \
+  --set worker.replicas=10 \
+  --set master.storage.meta.storageClass=fast-ssd \
+  --set worker.storage.dataDirs[0].storageClass=fast-ssd \
+  --set worker.storage.dataDirs[0].size=500Gi
+```
+## 存储配置
+
+### 使用 PVC（推荐用于云环境）
+
+```yaml
+master:
+  storage:
+    meta:
+      storageClass: "fast-ssd"
+      size: "20Gi"
+    journal:
+      storageClass: "fast-ssd"
+      size: "100Gi"
+
+worker:
+  storage:
+    dataDirs:
+      - name: "data1"
+        type: "SSD"
+        enabled: true
+        size: "100Gi"
+        storageClass: "fast-ssd"
+        mountPath: "/data/data1"
+```
+### 使用 hostPath（推荐用于裸机）
+
+```yaml
+master:
+  storage:
+    meta:
+      storageClass: ""
+      hostPath: "/mnt/curvine/master/meta"
+    journal:
+      storageClass: ""
+      hostPath: "/mnt/curvine/master/journal"
+
+worker:
+  storage:
+    dataDirs:
+      - name: "data1"
+        type: "SSD"
+        enabled: true
+        size: "100Gi"
+        storageClass: ""
+        hostPath: "/mnt/nvme0n1/curvine"
+        mountPath: "/data/data1"
+```
+### 使用 emptyDir（用于测试）
+
+```yaml
+master:
+  storage:
+    meta:
+      storageClass: ""
+      hostPath: ""
+    journal:
+      storageClass: ""
+      hostPath: ""
+
+worker:
+  storage:
+    dataDirs:
+      - name: "data1"
+        storageClass: ""
+        hostPath: ""
+```
+### 存储配置示例
+
+#### 使用默认 PVC 快速启动
+
+```bash
+# 使用默认存储类（最快的启动方式）
+helm install curvine ./curvine-runtime -n curvine --create-namespace
+```
+#### 云环境配置快速 SSD
+
+```bash
+# AWS/GCP/Azure 快速 SSD 存储
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  --set master.storage.meta.storageClass=fast-ssd \
+  --set master.storage.journal.storageClass=fast-ssd \
+  --set 'worker.storage.dataDirs[0].storageClass=fast-ssd' \
+  --set 'worker.storage.dataDirs[0].size=500Gi'
+```
+#### 裸机多存储类型配置
+
+```bash
+# 创建 values-baremetal-multi.yaml：
+# master:
+#   storage:
+#     meta:
+#       storageClass: ""
+#       hostPath: "/mnt/nvme/master/meta"
+#     journal:
+#       storageClass: ""
+#       hostPath: "/mnt/nvme/master/journal"
+# 
+# worker:
+#   storage:
+#     dataDirs:
+#       - name: "nvme"
+#         type: "SSD"
+#         enabled: true
+#         size: "200Gi"
+#         storageClass: ""
+#         hostPath: "/mnt/nvme/worker"
+#         mountPath: "/data/nvme"
+#       - name: "ssd"
+#         type: "SSD"
+#         enabled: true
+#         size: "500Gi"
+#         storageClass: ""
+#         hostPath: "/mnt/ssd/worker"
+#         mountPath: "/data/ssd"
+#       - name: "hdd"
+#         type: "HDD"
+#         enabled: true
+#         size: "2000Gi"
+#         storageClass: ""
+#         hostPath: "/mnt/hdd/worker"
+#         mountPath: "/data/hdd"
+
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  -f values-baremetal-multi.yaml
+```
+#### 混合云和本地存储
+
+```bash
+# Master 使用云 PVC，Worker 使用本地 hostPath
+helm install curvine ./curvine-runtime -n curvine --create-namespace \
+  --set master.storage.meta.storageClass=cloud-ssd \
+  --set master.storage.journal.storageClass=cloud-ssd \
+  --set 'worker.storage.dataDirs[0].storageClass=""' \
+  --set 'worker.storage.dataDirs[0].hostPath=/mnt/local/data'
+```
+## 升级
+
+### 更新配置
+
+```bash
+# 扩展 Worker 副本数（从 Helm 仓库）
+helm upgrade curvine curvine/curvine -n curvine --devel \
+  --set worker.replicas=15
+
+# 升级镜像版本（从 Helm 仓库）
+helm upgrade curvine curvine/curvine -n curvine --devel \
+  --set image.tag=v1.1.0
+
+# 使用新 values 文件升级（从本地 Chart，在 helm-charts 目录运行）
+helm upgrade curvine ./curvine-runtime -n curvine \
+  -f ./curvine-runtime/values-new.yaml
+```
+>**注意**：
+>1.升级期间无法修改 Master 副本数和日志存储类。要修改请删除并重新部署集群。
+>2.升级期间没有修改的参数会被重设为默认配置。如果在安装时修改了 Master 副本数和日志存储类，需要在更新时带上这两个参数。
+### 常见升级场景
+
+#### 扩展 Worker 节点
+
+```bash
+# 将 Worker 副本数从 3 增加到 10
+helm upgrade curvine ./curvine-runtime -n curvine \
+  --set worker.replicas=10
+```
+#### 增加资源限制
+
+```bash
+# 提升 Master 资源以获得更好的性能
+helm upgrade curvine ./curvine-runtime -n curvine \
+  --set master.resources.limits.cpu=4000m \
+  --set master.resources.limits.memory=8Gi
+```
+#### 更新镜像版本
+
+```bash
+# 升级到新的 Curvine 版本
+helm upgrade curvine ./curvine-runtime -n curvine \
+  --set image.tag=v1.2.0
+```
+#### 启用调试日志
+
+```bash
+# 临时启用调试日志用于故障排查
+helm upgrade curvine ./curvine-runtime -n curvine \
+  --set config.log.level=DEBUG
+```
+#### 更改存储配置
+
+```bash
+# 迁移到更快的存储类
+helm upgrade curvine ./curvine-runtime -n curvine \
+  --set master.storage.meta.storageClass=ultra-ssd \
+  --set master.storage.journal.storageClass=ultra-ssd
+```
+### 查看发布历史
+
+```bash
+helm history curvine -n curvine
+```
+### 回滚
+
+```bash
+# 回滚到上一个版本
+helm rollback curvine -n curvine
+
+# 回滚到特定版本
+helm rollback curvine 2 -n curvine
+```
+## 卸载
+
+```bash
+# 卸载 Chart（保留 PVC）
+helm uninstall curvine -n curvine
+
+# 删除 PersistentVolumeClaims
+kubectl delete pvc -n curvine -l app.kubernetes.io/instance=curvine
+
+# 删除命名空间
+kubectl delete namespace curvine
+```
+## 故障排查
+
+### 检查 Pod 状态
+
+```bash
+kubectl get pods -n curvine
+kubectl describe pod <pod-name> -n curvine
+kubectl logs <pod-name> -n curvine
+```
+### 查看 ConfigMap
+
+```bash
+kubectl get configmap -n curvine
+kubectl describe configmap curvine-config -n curvine
+```
+### 查看事件
+
+```bash
+kubectl get events -n curvine --sort-by='.lastTimestamp'
+```
+### 常见问题
+
+1. **Master 副本验证失败**
+
+   1. 错误：`master.replicas must be an odd number`
+
+   2. 解决方案：确保 Master 副本数为奇数（1, 3, 5, 7…）
+
+2. **PVC 无法绑定**
+
+   1. 检查 StorageClass 是否存在
+
+   2. 验证 PV 供应器是否正常工作
+
+3. **Pod 启动失败**
+
+   1. 验证容器镜像是否存在
+
+   2. 检查资源配额是否充足
+
+   3. 查看 Pod 日志了解详情

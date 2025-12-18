@@ -13,15 +13,15 @@
   },
   "link.item.label.Quick Start": {
     "message": "快速开始",
-    "description": "The label of footer link with label=Tutorial linking to /docs/Deploy/quick-start"
+    "description": "The label of footer link with label=Quick Start linking to /docs/Deploy/quick-start"
   },
   "link.item.label.Discord": {
     "message": "Discord",
-    "description": "The label of footer link with label=Discord linking to https://discordapp.com/invite/docusaurus"
+    "description": "The label of footer link with label=Discord linking to https://discord.com/invite/xfxMQKv3"
   },
   "link.item.label.X": {
     "message": "X",
-    "description": "The label of footer link with label=X linking to https://x.com/docusaurus"
+    "description": "The label of footer link with label=X linking to https://x.com/szbr8896"
   },
   "link.item.label.Blog": {
     "message": "博客",
@@ -29,7 +29,7 @@
   },
   "link.item.label.GitHub": {
     "message": "GitHub",
-    "description": "The label of footer link with label=GitHub linking to https://github.com/facebook/docusaurus"
+    "description": "The label of footer link with label=GitHub linking to https://github.com/curvineio/curvine"
   },
   "copyright": {
     "message": "Copyright © 2025 Curvine Project Authors.<br/> Open source under Apache License 2.0. Built with Docusaurus.",
