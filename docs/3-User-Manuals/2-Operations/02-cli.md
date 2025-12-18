@@ -144,39 +144,6 @@ bin/cv load-status $jobid
 ```
 You can use `-w,--watch` parameter to monitor the status of loading tasks
 
-## HDFS-Compatible Commands (deprecated)
-
-Curvine is compatible with the HDFS access protocol. You can execute operations that are fully compatible with the `hdfs fs` command syntax through the `bin/curvine fs` command, as shown in the following examples:
-
-Examples:
-```bash
-# List files and directories
-bin/curvine fs -ls /
-
-# Create directories
-bin/curvine fs -mkdir -p /dir/a
-```
-
-Currently, Curvine and Hadoop are not 100% fully compatible. Some commands may not execute or have no effect. The following commands have passed rigorous testing:
-
-| Command | Description                           |
-|---------|---------------------------------------|
-| ls      | List directory contents               |
-| mkdir   | Create directories                    |
-| cat     | View file contents                    |
-| put     | Upload files                          |
-| get     | Download files                        |
-| count   | Count files and directories           |
-| du      | Calculate directory space usage       |
-| df      | Show file system available space     |
-| mv      | Rename/move files                     |
-| stat    | Query file/directory status           |
-| rm      | Delete files or directories           |
-
-:::tip
-Commands not listed in the table do not necessarily mean they are unsupported, but rather that they have not undergone complete testing. The `curvine` command-line tool depends on JVM environment, we recommend using the native `cv` command. If you have common command requirements, please submit an Issue.
-:::
-
 ## POSIX Commands
 
 Curvine implements a POSIX-compliant FUSE (Filesystem in Userspace) interface.
