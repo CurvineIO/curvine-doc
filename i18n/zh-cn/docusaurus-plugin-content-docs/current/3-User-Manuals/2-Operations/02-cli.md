@@ -144,38 +144,6 @@ bin/cv load-status $jobid
 ```
 您可以使用 `-w,--watch`参数来监控加载任务的状态
 
-## hdfs兼容的命令行(deprecated)
-Curvine 兼容hdfs访问协议，通过命令`bin/dfs fs` 执行 `hdfs fs`命令语法完全兼容的操作，如下示例：
-
-示例：
-```
-# 查看文件、目录
-bin/curvine fs -ls /
-
-# 创建目录
-bin/curvine fs -mkdir -p /dir/a
-```
-
-目前 Curvine 和 Hadoop 并非100%完全兼容，某些命令可能无法执行或者没有效果。如下命令已经通过严格的测试：
-
-| 命令  | 功能描述                     |
-|-------|----------------------------|
-| ls    | 查看目录列表                 |
-| mkdir | 创建目录                     |
-| cat   | 查看文件内容                 |
-| put   | 上传文件                     |
-| get   | 下载文件                     |
-| count | 统计文件、目录数量           |
-| du    | 统计目录占用空间大小         |
-| df    | 文件系统可用空间             |
-| mv    | 重命名                       |
-| stat  | 查询文件、目录状态           |
-| rm    | 删除文件或者目录             |
-
-:::tip
-不在列表中的命令不代表不支持，而是未经过完整测试。 `curvine` 命令行工具依赖jvm环境，推荐您使用`cv` 原生命令。 如果有常见命令需求，欢迎提交Issue.
-:::
-
 ## POSIX命令令行
 Curvine 实现了符合 POSIX 标准的 FUSE(Filesystem in Userspace) 文件系统接口，
 因此在 Linux 系统中挂载 Curvine 后，用户可以通过标准的 Linux 文件操作命令集进行交互。这一实现具有以下技术特性：

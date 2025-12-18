@@ -4,10 +4,10 @@
 ### 指标收集
 master,worker,fuse,s3 gateway会通过http接口暴露监控指标，可以在prometheus采集这些指标，然后通过grafana可视化这些指标。
 
-master指标：http://URL_ADDRESS:9000/metrics    
-worker指标：http://URL_ADDRESS:9001/metrics
-fuse指标：http://URL_ADDRESS:9002/metrics   
-s3 gateway指标：http://URL_ADDRESS:9003/metrics   
+- master指标：http://URL_ADDRESS:9000/metrics    
+- worker指标：http://URL_ADDRESS:9001/metrics
+- fuse指标：http://URL_ADDRESS:9002/metrics   
+- s3 gateway指标：http://URL_ADDRESS:9003/metrics   
 
 ## Master 指标
 
