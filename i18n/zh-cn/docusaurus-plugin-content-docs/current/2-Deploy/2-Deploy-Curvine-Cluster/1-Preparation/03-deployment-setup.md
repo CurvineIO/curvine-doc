@@ -55,6 +55,9 @@ make dist
 ```
 export LOCAL_HOSTNAME=$(hostname)
 ```
+:::warning
+CURVINE_MASTER_HOSTNAME 和 CURVINE_WORKER_HOSTNAME 用于显式指定 Master 和 Worker 节点的IP地址，多网卡环境下建议显式指定。默认情况下执行hostname -I 并取最后一个IP，您也可以自行修改conf/curvine-env.sh中的IP获取方式。
+:::
 
 curvine的配置文件在conf/curvine-cluster.toml，这个文件是一个toml格式的配置文件，配置文件中包含了curvine的各种配置，通常需要修改的配置如下：
 1. 配置master节点地址
@@ -76,8 +79,8 @@ log = { level = "info", log_dir = "logs", file_name = "master.log" }
 # 配置raft主节点列表。hostname需要和LOCAL_HOSTNAME环境变量一致，否则无法识别主节点。
 # id为整数，不能重复。port为master raft端口，默认为8996
 journal_addrs = [
-    {id = 1, hostname = "master1", port = 8996}
-    {id = 2, hostname = "master2", port = 8996}
+    {id = 1, hostname = "master1", port = 8996},
+    {id = 2, hostname = "master2", port = 8996},
     {id = 3, hostname = "master3", port = 8996}
 ]
 
@@ -95,7 +98,7 @@ data_dir = [
 ]
 
 # 配置worker日志
-log = { level = "info", log_dir = "logss", file_name = "worker.log" }
+log = { level = "info", log_dir = "logs", file_name = "worker.log" }
 
 [client]
 # 配置master地址，端口为master rpc端口，默认为8995
@@ -119,7 +122,7 @@ journal配置的master_addrs的hostname，一定要和master启动的hostname保
 :::
 
 如果需要使用java hadoop 客户端，修改curvine-site.xml中fs.cv.master_addrs值，示例如下：
-```
+```xml
 <property>
     <name>fs.cv.master_addrs</name>
     <value>master1:8995,master2:8995,master3:8995</value>
