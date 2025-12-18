@@ -15,34 +15,59 @@
     "message": "Tutorial - Extras",
     "description": "The label for category Tutorial - Extras in sidebar tutorialSidebar"
   },
-
   "sidebar.tutorialSidebar.category.User Manuals": {
     "message": "用户手册",
-    "description": "用户手册"
+    "description": "The label for category User Manuals in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Key Features": {
+    "message": "核心特征",
+    "description": "核心特征"
+  },
+  "sidebar.tutorialSidebar.category.Operations": {
+    "message": "运维管理",
+    "description": "运维管理"
+  },
+  "sidebar.tutorialSidebar.category.Access": {
+    "message": "接入方式",
+    "description": "接入方式"
+  },
+  "sidebar.tutorialSidebar.category.K8S CSI Driver": {
+    "message": "K8S CSI 驱动",
+    "description": "K8S CSI 驱动"
   },
 
   "sidebar.tutorialSidebar.category.Overview": {
     "message": "概览",
-    "description": "概览"
+    "description": "The label for category Overview in sidebar tutorialSidebar"
   },
 
   "sidebar.tutorialSidebar.category.Deploy": {
     "message": "部署",
-    "description": "部署"
+    "description": "The label for category Deploy in sidebar tutorialSidebar"
   },
-
+  "sidebar.tutorialSidebar.category.Deploy Curvine Cluster": {
+    "message": "部署集群",
+    "description": "部署集群"
+  },
+  "sidebar.tutorialSidebar.category.Preparation": {
+    "message": "前期准备",
+    "description": "前期准备"
+  },
+  "sidebar.tutorialSidebar.category.Distributed Mode": {
+    "message": "分布式模式",
+    "description": "分布式模式"
+  },
+  
   "sidebar.tutorialSidebar.category.Benchmark": {
     "message": "性能测试",
-    "description": "性能测试"
+    "description": "The label for category Benchmark in sidebar tutorialSidebar"
   },
-
   "sidebar.tutorialSidebar.category.Architecture": {
     "message": "架构详情",
-    "description": "Curvine Architecture"
+    "description": "The label for category Architecture in sidebar tutorialSidebar"
   },
-
   "sidebar.tutorialSidebar.category.Contributor Guide": {
     "message": "开发者指南",
-    "description": "社区"
+    "description": "The label for category Contributor Guide in sidebar tutorialSidebar"
   }
 }
