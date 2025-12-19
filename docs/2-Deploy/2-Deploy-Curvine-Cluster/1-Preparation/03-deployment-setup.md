@@ -57,6 +57,9 @@ It's recommended to set it to the local hostname:
 ```bash
 export LOCAL_HOSTNAME=$(hostname)
 ```
+:::warning
+CURVINE_MASTER_HOSTNAME and CURVINE_WORKER_HOSTNAME are used to explicitly specify the IP addresses of Master and Worker nodes. In multi-network interface environments, it is recommended to explicitly specify them. By default, `hostname -I` is executed and the last IP is taken. You can also modify the IP acquisition method in conf/curvine-env.sh yourself.
+:::
 
 Curvine's configuration file is located at `conf/curvine-cluster.toml`. This is a TOML format configuration file containing various Curvine configurations. The configurations that typically need modification are:
 1. Configure master node addresses
