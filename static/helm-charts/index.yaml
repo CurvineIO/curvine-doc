@@ -3,10 +3,10 @@ entries:
   curvine:
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-12-22T09:47:12.512776135Z"
+    created: "2025-12-22T11:25:51.27169634Z"
     description: A Helm chart for deploying Curvine distributed multi-level cache
       system cluster on Kubernetes
-    digest: 6305b2014c77d98343f050e3f676a9af94027631c24b708f0694d5fb448f4452
+    digest: 0eeafc49d6915c413d657dbd27a131c54372425bff77cecdae68395c06106715
     home: https://github.com/CurvineIO/curvine
     icon: https://curvineio.github.io/img/curvine_logo.png
     keywords:
@@ -27,9 +27,9 @@ entries:
   curvine-csi:
   - apiVersion: v2
     appVersion: latest
-    created: "2025-12-22T09:47:12.513465333Z"
+    created: "2025-12-22T11:25:51.272414449Z"
     description: A Helm chart for Curvine CSI Driver
-    digest: 14fe7567479b41fc78063610bb7aa485fc74b88fd827dd00353fa872fa64af50
+    digest: f70d1fad8e60e7196083bed4dbda2db15087ee4904008438d0b33bca1ad3f463
     home: https://github.com/CurvineIO/curvine
     keywords:
     - storage
@@ -46,4 +46,4 @@ entries:
     urls:
     - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-csi-0.0.0-dev.tgz
     version: 0.0.0-dev
-generated: "2025-12-22T09:47:12.511771278Z"
+generated: "2025-12-22T11:25:51.270749303Z"
