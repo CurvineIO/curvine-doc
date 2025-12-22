@@ -94,3 +94,41 @@ footer[class*="footer"],
   color: var(--ifm-footer-color);
   opacity: 0.8;
 }
+
+/* Medium Zoom styles for Mermaid diagrams */
+.medium-zoom-overlay {
+  z-index: 999;
+}
+
+.medium-zoom-image--opened {
+  z-index: 1000;
+}
+
+/* Make mermaid diagrams responsive and zoomable */
+.docusaurus-mermaid-container {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.docusaurus-mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+  cursor: zoom-in !important;
+  transition: transform 0.3s ease;
+}
+
+.docusaurus-mermaid-container svg:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode adjustments for zoomed mermaid diagrams */
+[data-theme='dark'] .medium-zoom-overlay {
+  background: rgba(0, 0, 0, 0.95) !important;
+}
+
+/* Light mode adjustments for zoomed mermaid diagrams */
+[data-theme='light'] .medium-zoom-overlay {
+  background: rgba(255, 255, 255, 0.95) !important;
+}
