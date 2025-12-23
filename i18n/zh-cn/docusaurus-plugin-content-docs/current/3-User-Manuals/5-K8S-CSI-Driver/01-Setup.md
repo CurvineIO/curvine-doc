@@ -140,13 +140,16 @@ controller:
 
 # Node 配置
 node:
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
+  mountMode: standalone
+  standalone:
+    image: ""
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 2
+        memory: 2Gi
 ```
 
 helm指定自定义参数
@@ -670,6 +673,7 @@ kubectl exec dynamic-pv-test -- cat /usr/share/nginx/html/index.html
 | `node.name` | string | `curvine-csi-node` | Node DaemonSet名称 |
 | `node.priorityClassName` | string | `system-node-critical` | Node优先级类名（节点关键级别） |
 | `node.dnsPolicy` | string | `ClusterFirstWithHostNet` | DNS策略（集群优先+主机网络） |
+| `node.mountMode` | string | `standalone` | 挂载模式：`standalone`（独立Pod）或 `embedded`（嵌入CSI容器） |
 | `node.container.name` | string | `csi-plugin` | 主容器名称 |
 | `node.container.command` | array | `["/opt/curvine/csi"]` | 容器启动命令 |
 | `node.container.args` | array | 见values.yaml | 容器启动参数 |
@@ -682,6 +686,34 @@ kubectl exec dynamic-pv-test -- cat /usr/share/nginx/html/index.html
 | `node.container.securityContext.privileged` | boolean | `true` | 是否以特权模式运行 |
 | `node.container.lifecycle.preStop` | object | 见values.yaml | 容器停止前钩子（清理socket文件） |
 | `node.tolerations` | array | `[{operator: Exists}]` | Pod容忍度配置（容忍所有污点） |
+
+#### Standalone Pod配置 (Standalone Pod Settings)
+
+当 `node.mountMode` 设置为 `standalone` 时，以下配置生效：
+
+| 参数路径 | 类型 | 默认值 | 说明 |
+|---------|------|--------|------|
+| `node.standalone.image` | string | `""` | Standalone Pod镜像，留空则使用CSI镜像 |
+| `node.standalone.resources.requests.cpu` | string | `"500m"` | CPU请求量 |
+| `node.standalone.resources.requests.memory` | string | `"512Mi"` | 内存请求量 |
+| `node.standalone.resources.limits.cpu` | string | `"2"` | CPU限制量 |
+| `node.standalone.resources.limits.memory` | string | `"2Gi"` | 内存限制量 |
+
+配置示例：
+
+```yaml
+node:
+  mountMode: standalone
+  standalone:
+    image: ""  # 留空使用CSI镜像
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "2"
+        memory: "2Gi"
+```
 
 #### Node Sidecar容器配置
 
