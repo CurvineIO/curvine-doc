@@ -29,6 +29,39 @@ helm install curvine-csi ./curvine-csi \
   --set mountMode=standalone
 ```
 
+#### 资源配置
+
+通过 Helm values 配置 Standalone Pod 的资源限制：
+
+```bash
+helm install curvine-csi ./curvine-csi \
+  --set node.mountMode=standalone \
+  --set node.standalone.resources.requests.cpu=500m \
+  --set node.standalone.resources.requests.memory=512Mi \
+  --set node.standalone.resources.limits.cpu=2 \
+  --set node.standalone.resources.limits.memory=2Gi
+```
+
+或使用 values 文件：
+
+```yaml
+node:
+  mountMode: standalone
+  standalone:
+    image: ""  # 留空使用CSI镜像
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "2"
+        memory: "2Gi"
+```
+
+默认配置：
+- CPU: requests 500m, limits 2
+- Memory: requests 512Mi, limits 2Gi
+
 架构示意图：
 
 ```mermaid
@@ -199,11 +232,11 @@ helm install curvine-csi ./curvine-csi \
 ```
 
 
-## FUSE 进程复用与生命周期管理
+## FUSE生命周期管理
 
 ### 概述
 
-Curvine CSI 采用智能的 FUSE 进程复用机制，通过 **ClusterID** 作为唯一标识，实现多个 PV 共享同一个 FUSE 进程（Standalone Pod）。这种设计显著提升了资源利用率和系统性能。
+Curvine CSI 采用FUSE进程复用机制，通过 **ClusterID** 作为唯一标识，实现多个 PV 共享同一个 FUSE 进程（Standalone Pod）。这种设计显著提升了资源利用率和系统性能。
 
 ### 核心概念
 
@@ -534,57 +567,3 @@ Standalone 模式需要以下权限：
 | `configmaps` | `create`, `delete`, `get`, `list`, `update`, `watch` | 状态持久化 |
 | `persistentvolumes` | `get`, `list`, `watch` | PV Watch 兜底清理 |
 | `events` | `create`, `patch` | 事件记录和调试 |
-
-### 监控与调试
-
-#### 查看 Standalone Pod 状态
-
-```bash
-# 查看所有 Standalone Pod
-kubectl get pods -n curvine-system -l app=curvine-standalone
-
-# 查看特定 ClusterID 的 Pod
-kubectl get pods -n curvine-system -l curvine.io/cluster-id=0893a5f6
-
-# 查看引用计数状态
-kubectl get configmap curvine-standalone-state-$(hostname) -n curvine-system -o yaml
-```
-
-#### 日志关键信息
-
-```log
-# 创建 Standalone
-I1222 10:00:00 Creating Standalone for cluster 0893a5f6
-I1222 10:00:05 Standalone curvine-standalone-0893a5f6-aefd8804 is ready
-
-# 增加引用
-I1222 10:01:00 Added volume ref vol-app1 for cluster 0893a5f6, refCount=1
-I1222 10:02:00 Added volume ref vol-app2 for cluster 0893a5f6, refCount=2
-
-# 删除引用
-I1222 10:10:00 Removed volume ref vol-app1 for cluster 0893a5f6, refCount=1
-
-# 自动清理
-I1222 10:15:00 Removed volume ref vol-app2 for cluster 0893a5f6, refCount=0
-I1222 10:15:00 No more volume refs for cluster 0893a5f6, deleting Standalone
-I1222 10:15:01 Standalone curvine-standalone-0893a5f6-aefd8804 deleted
-```
-
-### 最佳实践
-
-1. **使用 Standalone 模式**（默认推荐）
-   - FUSE 进程独立，CSI 升级不影响业务
-   - 资源隔离，问题域清晰
-
-2. **相同集群使用相同 master-addrs**
-   - 确保 PV 的 `master-addrs` 格式一致
-   - 最大化 FUSE 进程复用
-
-3. **合理规划 StorageClass**
-   - 不同集群使用不同 StorageClass
-   - 避免手动修改 master-addrs
-
-4. **监控 Standalone Pod**
-   - 定期检查 Pod 状态和引用计数
-   - 关注异常重启和 OOM
-
