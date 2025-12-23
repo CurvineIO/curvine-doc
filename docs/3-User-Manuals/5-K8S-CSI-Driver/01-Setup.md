@@ -139,15 +139,33 @@ controller:
       cpu: 500m
       memory: 512Mi
 
-# Node configuration
+# Node configuration - Standalone mode (default)
 node:
+  mountMode: standalone
+  standalone:
+    image: ""
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 2
+        memory: 2Gi
+```
+
+Or use Embedded mode:
+
+```yaml
+# Node configuration - Embedded mode
+node:
+  mountMode: embedded
   resources:
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 1000m
+      memory: 2Gi
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 2000m
+      memory: 4Gi
 ```
 
 Install with custom parameters using Helm:
@@ -675,6 +693,7 @@ kubectl exec dynamic-pv-test -- cat /usr/share/nginx/html/index.html
 | `node.name` | string | `curvine-csi-node` | Node DaemonSet name |
 | `node.priorityClassName` | string | `system-node-critical` | Node priority class name (node critical level) |
 | `node.dnsPolicy` | string | `ClusterFirstWithHostNet` | DNS policy (cluster first + host network) |
+| `node.mountMode` | string | `standalone` | Mount mode: `standalone` (independent pod) or `embedded` (embedded in CSI container) |
 | `node.container.name` | string | `csi-plugin` | Main container name |
 | `node.container.command` | array | `["/opt/curvine/csi"]` | Container start command |
 | `node.container.args` | array | See values.yaml | Container start arguments |
@@ -687,6 +706,34 @@ kubectl exec dynamic-pv-test -- cat /usr/share/nginx/html/index.html
 | `node.container.securityContext.privileged` | boolean | `true` | Whether to run in privileged mode |
 | `node.container.lifecycle.preStop` | object | See values.yaml | Container pre-stop hook (cleanup socket files) |
 | `node.tolerations` | array | `[{operator: Exists}]` | Pod toleration configuration (tolerates all taints) |
+
+#### Standalone Pod Settings
+
+When `node.mountMode` is set to `standalone`, the following settings apply:
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `node.standalone.image` | string | `""` | Standalone Pod image, empty uses CSI image |
+| `node.standalone.resources.requests.cpu` | string | `"500m"` | CPU request |
+| `node.standalone.resources.requests.memory` | string | `"512Mi"` | Memory request |
+| `node.standalone.resources.limits.cpu` | string | `"2"` | CPU limit |
+| `node.standalone.resources.limits.memory` | string | `"2Gi"` | Memory limit |
+
+Example configuration:
+
+```yaml
+node:
+  mountMode: standalone
+  standalone:
+    image: ""  # Empty uses CSI image
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "2"
+        memory: "2Gi"
+```
 
 #### Node Sidecar Container Configuration
 
