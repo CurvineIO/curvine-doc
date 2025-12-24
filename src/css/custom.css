@@ -182,3 +182,329 @@ footer[class*="footer"],
 [data-theme='light'] .medium-zoom-overlay {
   background: rgba(255, 255, 255, 0.95) !important;
 }
+
+/* Blog page width adjustments - Expand content area while maintaining responsiveness */
+/* Target blog pages specifically to avoid affecting docs pages */
+/* Use multiple selectors to ensure coverage of different Docusaurus blog page structures */
+.blog-wrapper .container,
+.blog-list-page .container,
+.blog-post-page .container,
+[class*="blog-wrapper"] .container,
+[class*="blog-list"] .container,
+[class*="blog-post"] .container,
+.main-wrapper:has([class*="blog"]) .container,
+.main-wrapper:has(.blog-wrapper) .container {
+  max-width: 1800px !important;
+}
+
+/* Blog page three-column layout adjustments */
+/* Target the row container that holds the three columns */
+.blog-wrapper .row,
+.blog-list-page .row,
+.blog-post-page .row,
+[class*="blog"] .row {
+  max-width: 100%;
+}
+
+/* Adjust sidebar (recent posts) width */
+.blog-wrapper .col--2,
+.blog-wrapper .col--3,
+.blog-list-page .col--2,
+.blog-list-page .col--3,
+.blog-post-page .col--2,
+.blog-post-page .col--3,
+[class*="blog"] .col--2,
+[class*="blog"] .col--3 {
+  flex: 0 0 20% !important;
+  max-width: 20% !important;
+}
+
+/* Expand main content area (middle column) - this is the blog post/article content */
+.blog-wrapper .col--8,
+.blog-wrapper .col--9,
+.blog-wrapper .col--10,
+.blog-list-page .col--8,
+.blog-list-page .col--9,
+.blog-list-page .col--10,
+.blog-post-page .col--8,
+.blog-post-page .col--9,
+.blog-post-page .col--10,
+[class*="blog"] .col--8,
+[class*="blog"] .col--9,
+[class*="blog"] .col--10 {
+  flex: 0 0 60% !important;
+  max-width: 60% !important;
+}
+
+/* Adjust TOC width if it's in a separate column */
+.blog-wrapper .col--1,
+.blog-wrapper .table-of-contents,
+.blog-post-page .col--1,
+.blog-post-page .table-of-contents,
+[class*="blog"] .col--1,
+[class*="blog"] .table-of-contents {
+  flex: 0 0 20% !important;
+  max-width: 20% !important;
+  min-width: 200px !important;
+}
+
+/* Ensure TOC text displays normally (horizontal, not vertical) */
+.blog-wrapper .table-of-contents,
+.blog-post-page .table-of-contents,
+[class*="blog"] .table-of-contents,
+.blog-wrapper .table-of-contents ul,
+.blog-post-page .table-of-contents ul,
+[class*="blog"] .table-of-contents ul {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  direction: ltr !important;
+  white-space: normal !important;
+}
+
+/* Ensure TOC list items display horizontally */
+.blog-wrapper .table-of-contents li,
+.blog-post-page .table-of-contents li,
+[class*="blog"] .table-of-contents li {
+  display: block !important;
+  width: 100% !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+/* Ensure TOC links wrap normally */
+.blog-wrapper .table-of-contents a,
+.blog-post-page .table-of-contents a,
+[class*="blog"] .table-of-contents a {
+  display: inline-block !important;
+  width: auto !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: normal !important;
+}
+
+/* Alternative: If TOC is inside the main content column, ensure content area uses available space */
+.blog-post-page .col--9 .col--3,
+.blog-post-page .col--10 .col--2 {
+  flex: 0 0 20% !important;
+  max-width: 20% !important;
+}
+
+.blog-post-page .col--9 .col--9,
+.blog-post-page .col--10 .col--10 {
+  flex: 0 0 80% !important;
+  max-width: 80% !important;
+}
+
+/* Blog post content wrapper - ensure full width usage */
+.blog-post-page .markdown,
+.blog-post-page article,
+.blog-post-page .article {
+  max-width: 100%;
+}
+
+/* Blog list items container */
+.blog-list-page .blog-list,
+.blog-list-page .blog-list-item {
+  max-width: 100%;
+}
+
+/* Responsive adjustments for blog pages */
+@media (max-width: 1920px) {
+  .blog-wrapper .container,
+  .blog-list-page .container,
+  .blog-post-page .container,
+  [class*="blog-wrapper"] .container,
+  [class*="blog-list"] .container,
+  [class*="blog-post"] .container,
+  .main-wrapper:has([class*="blog"]) .container,
+  .main-wrapper:has(.blog-wrapper) .container {
+    max-width: 1700px !important;
+  }
+}
+
+@media (max-width: 1600px) {
+  .blog-wrapper .container,
+  .blog-list-page .container,
+  .blog-post-page .container,
+  [class*="blog-wrapper"] .container,
+  [class*="blog-list"] .container,
+  [class*="blog-post"] .container,
+  .main-wrapper:has([class*="blog"]) .container,
+  .main-wrapper:has(.blog-wrapper) .container {
+    max-width: 1500px !important;
+  }
+}
+
+@media (max-width: 1440px) {
+  .blog-wrapper .container,
+  .blog-list-page .container,
+  .blog-post-page .container,
+  [class*="blog-wrapper"] .container,
+  [class*="blog-list"] .container,
+  [class*="blog-post"] .container,
+  .main-wrapper:has([class*="blog"]) .container,
+  .main-wrapper:has(.blog-wrapper) .container {
+    max-width: 1400px !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .blog-wrapper .container,
+  .blog-list-page .container,
+  .blog-post-page .container,
+  [class*="blog-wrapper"] .container,
+  [class*="blog-list"] .container,
+  [class*="blog-post"] .container,
+  .main-wrapper:has([class*="blog"]) .container,
+  .main-wrapper:has(.blog-wrapper) .container {
+    max-width: 100% !important;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  
+  /* On smaller screens, adjust column widths */
+  .blog-wrapper .col--2,
+  .blog-wrapper .col--3,
+  .blog-list-page .col--2,
+  .blog-list-page .col--3,
+  .blog-post-page .col--2,
+  .blog-post-page .col--3,
+  [class*="blog"] .col--2,
+  [class*="blog"] .col--3 {
+    flex: 0 0 20% !important;
+    max-width: 20% !important;
+  }
+  
+  .blog-wrapper .col--8,
+  .blog-wrapper .col--9,
+  .blog-wrapper .col--10,
+  .blog-list-page .col--8,
+  .blog-list-page .col--9,
+  .blog-list-page .col--10,
+  .blog-post-page .col--8,
+  .blog-post-page .col--9,
+  .blog-post-page .col--10,
+  [class*="blog"] .col--8,
+  [class*="blog"] .col--9,
+  [class*="blog"] .col--10 {
+    flex: 0 0 60% !important;
+    max-width: 60% !important;
+  }
+  
+  .blog-wrapper .col--1,
+  .blog-wrapper .table-of-contents,
+  .blog-post-page .col--1,
+  .blog-post-page .table-of-contents,
+  [class*="blog"] .col--1,
+  [class*="blog"] .table-of-contents {
+    flex: 0 0 25% !important;
+    max-width: 25% !important;
+    min-width: 220px !important;
+  }
+  
+  /* Ensure TOC text displays normally on smaller screens */
+  .blog-wrapper .table-of-contents,
+  .blog-post-page .table-of-contents,
+  [class*="blog"] .table-of-contents {
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+  }
+}
+
+@media (max-width: 996px) {
+  .blog-wrapper .container,
+  .blog-list-page .container,
+  .blog-post-page .container,
+  [class*="blog-wrapper"] .container,
+  [class*="blog-list"] .container,
+  [class*="blog-post"] .container,
+  .main-wrapper:has([class*="blog"]) .container,
+  .main-wrapper:has(.blog-wrapper) .container {
+    max-width: 100% !important;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  /* On tablet, make content area wider */
+  .blog-wrapper .col--2,
+  .blog-wrapper .col--3,
+  .blog-list-page .col--2,
+  .blog-list-page .col--3,
+  .blog-post-page .col--2,
+  .blog-post-page .col--3,
+  [class*="blog"] .col--2,
+  [class*="blog"] .col--3 {
+    flex: 0 0 25% !important;
+    max-width: 25% !important;
+  }
+  
+  .blog-wrapper .col--8,
+  .blog-wrapper .col--9,
+  .blog-wrapper .col--10,
+  .blog-list-page .col--8,
+  .blog-list-page .col--9,
+  .blog-list-page .col--10,
+  .blog-post-page .col--8,
+  .blog-post-page .col--9,
+  .blog-post-page .col--10,
+  [class*="blog"] .col--8,
+  [class*="blog"] .col--9,
+  [class*="blog"] .col--10 {
+    flex: 0 0 75% !important;
+    max-width: 75% !important;
+  }
+  
+  /* Hide TOC on smaller screens or make it collapsible */
+  .blog-wrapper .col--1,
+  .blog-wrapper .table-of-contents,
+  .blog-post-page .col--1,
+  .blog-post-page .table-of-contents,
+  [class*="blog"] .col--1,
+  [class*="blog"] .table-of-contents {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .blog-wrapper .container,
+  .blog-list-page .container,
+  .blog-post-page .container,
+  [class*="blog-wrapper"] .container,
+  [class*="blog-list"] .container,
+  [class*="blog-post"] .container,
+  .main-wrapper:has([class*="blog"]) .container,
+  .main-wrapper:has(.blog-wrapper) .container {
+    max-width: 100% !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* On mobile, stack columns vertically or hide sidebar */
+  .blog-wrapper .col--2,
+  .blog-wrapper .col--3,
+  .blog-list-page .col--2,
+  .blog-list-page .col--3,
+  .blog-post-page .col--2,
+  .blog-post-page .col--3,
+  [class*="blog"] .col--2,
+  [class*="blog"] .col--3 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .blog-wrapper .col--8,
+  .blog-wrapper .col--9,
+  .blog-wrapper .col--10,
+  .blog-list-page .col--8,
+  .blog-list-page .col--9,
+  .blog-list-page .col--10,
+  .blog-post-page .col--8,
+  .blog-post-page .col--9,
+  .blog-post-page .col--10,
+  [class*="blog"] .col--8,
+  [class*="blog"] .col--9,
+  [class*="blog"] .col--10 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
