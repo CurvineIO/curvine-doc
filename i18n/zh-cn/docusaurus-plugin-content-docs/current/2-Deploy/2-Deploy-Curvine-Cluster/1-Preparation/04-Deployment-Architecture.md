@@ -4,6 +4,7 @@ sidebar_position: 4
 
 # 部署架构
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
 flowchart TD
     subgraph 客户端应用
         App1[应用程序1<br/>FUSE挂载]
@@ -47,6 +48,17 @@ flowchart TD
     Worker2 -. 缓存后端 .-> HDFSCluster
     Worker3 -. 缓存后端 .-> S3Bucket
     WorkerN -. 缓存后端 .-> HDFSCluster
+
+    %% Styles
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    classDef masterStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef workerStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
+    
+    class App1,App2,App3 appStyle
+    class MasterLeader,MasterFollower1,MasterFollower2 masterStyle
+    class Worker1,Worker2,Worker3,WorkerN workerStyle
+    class S3Bucket,HDFSCluster storageStyle
 ```
 ## 组件作用
 **Master节点**：负责元数据管理、工作节点协调和负载均衡
@@ -69,6 +81,7 @@ flowchart TD
 
 ## curvine master, curvine worker 和 curvine fuse 的关系
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
 flowchart LR
     subgraph 客户端层
     App[应用程序<br/>ls,cat,cp]
@@ -82,6 +95,17 @@ flowchart LR
     end
     fuse -- RPC 通信 --> master
     fuse -- 数据读写 --> worker
+
+    %% Styles
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    classDef fuseStyle fill:#ecc94b,stroke:#b7791f,color:#1a202c,stroke-width:2px
+    classDef masterStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef workerStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    
+    class App appStyle
+    class fuse fuseStyle
+    class master masterStyle
+    class worker workerStyle
 ```
 ## curvine fuse 使用场景
 当需要让现有应用程序无需修改即可访问 Curvine 分布式缓存时，使用 FUSE 可以将 Curvine 挂载为本地文件系统。

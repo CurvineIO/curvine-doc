@@ -16,7 +16,7 @@ export default function LayoutWrapper(props: Props): JSX.Element {
   useEffect(() => {
     console.log('[MermaidZoom] Initializing');
 
-    // Function to attach click handlers to mermaid diagrams
+    // Function to attach zoom icon buttons to mermaid diagrams
     const attachZoomToMermaid = () => {
       const mermaidContainers = document.querySelectorAll<HTMLElement>('.docusaurus-mermaid-container');
       
@@ -25,12 +25,24 @@ export default function LayoutWrapper(props: Props): JSX.Element {
         
         mermaidContainers.forEach((container) => {
           const svg = container.querySelector('svg');
-          if (svg && !(svg as any)._zoomAttached) {
+          // Check if already processed
+          if (svg && !(container as any)._zoomAttached) {
             // Mark as processed
-            (svg as any)._zoomAttached = true;
+            (container as any)._zoomAttached = true;
             
-            // Add click handler
-            svg.addEventListener('click', () => {
+            // Create zoom icon button
+            const zoomIcon = document.createElement('div');
+            zoomIcon.className = 'zoom-icon';
+            zoomIcon.innerHTML = `
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+              </svg>
+            `;
+            
+            // Add click handler to zoom icon
+            zoomIcon.addEventListener('click', (e) => {
+              e.stopPropagation();
+              
               // Clone the SVG and get its outerHTML
               const svgClone = svg.cloneNode(true) as SVGElement;
               
@@ -46,7 +58,10 @@ export default function LayoutWrapper(props: Props): JSX.Element {
               setZoomedSvg(svgClone.outerHTML);
             });
             
-            console.log('[MermaidZoom] Attached click handler to diagram');
+            // Append zoom icon to container
+            container.appendChild(zoomIcon);
+            
+            console.log('[MermaidZoom] Attached zoom icon to diagram');
           }
         });
       }
