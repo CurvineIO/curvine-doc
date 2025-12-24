@@ -1,4 +1,4 @@
-# K8S CSI Driver
+# Installation Guide
 To facilitate quick integration with Curvine in cloud-native environments, Curvine provides CSI driver support. Your Pod containers can access Curvine through `PV` (Persistent Volume) without requiring application modifications, enabling seamless use of Curvine's caching capabilities.
 
 The Curvine CSI driver follows the standard CSI specification and includes:
@@ -10,11 +10,7 @@ The Curvine CSI driver follows the standard CSI specification and includes:
 The Curvine CSI driver adopts the standard CSI architecture with two main components:
 
 ```mermaid
----
-config:
-  theme: 'base'
----
-
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
 graph TB
     subgraph "Kubernetes Cluster"
         subgraph "Control Plane"
@@ -49,6 +45,18 @@ graph TB
     
     Node1 -.FUSE Mount.-> Master
     Node2 -.FUSE Mount.-> Master
+
+    %% Styles - colors adjusted for light background
+    classDef csiStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef sidecarStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    classDef nodeStyle fill:#48bb78,stroke:#276749,color:#fff,stroke-width:2px
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
+    
+    class Controller,Node1,Node2 csiStyle
+    class Provisioner,Attacher,Registrar1,Registrar2 sidecarStyle
+    class Pod1,Pod2 appStyle
+    class Master,Storage storageStyle
 ```
 
 ### Core Components
@@ -348,9 +356,9 @@ Actual path: "/k8s-volumes/pvc-1234-5678-abcd"
 
 ### 3.4 Create StorageClass
 
-```bash
-# Create StorageClass
-kubectl apply -f - <<EOF
+Create the `storageclass.yaml` file:
+
+```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -363,7 +371,13 @@ parameters:
   master-addrs: "m0:8995,m1:8995,m2:8995"
   fs-path: "/k8s-volumes"
   path-type: "DirectoryOrCreate"
-EOF
+```
+
+Apply the configuration:
+
+```bash
+# Create StorageClass
+kubectl apply -f storageclass.yaml
 
 # View StorageClass
 kubectl get storageclass curvine-sc
@@ -421,14 +435,23 @@ Static PV is used to mount existing data directories in Curvine, suitable for th
 
 ### 4.1 Working Principle
 
-```
-Curvine cluster has existing data
-    ↓
-Administrator creates PV, specifying curvine-path
-    ↓
-User creates PVC, binds to specified PV
-    ↓
-Pod mounts PVC
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
+flowchart LR
+    Start[Curvine cluster has existing data] --> CreatePV[Administrator creates PV<br/>specifying curvine-path]
+    CreatePV --> CreatePVC[User creates PVC<br/>binds to specified PV]
+    CreatePVC --> MountPod[Pod mounts PVC]
+    
+    %% Styles
+    classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
+    classDef adminStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef userStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    
+    class Start storageStyle
+    class CreatePV adminStyle
+    class CreatePVC userStyle
+    class MountPod appStyle
 ```
 
 ### 4.2 Create Static PV
@@ -530,16 +553,26 @@ Dynamic PV is the most commonly used method, automatically created and managed b
 
 ### 5.1 Working Principle
 
-```
-User creates PVC, specifying StorageClass
-    ↓
-CSI Provisioner automatically creates PV
-    ↓
-Auto-generates Curvine path: fs-path + pv-name
-    ↓
-PVC automatically binds to PV
-    ↓
-Pod mounts PVC for use
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
+flowchart LR
+    CreatePVC[User creates PVC<br/>specifying StorageClass] --> AutoCreatePV[CSI Provisioner<br/>automatically creates PV]
+    AutoCreatePV --> GenPath[Auto-generates Curvine path<br/>fs-path + pv-name]
+    GenPath --> AutoBind[PVC automatically binds to PV]
+    AutoBind --> MountPod[Pod mounts PVC for use]
+    
+    %% Styles
+    classDef userStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    classDef csiStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef pathStyle fill:#48bb78,stroke:#276749,color:#fff,stroke-width:2px
+    classDef bindStyle fill:#ecc94b,stroke:#b7791f,color:#1a202c,stroke-width:2px
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    
+    class CreatePVC userStyle
+    class AutoCreatePV csiStyle
+    class GenPath pathStyle
+    class AutoBind bindStyle
+    class MountPod appStyle
 ```
 
 ### 5.2 Create Dynamic PVC
@@ -582,9 +615,9 @@ name: my-dynamic-pvc
 
 ### 5.4 Dynamic PV Complete Example
 
-```bash
-# 1. Create dynamic PVC
-kubectl apply -f - <<EOF
+Create the `dynamic-pvc.yaml` file:
+
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -597,17 +630,11 @@ spec:
   resources:
     requests:
       storage: 20Gi
-EOF
+```
 
-# 2. Check PVC status (should automatically Bound)
-kubectl get pvc app-data-pvc
-kubectl describe pvc app-data-pvc
+Create the `dynamic-pv-pod.yaml` file:
 
-# 3. Check auto-created PV
-kubectl get pv
-
-# 4. Create Pod using PVC
-kubectl apply -f - <<EOF
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -623,7 +650,23 @@ spec:
   - name: data
     persistentVolumeClaim:
       claimName: app-data-pvc
-EOF
+```
+
+Apply the configuration:
+
+```bash
+# 1. Create dynamic PVC
+kubectl apply -f dynamic-pvc.yaml
+
+# 2. Check PVC status (should automatically Bound)
+kubectl get pvc app-data-pvc
+kubectl describe pvc app-data-pvc
+
+# 3. Check auto-created PV
+kubectl get pv
+
+# 4. Create Pod using PVC
+kubectl apply -f dynamic-pv-pod.yaml
 
 # 5. Test write and read
 kubectl exec dynamic-pv-test -- sh -c 'echo "Hello Curvine" > /usr/share/nginx/html/index.html'
