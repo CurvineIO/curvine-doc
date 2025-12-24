@@ -179,6 +179,10 @@ helm install curvine-csi curvine/curvine-csi \
 helm status curvine-csi -n curvine
 ```
 
+:::tip
+By default, curvine-csi uses `standalone` mode, where FUSE mounts run in independent pods unaffected by curvine-csi restarts (recommended). It also supports `embedded` mode. For architecture details and Helm configuration parameters, refer to [Curvine CSI Architecture](Framework).
+:::
+
 ### 1.4 Upgrade and Uninstall
 
 ```bash

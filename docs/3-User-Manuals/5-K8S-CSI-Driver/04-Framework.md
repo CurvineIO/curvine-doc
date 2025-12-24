@@ -4,18 +4,19 @@
 
 ## Architecture
 
-The diagram below shows the overall design architecture of curvine-csi. **If you only need to use CSI, you can skip this chapter** and refer to [K8S CSI Driver](Setup) directly.
+**If you only need to use CSI, you can skip this chapter** and refer to [K8S CSI Driver](Setup) directly.
 
-Curvine-csi mainly consists of two components:
+Curvine-csi mainly consists of the following components:
 
 | Component | Responsibility |
 |-----------|---------------|
-| CSI Node Service | Handle CSI gRPC calls, manage MountPod lifecycle |
-| MountPod Controller | Create/Delete/Monitor MountPod |
+| CSI Node | Handle CSI gRPC calls, manage volume mounts |
+| CSI Controller | Create/Delete/Monitor PVs |
+| Standalone POD | In `standalone` mode, independently manages FUSE processes |
 
 ## Mount Modes
 
-Most CSI implementations manage mounts directly in csi-node by mounting remote storage to hosts and finally bind mounting to pod containers. Curvine-csi is based on FUSE. When the CSI component restarts, the FUSE process will be interrupted. To avoid FUSE interruption caused by CSI driver upgrades or restarts, curvine-csi supports two mount modes: standalone and embedded.
+Most CSI implementations manage mounts directly in `csi-node` by mounting remote storage to hosts and finally bind mounting to pod containers. Curvine-csi is based on FUSE. When the CSI component restarts, the FUSE process will be interrupted. To avoid FUSE interruption caused by CSI driver upgrades or restarts, curvine-csi supports two mount modes: standalone and embedded.
 
 - **Standalone**: Decouple the FUSE process from the csi-node pod and run it in an independent Pod
 - **Embedded**: FUSE process runs in the csi-node plugin pod
@@ -66,7 +67,7 @@ Architecture diagram:
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%flowchart TB
-    subgraph K8sNode["🖥️ Kubernetes Node"]
+    subgraph K8sNode["Kubernetes Node"]
         subgraph CSIPod["CSI Node Pod"]
             CSIDriver["CSI Driver<br/>gRPC Handler"]
             MountPodCtrl["MountPod<br/>Controller"]
@@ -165,7 +166,7 @@ Architecture diagram:
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%flowchart TB
-    subgraph K8sNode["🖥️ Kubernetes Node"]
+    subgraph K8sNode["Kubernetes Node"]
         subgraph CSIPod["CSI Node Pod (privileged)"]
             CSIDriver["CSI Driver<br/>gRPC Handler"]
             FUSE1["curvine-fuse<br/>Process"]
@@ -230,6 +231,10 @@ Architecture diagram:
     class MNT1,MNT2,VolPath1,VolPath2 pathStyle
 ```
 
+:::warning
+In Embedded mode, if curvine-csi restarts or upgrades, the FUSE process will be interrupted, causing Pods to be unable to use Curvine normally. Please choose carefully based on your scenario.
+:::
+
 ## FUSE Process Reuse and Lifecycle Management
 
 ### Overview
@@ -253,68 +258,67 @@ clusterID := SHA256(masterAddrs)[:8]  // e.g., 0893a5f6
 - Different `master-addrs` → Different ClusterID → Independent Standalone Pod
 - Multi-cluster support: Same node can run multiple Standalone Pods for different Curvine clusters
 
-#### Reference Counting
+#### Standalone Pod Naming
 
-Each Standalone Pod maintains a reference count:
-- **RefCount++**: When a new PV uses this Standalone Pod
-- **RefCount--**: When a PV is deleted
-- **Delete Pod**: When RefCount reaches 0 (no references)
-
-### Lifecycle Management
-
-#### Creation Phase
-
-1. First PV requests → Create Standalone Pod (RefCount: 0 → 1)
-2. Subsequent PVs with same master-addrs → Reuse existing Pod (RefCount++)
-
-#### Running Phase
-
-- Standalone Pod serves multiple PVs simultaneously
-- Shared FUSE mount point
-- Shared gRPC connection to Curvine cluster
-
-#### Cleanup Phase (Automatic)
-
-When the last PV is deleted:
-1. RefCount: 1 → 0
-2. Trigger automatic cleanup
-3. Graceful shutdown (30s):
-   - preStop hook: 5s (wait for I/O)
-   - Unmount FUSE
-   - Clean up resources
-4. Delete Standalone Pod
-
-### PV Watch Fallback Mechanism
-
-To handle abnormal cases (e.g., PV deleted directly without Unstage call), CSI implements PV Watch mechanism:
-
-**Triple Protection**:
-1. **Main Path**: Normal Unstage call (fastest, 0 latency)
-2. **PV Watch**: Monitor PV deletion events (second-level response)
-3. **Periodic GC**: Scan orphaned Pods (10-minute fallback)
-
-### State Persistence
-
-Reference counts and volume lists are stored in ConfigMap, ensuring state survives node restarts:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: curvine-standalone-state-<nodename>
-data:
-  state.json: |
-    {
-      "mounts": {
-        "0893a5f6": {
-          "clusterID": "0893a5f6",
-          "podName": "curvine-standalone-0893a5f6-aefd8804",
-          "refCount": 3,
-          "volumes": ["vol-1", "vol-2", "vol-3"]
-        }
-      }
-    }
+```bash
+curvine-standalone-{clusterID}-{randomSuffix}
+# Example: curvine-standalone-0893a5f6-aefd8804
 ```
+
+### FUSE Process Reuse Mechanism
+
+#### Reuse Scenario Example
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
+flowchart LR
+    subgraph PVs["PersistentVolumes"]
+        PV1["PV-1<br/>volumeHandle: vol-app1<br/>master-addrs: 10.0.0.1:8995,..."]
+        PV2["PV-2<br/>volumeHandle: vol-app2<br/>master-addrs: 10.0.0.1:8995,..."]
+        PV3["PV-3<br/>volumeHandle: vol-db<br/>master-addrs: 10.0.0.1:8995,..."]
+        PV4["PV-4<br/>volumeHandle: vol-logs<br/>master-addrs: 192.168.1.1:8995,..."]
+    end
+    
+    subgraph ClusterID["ClusterID Calculation"]
+        Hash1["SHA256(10.0.0.1:8995,...)<br/>→ 0893a5f6"]
+        Hash2["SHA256(192.168.1.1:8995,...)<br/>→ 1a2b3c4d"]
+    end
+    
+    subgraph Standalone["Standalone Pods"]
+        SP1["Standalone-0893a5f6<br/>RefCount: 3<br/>Volumes: [vol-app1, vol-app2, vol-db]"]
+        SP2["Standalone-1a2b3c4d<br/>RefCount: 1<br/>Volumes: [vol-logs]"]
+    end
+    
+    PV1 --> Hash1
+    PV2 --> Hash1
+    PV3 --> Hash1
+    PV4 --> Hash2
+    
+    Hash1 --> SP1
+    Hash2 --> SP2
+    
+    classDef pvStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef hashStyle fill:#ecc94b,stroke:#b7791f,color:#1a202c,stroke-width:2px
+    classDef standaloneLightStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:3px
+    classDef standaloneHeavyStyle fill:#e53e3e,stroke:#c53030,color:#fff,stroke-width:3px
+    
+    class PV1,PV2,PV3,PV4 pvStyle
+    class Hash1,Hash2 hashStyle
+    class SP1 standaloneHeavyStyle
+    class SP2 standaloneLightStyle
+```
+
+**Explanation**:
+- PV-1, PV-2, PV-3 use the same `master-addrs`, sharing **Standalone-0893a5f6**
+- PV-4 uses different `master-addrs`, using independent **Standalone-1a2b3c4d**
+- Standalone-0893a5f6 has a reference count of 3 (three PVs sharing)
+- Standalone-1a2b3c4d has a reference count of 1
+
+**Automatic Cleanup Mechanism**:
+- **Trigger Condition**: RefCount drops to 0 (no PV references)
+- **Graceful Shutdown**: 30-second grace period to ensure FUSE unmounts correctly
+- **preStop Hook**: 5-second wait to allow ongoing I/O to complete
+- **State Persistence**: Reference counts stored in ConfigMap, state restored after node restarts
 
 ### RBAC Requirements
 
