@@ -163,6 +163,10 @@ helm install curvine-csi curvine/curvine-csi \
 helm status curvine-csi -n curvine
 ```
 
+:::tip
+默认情况下，curvine-csi采用`standalone`的模式部署，即fuse挂载在独立的pod中，不受curvine-csi重启影响（推荐模式）， 同时也支持`embedded` 模式，相关架构以及helm配置参数， 可以参考[Curvine CSI架构详解](Framework)
+:::
+
 ### 1.4 升级和卸载
 
 ```bash
@@ -175,7 +179,6 @@ helm uninstall curvine-csi -n curvine
 # 完全清理（包括 namespace）
 kubectl delete namespace curvine
 ```
-
 ---
 
 ## 二、验证和检查状态
