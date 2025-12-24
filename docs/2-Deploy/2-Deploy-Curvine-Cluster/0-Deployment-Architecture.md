@@ -1,10 +1,16 @@
 ---
-sidebar_position: 4
+sidebar_position: 0
 ---
 
 # Deployment Architecture
 
+Before deploying a cluster, you need to understand the roles of each Curvine component and their interaction patterns. The following diagram shows the typical deployment architecture of Curvine, divided into three layers from top to bottom:
+- **Application Layer**: Includes curvine-fuse, applications accessed via SDK, CLI management tools, etc. For details, refer to [Access Methods](../../../3-User-Manuals/4-Access/01-fuse.md).
+- **Curvine Cluster Service Layer**: Consists of curvine-master and curvine-worker forming the Curvine cluster.
+- **UFS Cluster**: As the underlying storage backend, connected to the Curvine cluster through [mounting](../../../3-User-Manuals/1-Key-Features/01-ufs.md#mounting), such as S3, HDFS, and other clusters.
+
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
 flowchart TD
     subgraph Client_Applications
         App1[Application 1<br/>FUSE mount]
@@ -50,6 +56,17 @@ flowchart TD
     Worker2 -. Cache backend .-> HDFSCluster
     Worker3 -. Cache backend .-> S3Bucket
     WorkerN -. Cache backend .-> HDFSCluster
+
+    %% Styles
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    classDef masterStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef workerStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
+    
+    class App1,App2,App3 appStyle
+    class MasterLeader,MasterFollower1,MasterFollower2 masterStyle
+    class Worker1,Worker2,Worker3,WorkerN workerStyle
+    class S3Bucket,HDFSCluster storageStyle
 ```
 
 ## Component Roles
@@ -75,6 +92,7 @@ flowchart TD
 ## Relationship between curvine master, curvine worker, and curvine fuse
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
 flowchart LR
     subgraph Client_Layer
         App[Applications<br/>ls,cat,cp]
@@ -90,6 +108,17 @@ flowchart LR
 
     fuse -- RPC Communication  --> master
     fuse -- Data Read/Write  --> worker
+
+    %% Styles
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    classDef fuseStyle fill:#ecc94b,stroke:#b7791f,color:#1a202c,stroke-width:2px
+    classDef masterStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef workerStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    
+    class App appStyle
+    class fuse fuseStyle
+    class master masterStyle
+    class worker workerStyle
 ```
 
 ## curvine fuse Use Cases
