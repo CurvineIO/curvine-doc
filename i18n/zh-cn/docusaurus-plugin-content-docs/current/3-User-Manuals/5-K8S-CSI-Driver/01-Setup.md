@@ -1,4 +1,4 @@
-# K8S CSI驱动
+# 安装说明
 为了更方便在云原生环境下快速接入curvine, curinve提供了csi驱动支持, 你的Pod容器可以通过`PV`(Persisit Volume) 的方式来访问curvine, 无需对应用进行改造，即可使用curvine缓存能力；
 
 Curvine CSI驱动遵循标准的CSI规范，包含 
@@ -10,11 +10,7 @@ Curvine CSI驱动遵循标准的CSI规范，包含
 Curvine CSI 驱动采用标准的 CSI 架构，包含两个主要组件：
 
 ```mermaid
----
-config:
-  theme: 'base'
----
-
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
 graph TB
     subgraph "Kubernetes Cluster"
         subgraph "Control Plane"
@@ -49,6 +45,18 @@ graph TB
     
     Node1 -.FUSE Mount.-> Master
     Node2 -.FUSE Mount.-> Master
+
+    %% Styles - colors adjusted for light background
+    classDef csiStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef sidecarStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    classDef nodeStyle fill:#48bb78,stroke:#276749,color:#fff,stroke-width:2px
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
+    
+    class Controller,Node1,Node2 csiStyle
+    class Provisioner,Attacher,Registrar1,Registrar2 sidecarStyle
+    class Pod1,Pod2 appStyle
+    class Master,Storage storageStyle
 ```
 
 ### 核心组件
@@ -331,9 +339,9 @@ pv-name: "pvc-1234-5678-abcd"
 
 ### 3.4 创建 StorageClass
 
-```bash
-# 创建 StorageClass
-kubectl apply -f - <<EOF
+创建 `storageclass.yaml` 文件：
+
+```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -346,7 +354,13 @@ parameters:
   master-addrs: "m0:8995,m1:8995,m2:8995"
   fs-path: "/k8s-volumes"
   path-type: "DirectoryOrCreate"
-EOF
+```
+
+应用配置：
+
+```bash
+# 创建 StorageClass
+kubectl apply -f storageclass.yaml
 
 # 查看 StorageClass
 kubectl get storageclass curvine-sc
@@ -404,14 +418,23 @@ parameters:
 
 ### 4.1 工作原理
 
-```
-Curvine 集群已有数据
-    ↓
-管理员创建 PV，指定 curvine-path
-    ↓
-用户创建 PVC，绑定到指定 PV
-    ↓
-Pod 挂载 PVC
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
+flowchart LR
+    Start[Curvine 集群已有数据] --> CreatePV[管理员创建 PV<br/>指定 curvine-path]
+    CreatePV --> CreatePVC[用户创建 PVC<br/>绑定到指定 PV]
+    CreatePVC --> MountPod[Pod 挂载 PVC]
+    
+    %% Styles
+    classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
+    classDef adminStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef userStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    
+    class Start storageStyle
+    class CreatePV adminStyle
+    class CreatePVC userStyle
+    class MountPod appStyle
 ```
 
 ### 4.2 创建静态 PV
@@ -513,16 +536,26 @@ spec:
 
 ### 5.1 工作原理
 
-```
-用户创建 PVC，指定 StorageClass
-    ↓
-CSI Provisioner 自动创建 PV
-    ↓
-自动生成 Curvine 路径：fs-path + pv-name
-    ↓
-PVC 自动绑定到 PV
-    ↓
-Pod 挂载 PVC 使用
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
+flowchart LR
+    CreatePVC[用户创建 PVC<br/>指定 StorageClass] --> AutoCreatePV[CSI Provisioner<br/>自动创建 PV]
+    AutoCreatePV --> GenPath[自动生成 Curvine 路径<br/>fs-path + pv-name]
+    GenPath --> AutoBind[PVC 自动绑定到 PV]
+    AutoBind --> MountPod[Pod 挂载 PVC 使用]
+    
+    %% Styles
+    classDef userStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    classDef csiStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef pathStyle fill:#48bb78,stroke:#276749,color:#fff,stroke-width:2px
+    classDef bindStyle fill:#ecc94b,stroke:#b7791f,color:#1a202c,stroke-width:2px
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    
+    class CreatePVC userStyle
+    class AutoCreatePV csiStyle
+    class GenPath pathStyle
+    class AutoBind bindStyle
+    class MountPod appStyle
 ```
 
 ### 5.2 创建动态 PVC
@@ -565,9 +598,9 @@ name: my-dynamic-pvc
 
 ### 5.4 动态 PV 完整示例
 
-```bash
-# 1. 创建动态 PVC
-kubectl apply -f - <<EOF
+创建 `dynamic-pvc.yaml` 文件：
+
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -580,17 +613,11 @@ spec:
   resources:
     requests:
       storage: 20Gi
-EOF
+```
 
-# 2. 查看 PVC 状态（应该自动 Bound）
-kubectl get pvc app-data-pvc
-kubectl describe pvc app-data-pvc
+创建 `dynamic-pv-pod.yaml` 文件：
 
-# 3. 查看自动创建的 PV
-kubectl get pv
-
-# 4. 创建使用 PVC 的 Pod
-kubectl apply -f - <<EOF
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -606,7 +633,23 @@ spec:
   - name: data
     persistentVolumeClaim:
       claimName: app-data-pvc
-EOF
+```
+
+应用配置：
+
+```bash
+# 1. 创建动态 PVC
+kubectl apply -f dynamic-pvc.yaml
+
+# 2. 查看 PVC 状态（应该自动 Bound）
+kubectl get pvc app-data-pvc
+kubectl describe pvc app-data-pvc
+
+# 3. 查看自动创建的 PV
+kubectl get pv
+
+# 4. 创建使用 PVC 的 Pod
+kubectl apply -f dynamic-pv-pod.yaml
 
 # 5. 测试写入和读取
 kubectl exec dynamic-pv-test -- sh -c 'echo "Hello Curvine" > /usr/share/nginx/html/index.html'
