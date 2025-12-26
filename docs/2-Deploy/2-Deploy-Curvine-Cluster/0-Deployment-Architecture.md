@@ -5,9 +5,9 @@ sidebar_position: 0
 # Deployment Architecture
 
 Before deploying a cluster, you need to understand the roles of each Curvine component and their interaction patterns. The following diagram shows the typical deployment architecture of Curvine, divided into three layers from top to bottom:
-- **Application Layer**: Includes curvine-fuse, applications accessed via SDK, CLI management tools, etc. For details, refer to [Access Methods](../../../3-User-Manuals/4-Access/01-fuse.md).
+- **Application Layer**: Includes curvine-fuse, applications accessed via SDK, CLI management tools, etc. For details, refer to [Access Methods](../../3-User-Manuals/4-Access/01-fuse.md).
 - **Curvine Cluster Service Layer**: Consists of curvine-master and curvine-worker forming the Curvine cluster.
-- **UFS Cluster**: As the underlying storage backend, connected to the Curvine cluster through [mounting](../../../3-User-Manuals/1-Key-Features/01-ufs.md#mounting), such as S3, HDFS, and other clusters.
+- **UFS Cluster**: As the underlying storage backend, connected to the Curvine cluster through [mounting](../../3-User-Manuals/1-Key-Features/01-ufs.md#mounting), such as S3, HDFS, and other clusters.
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
