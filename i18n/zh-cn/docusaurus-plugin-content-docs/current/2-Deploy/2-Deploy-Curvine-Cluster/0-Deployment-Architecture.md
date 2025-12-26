@@ -4,9 +4,9 @@ sidebar_position: 0
 
 # 部署架构
 在部署集群之前，您需要了解清楚curvine各个组件的作用，以及交互模式。下图展示了curvine的典型部署架构，自上而下分为三层：
-- 应用层：包括 curvine-fuse、通过 SDK 接入的应用、CLI 运维工具等。详细内容请参考[接入方式](../../../3-User-Manuals/Access/fuse.md)。
+- 应用层：包括 curvine-fuse、通过 SDK 接入的应用、CLI 运维工具等。详细内容请参考[接入方式](../../3-User-Manuals/4-Access/01-fuse.md)。
 - curvine集群服务层：由 curvine-master 和 curvine-worker 组成 curvine 集群。
-- UFS集群作为底层存储后端通过[挂载](../../../3-User-Manuals/1-Key-Features/01-ufs.md#挂载)的方式接入到curvine集群上，比如S3、HDFS等集群
+- UFS集群作为底层存储后端通过[挂载](../../3-User-Manuals/1-Key-Features/01-ufs.md#挂载)的方式接入到curvine集群上，比如S3、HDFS等集群
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
