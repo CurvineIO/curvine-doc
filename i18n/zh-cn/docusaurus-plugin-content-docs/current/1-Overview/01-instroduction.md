@@ -36,6 +36,175 @@ Curvine 为高性能、高并发以及海量数据缓存设计，可以在很多
 - **存储大数据计算过程中间结果（shuffle），实现计算、存储的完全分离。**
 - **多云数据缓存，提高跨云、跨区域数据访问效率**
 
+## 性能表现
+
+**1. 元数据操作性能**
+<!-- 表格区 -->
+   <table>
+  <thead>
+    <tr style={{ backgroundColor: '#2ecc71', color: 'white' }}>
+      <th>Operation Type</th>
+      <th>Curvine (QPS)</th>
+      <th>Juicefs (QPS)</th>
+      <th>oss (QPS)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>create</td>
+      <td style={{ textAlign: 'right' }}>19,985</td>
+      <td style={{ textAlign: 'right' }}>16,000</td>
+      <td style={{ textAlign: 'right' }}>2,000</td>
+    </tr>
+    <tr>
+      <td>open</td>
+      <td style={{ textAlign: 'right' }}>60,376</td>
+      <td style={{ textAlign: 'right' }}>50,000</td>
+      <td style={{ textAlign: 'right' }}>3,900</td>
+    </tr>
+    <tr>
+      <td>rename</td>
+      <td style={{ textAlign: 'right' }}>43,009</td>
+      <td style={{ textAlign: 'right' }}>21,000</td>
+      <td style={{ textAlign: 'right' }}>200</td>
+    </tr>
+    <tr>
+      <td>delete</td>
+      <td style={{ textAlign: 'right' }}>39,013</td>
+      <td style={{ textAlign: 'right' }}>41,000</td>
+      <td style={{ textAlign: 'right' }}>1,900</td>
+    </tr>
+  </tbody>
+</table>
+
+&emsp;**注**： 对比数据选取的并发度均为40
+
+&emsp;**详细结果**： https://curvineio.github.io/docs/Benchmark/meta/
+
+&emsp;**业界类似产品测试数据**：https://juicefs.com/zh-cn/blog/engineering/meta-perf-hdfs-oss-jfs
+
+
+**2. 数据读写性能**
+
+相同硬件条件下，测试对比Alluxio性能：
+
+● 256k顺序读
+  <!-- 表格区 -->
+  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <thead>
+      <tr style={{ backgroundColor: '#2ecc71', color: 'white' }}>
+        <th>Thread count</th>
+        <th>Curvine Open Source Edition (GiB/s)</th>
+        <th>Throughput of Open Source Alluxio (GiB/s)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 数据行模板 -->
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>1</td>
+        <td style={{ textAlign: 'right' }}>2.2</td>
+        <td style={{ textAlign: 'right' }}>0.6</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>2</td>
+        <td style={{ textAlign: 'right' }}>3.7</td>
+        <td style={{ textAlign: 'right' }}>1.1</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>4</td>
+        <td style={{ textAlign: 'right' }}>6.8</td>
+        <td style={{ textAlign: 'right' }}>2.3</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>8</td>
+        <td style={{ textAlign: 'right' }}>8.9</td>
+        <td style={{ textAlign: 'right' }}>4.5</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>16</td>
+        <td style={{ textAlign: 'right' }}>9.2</td>
+        <td style={{ textAlign: 'right' }}>7.9</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>32</td>
+        <td style={{ textAlign: 'right' }}>9.5</td>
+        <td style={{ textAlign: 'right' }}>8.8</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>64</td>
+        <td style={{ textAlign: 'right' }}>9.2</td>
+        <td style={{ textAlign: 'right' }}>N/A</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>128</td>
+        <td style={{ textAlign: 'right' }}>9.2</td>
+        <td style={{ textAlign: 'right' }}>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+  
+● 256k随机读
+<!-- 表格区 -->
+  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <thead>
+      <tr style={{ backgroundColor: '#2ecc71', color: 'white' }}>
+        <th>Thread count</th>
+        <th>Curvine Open Source Edition (GiB/s)</th>
+        <th>Throughput of Open Source Alluxio (GiB/s)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 数据行模板 -->
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>1</td>
+        <td style={{ textAlign: 'right' }}>0.3</td>
+        <td style={{ textAlign: 'right' }}>0.0</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>2</td>
+        <td style={{ textAlign: 'right' }}>0.7</td>
+        <td style={{ textAlign: 'right' }}>0.1</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>4</td>
+        <td style={{ textAlign: 'right' }}>1.4</td>
+        <td style={{ textAlign: 'right' }}>0.1</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>8</td>
+        <td style={{ textAlign: 'right' }}>2.8</td>
+        <td style={{ textAlign: 'right' }}>0.2</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>16</td>
+        <td style={{ textAlign: 'right' }}>5.2</td>
+        <td style={{ textAlign: 'right' }}>0.4</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>32</td>
+        <td style={{ textAlign: 'right' }}>7.8</td>
+        <td style={{ textAlign: 'right' }}>0.3</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>64</td>
+        <td style={{ textAlign: 'right' }}>8.7</td>
+        <td style={{ textAlign: 'right' }}>N/A</td>
+      </tr>
+      <tr style={{ borderBottom: '1px solid #e1e4e8' }}>
+        <td style={{ textAlign: 'right' }}>128</td>
+        <td style={{ textAlign: 'right' }}>9.0</td>
+        <td style={{ textAlign: 'right' }}>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+&emsp; Alluxio官网数据披露：https://www.alluxio.com.cn/alluxio-enterprise-vs-open-source/
+
+
+**3. 资源消耗情况**
+
+&emsp; 得益于Rust语言的特性，大数据shuffle加速场景下，对比线上使用Curvine和Alluxio资源消耗情况，内存降低90%+，cpu降低50%+。
+
 ## 🧩 模块化架构
 
 Curvine 采用模块化设计，主要由以下核心组件构成：
