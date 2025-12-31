@@ -127,4 +127,3 @@ When you need to enable existing applications to access Curvine distributed cach
 
 - Default mount points
     - /curvine-fuse
-    - /var/lib/curvine-fuse (Kubernetes environment)
