@@ -299,42 +299,11 @@ parameters:
 |-----|------|------|------|
 | `master-addrs` | ✅ | Curvine Master node address list, comma-separated | `"10.0.0.1:8995,10.0.0.2:8995"` |
 | `fs-path` | ✅ | Path prefix for dynamic PVs, actual path is `fs-path + pv-name` | `"/k8s-volumes"` |
-| `path-type` | ❌ | Path creation strategy, defaults to `Directory` | `"DirectoryOrCreate"` |
+| `path-type` | ❌ | Path creation strategy, defaults to `Directory` | `"DirectoryOrCreate"`(Automatically creates path if it doesn't exist); `"Directory"`(Path must already exist) |
+| `reclaimPolicy` | ❌ | PV reclaim policy, defaults to `Delete` | `"Delete"`(Automatically deletes PV and storage data when PVC is deleted); `"Retain"`(PV is retained after PVC deletion) |
+| `Binding Mode` | ❌ | PV binding mode, defaults to `Immediate` | `"Immediate"`(PV is bound immediately after PVC creation); `"WaitForFirstConsumer"`(Waits for Pod scheduling before binding PV) |
 | `io-threads` | ❌ | FUSE IO thread count | `"4"` |
 | `worker-threads` | ❌ | FUSE worker thread count | `"8"` |
-
-#### Path Creation Strategy (path-type)
-
-- **`Directory`** (default)
-  - Path must already exist
-  - Recommended for production environments
-  - Ensures path is pre-created by administrators
-
-- **`DirectoryOrCreate`**
-  - Automatically creates path if it doesn't exist
-  - Suitable for testing and development environments
-  - Note permission issues
-
-#### Reclaim Policy (reclaimPolicy)
-
-- **`Delete`** (recommended for dynamic PVs)
-  - Automatically deletes PV and storage data when PVC is deleted
-  - Suitable for temporary data and testing environments
-
-- **`Retain`**
-  - PV is retained after PVC deletion
-  - Data needs manual cleanup
-  - Suitable for important data protection
-
-#### Binding Mode (volumeBindingMode)
-
-- **`Immediate`** (default)
-  - PV is bound immediately after PVC creation
-  - Suitable for single AZ clusters
-
-- **`WaitForFirstConsumer`**
-  - Waits for Pod scheduling before binding PV
-  - Suitable for multi-AZ clusters, ensures PV is available on the Pod's node
 
 ### 3.3 Dynamic PV Path Generation Rules
 
