@@ -84,6 +84,17 @@ bin/cv mount s3://ai/xuen-test /s3 \
 You can use command line, API to access ufs directories and files after UFS is mounted, but ufs data will not be automatically synchronized to curvine unless you load specific paths.
 :::
 
+### Mounting Parameters
+
+| Parameter | Type | Default | Description | Example |
+|-----------|------|---------|-------------|---------|
+| `--ttl-ms` | duration | `0` | Cache data expiration time | `24h`, `7d`, `30d` |
+| `--ttl-action` | enum | `none` | Expiration policy: `delete`/`none` | `delete` |
+| `--replicas` | int | `1` | Number of data replicas (1-5) | `3` |
+| `--block-size` | size | `128MB` | Cache block size | `64MB`, `128MB`, `256MB` |
+| `--consistency-strategy` | enum | `always` | Consistency strategy | `none`/`always`/`period` |
+| `--storage-type` | enum | `disk` | Storage medium type | `mem`/`ssd`/`disk` |
+
 ### Mount Modes
 #### Write Cache
 WriteType controls the write behavior between Curvine cache and underlying storage (UFS)
@@ -110,8 +121,9 @@ After UFS is mounted, Curvine provides a unified file system view, and you can a
 Clients, command line tools, fuse, etc. can all access the UFS file system through a unified path.
 
 :::tip
-Curvine does not cache UFS metadata, so there is no data consistency issue when accessing. Accessing UFS through Curvine is no different from accessing UFS directly.
+- Curvine does not cache UFS metadata, so there is no data consistency issue when accessing. Accessing UFS through Curvine is no different from accessing UFS directly.
 When Curvine cache data read fails, it automatically falls back to reading data from UFS.
+- If using the cv command, you can use the cache-only parameter to temporarily disable unified access to view files only cached in curvine. See [fsSubcommand](../2-Operations/02-cli.md#3-fs-subcommand)subcommand for details.
 :::
 
 ## Disabling Unified Access

@@ -8,7 +8,7 @@ This chapter introduces how to quickly start a Curvine cluster and perform read/
 
 ## Download Release Binary Package
 
-Download the pre-compiled Curvine package from https://github.com/CurvineIO/curvine/releases. Currently, only x86 environments based on Rocky9 are provided. For other environments, you need to compile from source. Refer to [Download and Compile Curvine](./2-Deploy-Curvine-Cluster/1-Preparation/02-compile.md).
+Download the pre-compiled Curvine package from https://github.com/CurvineIO/curvine/releases . Currently, only x86 environments based on Rocky9 are provided. For other environments, you need to compile from source. Refer to [Download and Compile Curvine](./2-Deploy-Curvine-Cluster/1-Preparation/02-compile.md).
 
 The directory structure after extraction is as follows:
 ```
