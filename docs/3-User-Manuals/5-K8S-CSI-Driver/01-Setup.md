@@ -440,7 +440,7 @@ Static PV is used to mount existing data directories in Curvine, suitable for th
 flowchart LR
     Start[Curvine cluster has existing data] --> CreatePV[Administrator creates PV<br/>specifying curvine-path]
     CreatePV --> CreatePVC[User creates PVC<br/>binds to specified PV]
-    CreatePVC --> MountPod[Pod mounts PVC]
+    CreatePVC --> StandalonePod[Pod mounts PVC]
     
     %% Styles
     classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
@@ -451,7 +451,7 @@ flowchart LR
     class Start storageStyle
     class CreatePV adminStyle
     class CreatePVC userStyle
-    class MountPod appStyle
+    class StandalonePod appStyle
 ```
 
 ### 4.2 Create Static PV
@@ -559,7 +559,7 @@ flowchart LR
     CreatePVC[User creates PVC<br/>specifying StorageClass] --> AutoCreatePV[CSI Provisioner<br/>automatically creates PV]
     AutoCreatePV --> GenPath[Auto-generates Curvine path<br/>fs-path + pv-name]
     GenPath --> AutoBind[PVC automatically binds to PV]
-    AutoBind --> MountPod[Pod mounts PVC for use]
+    AutoBind --> StandalonePod[Pod mounts PVC for use]
     
     %% Styles
     classDef userStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
@@ -572,7 +572,7 @@ flowchart LR
     class AutoCreatePV csiStyle
     class GenPath pathStyle
     class AutoBind bindStyle
-    class MountPod appStyle
+    class StandalonePod appStyle
 ```
 
 ### 5.2 Create Dynamic PVC

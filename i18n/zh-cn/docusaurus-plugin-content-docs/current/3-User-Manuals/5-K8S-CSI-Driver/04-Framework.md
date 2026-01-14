@@ -69,16 +69,16 @@ node:
     subgraph K8sNode["🖥️ Kubernetes Node"]
         subgraph CSIPod["CSI Node Pod"]
             CSIDriver["CSI Driver<br/>gRPC Handler"]
-            MountPodCtrl["MountPod<br/>Controller"]
+            StandalonePodCtrl["StandalonePod<br/>Controller"]
         end
         
-        subgraph MountPods["MountPod Layer"]
-            subgraph MP1["MountPod-1 (privileged)"]
+        subgraph StandalonePods["StandalonePod Layer"]
+            subgraph MP1["StandalonePod-1 (privileged)"]
                 FUSE1["curvine-fuse<br/>Process"]
                 MNT1["/mnt/curvine/<br/>cluster-A"]
             end
             
-            subgraph MP2["MountPod-2 (privileged)"]
+            subgraph MP2["StandalonePod-2 (privileged)"]
                 FUSE2["curvine-fuse<br/>Process"]
                 MNT2["/mnt/curvine/<br/>cluster-B"]
             end
@@ -103,10 +103,10 @@ node:
         end
     end
     
-    %% CSI Pod manages MountPods
-    CSIDriver --> MountPodCtrl
-    MountPodCtrl -->|"Create/Delete"| MP1
-    MountPodCtrl -->|"Create/Delete"| MP2
+    %% CSI Pod manages StandalonePods
+    CSIDriver --> StandalonePodCtrl
+    StandalonePodCtrl -->|"Create/Delete"| MP1
+    StandalonePodCtrl -->|"Create/Delete"| MP2
     
     %% FUSE processes connect to clusters
     FUSE1 -.->|"gRPC"| CurvineClusterA
@@ -132,15 +132,15 @@ node:
 
     %% Styles - colors adjusted for light background
     classDef csiStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
-    classDef mountPodStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    classDef StandalonePodStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
     classDef fuseStyle fill:#ecc94b,stroke:#b7791f,color:#1a202c,stroke-width:2px
     classDef hostStyle fill:#48bb78,stroke:#276749,color:#fff,stroke-width:2px
     classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
     classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
     classDef pathStyle fill:#cbd5e0,stroke:#718096,color:#1a202c,stroke-width:1px
     
-    class CSIDriver,MountPodCtrl csiStyle
-    class MP1,MP2 mountPodStyle
+    class CSIDriver,StandalonePodCtrl csiStyle
+    class MP1,MP2 StandalonePodStyle
     class FUSE1,FUSE2 fuseStyle
     class PluginPath,ClusterA,ClusterB hostStyle
     class App1,App2 appStyle
