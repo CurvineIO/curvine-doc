@@ -423,7 +423,7 @@ parameters:
 flowchart LR
     Start[Curvine 集群已有数据] --> CreatePV[管理员创建 PV<br/>指定 curvine-path]
     CreatePV --> CreatePVC[用户创建 PVC<br/>绑定到指定 PV]
-    CreatePVC --> MountPod[Pod 挂载 PVC]
+    CreatePVC --> StandalonePod[Pod 挂载 PVC]
     
     %% Styles
     classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
@@ -434,7 +434,7 @@ flowchart LR
     class Start storageStyle
     class CreatePV adminStyle
     class CreatePVC userStyle
-    class MountPod appStyle
+    class StandalonePod appStyle
 ```
 
 ### 4.2 创建静态 PV
@@ -542,7 +542,7 @@ flowchart LR
     CreatePVC[用户创建 PVC<br/>指定 StorageClass] --> AutoCreatePV[CSI Provisioner<br/>自动创建 PV]
     AutoCreatePV --> GenPath[自动生成 Curvine 路径<br/>fs-path + pv-name]
     GenPath --> AutoBind[PVC 自动绑定到 PV]
-    AutoBind --> MountPod[Pod 挂载 PVC 使用]
+    AutoBind --> StandalonePod[Pod 挂载 PVC 使用]
     
     %% Styles
     classDef userStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
@@ -555,7 +555,7 @@ flowchart LR
     class AutoCreatePV csiStyle
     class GenPath pathStyle
     class AutoBind bindStyle
-    class MountPod appStyle
+    class StandalonePod appStyle
 ```
 
 ### 5.2 创建动态 PVC
