@@ -282,42 +282,11 @@ parameters:
 |-----|------|------|------|
 | `master-addrs` | ✅ | Curvine Master 节点地址列表，用逗号分隔 | `"10.0.0.1:8995,10.0.0.2:8995"` |
 | `fs-path` | ✅ | 动态 PV 的路径前缀，实际路径为 `fs-path + pv-name` | `"/k8s-volumes"` |
-| `path-type` | ❌ | 路径创建策略，默认 `Directory` | `"DirectoryOrCreate"` |
+| `path-type` | ❌ | 路径创建策略，默认 `Directory` | `"DirectoryOrCreate"`（路径不存在时自动创建）；`"Directory"`（路径不存在时报错） |
+| `reclaimPolicy` | ❌	| 卷删除策略，决定PV删除时如何处理底层存储 | `"Delete"`（PVC 删除时，自动删除 PV 和存储数据）；`"Retain"`（PVC 删除后，PV 保留） |
+| `volumeBindingMode` | ❌ | 卷绑定模式，控制卷绑定和调度的时机 | `"Immediate"`（PVC 创建后立即绑定 PV）；`"WaitForFirstConsumer"`（等到 Pod 调度后再绑定 PV） |
 | `io-threads` | ❌ | FUSE IO 线程数 | `"4"` |
 | `worker-threads` | ❌ | FUSE 工作线程数 | `"8"` |
-
-#### 路径创建策略 (path-type)
-
-- **`Directory`** (默认)
-  - 路径必须已存在
-  - 推荐用于生产环境
-  - 确保路径由管理员预先创建
-
-- **`DirectoryOrCreate`**
-  - 路径不存在时自动创建
-  - 适合测试和开发环境
-  - 注意权限问题
-
-#### 回收策略 (reclaimPolicy)
-
-- **`Delete`** (推荐用于动态 PV)
-  - PVC 删除时，自动删除 PV 和存储数据
-  - 适合临时数据和测试环境
-
-- **`Retain`**
-  - PVC 删除后，PV 保留
-  - 数据需要手动清理
-  - 适合重要数据保护
-
-#### 绑定模式 (volumeBindingMode)
-
-- **`Immediate`** (默认)
-  - PVC 创建后立即绑定 PV
-  - 适合单 AZ 集群
-
-- **`WaitForFirstConsumer`**
-  - 等到 Pod 调度后再绑定 PV
-  - 适合多 AZ 集群，确保 PV 在 Pod 所在节点可用
 
 ### 3.3 动态 PV 路径生成规则
 
