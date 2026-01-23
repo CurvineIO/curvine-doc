@@ -6,7 +6,7 @@ sidebar_position: 0
 本章节将介绍如何快速启动curvine集群，并且进行读写数据测试。
 
 ## 下载Release binary包
-下载预编译好的curvine包，参见 https://github.com/CurvineIO/curvine/releases， 目前仅提供基于rocky9的x86环境， 其他环境需要自行编译，参考[下载和编译curvine](./2-Deploy-Curvine-Cluster/1-Preparation/02-compile.md)
+下载预编译好的curvine包，参见 https://github.com/CurvineIO/curvine/releases ， 目前仅提供基于rocky9的x86环境， 其他环境需要自行编译，参考[下载和编译curvine](./2-Deploy-Curvine-Cluster/1-Preparation/02-compile.md)
 
 解压后的目录结构如下
 ```

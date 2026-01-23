@@ -65,10 +65,10 @@ bin/cv mount s3://bucket/data /bucket/data --mnt-type cst
 - Production environments requiring intuitive path mapping
 - Data platforms with multi-team collaboration
 
-#### 🔀 Arch Mode (Orchestration Mode)
+#### 🔀 Orch Mode (Orchestration Mode)
 ```bash
 # Flexible path mapping, supporting complex path transformations
-bin/cv mount s3://complex-bucket/deep/nested/path /simple/data --mnt-type arch
+bin/cv mount s3://complex-bucket/deep/nested/path /simple/data --mnt-type orch
 ```
 
 **Ideal scenarios**:

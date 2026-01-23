@@ -65,10 +65,10 @@ bin/cv mount s3://bucket/data /bucket/data --mnt-type cst
 - 需要直观路径映射的生产环境
 - 多团队协作的数据平台
 
-#### 🔀 Arch 模式（编排模式）
+#### 🔀 Orch 模式（编排模式）
 ```bash
 # 灵活路径映射，支持复杂的路径变换
-bin/cv mount s3://complex-bucket/deep/nested/path /simple/data --mnt-type arch
+bin/cv mount s3://complex-bucket/deep/nested/path /simple/data --mnt-type orch
 ```
 
 **适用场景**:
