@@ -65,6 +65,10 @@ Use `cv fs` subcommand to execute hdfs commands. The `fs` subcommand provides ma
 | bin/cv fs mv src/path dst/path | Rename file or move file to target path |
 | bin/cv fs blocks /file | Display file block information |
 
+:::tip
+The `--cache-only` parameter can be used with all cv fs subcommands to view files only cached in curvine. This parameter only affects the current command execution.
+:::
+
 Specifically, the `cv fs ls` subcommand supports `hdfs`-like parameters, including:
 
 | Parameter | Description |

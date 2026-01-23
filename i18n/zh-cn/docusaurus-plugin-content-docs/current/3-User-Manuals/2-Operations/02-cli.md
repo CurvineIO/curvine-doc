@@ -64,6 +64,9 @@ Options:
 | bin/cv fs mv src/path dst/path| rename文件或者移动文件到目标路径 |
 | bin/cv fs blocks /file | 显示文件块信息 | 
 
+:::tip
+参数 `--cache-only` 可与所有 cv fs 子命令一起使用, 以查看仅缓存在curvine中的文件。该参数仅影响当前命令执行。
+:::
 
 特别的， `cv fs ls` 子命令支持了`hdfs` 类似的参数，包括:
 
