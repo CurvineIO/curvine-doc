@@ -116,4 +116,3 @@ flowchart LR
 当需要让现有应用程序无需修改即可访问 Curvine 分布式缓存时，使用 FUSE 可以将 Curvine 挂载为本地文件系统。
 - 默认挂载点
     - /curvine-fuse
-    - /var/lib/curvine-fuse （Kubernetes 环境）
