@@ -138,7 +138,7 @@ Use these to check connectivity and to scrape metrics (e.g. Prometheus).
 
 ## Debugging tools
 
-- **CLI**: `bin/cv report`, `bin/cv node`, `bin/cv fs ls ...` to inspect cluster and paths (see [CLI](../../3-User-Manuals/2-Operations/02-cli.md)).
+- **CLI**: `bin/cv report`, `bin/cv node`, `bin/cv fs ls ...` to inspect cluster and paths (see [CLI](/docs/User-Manuals/Operations/cli)).
 - **gdb**: Run the binary under gdb or attach; for core dumps, enable with `ulimit -c unlimited` and set `kernel.core_pattern` if needed.
 - **strace**: Trace system calls for the process (e.g. `strace -f -e trace=network ./lib/curvine-server --service worker --conf conf/curvine-cluster.toml`).
 

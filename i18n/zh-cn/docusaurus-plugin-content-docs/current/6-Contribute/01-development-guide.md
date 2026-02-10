@@ -66,7 +66,7 @@ sidebar_position: 1
 - **Node.js / npm**：Web UI（如 npm 9+）。
 - **Python**：3.7+（脚本与 Python SDK）。
 
-按操作系统安装步骤见 [环境初始化](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/01-prerequisites.md)。
+按操作系统安装步骤见 [环境初始化](/zh-cn/docs/Deploy/Deploy-Curvine-Cluster/Preparation/prerequisites)。
 
 ### 克隆与检查环境
 
@@ -104,7 +104,7 @@ make check-env
   make cargo ARGS='clippy --release --all-targets -- --deny warnings'
   ```
 
-更多构建方式与 Docker 构建见 [下载与编译 Curvine](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/02-compile.md)。
+更多构建方式与 Docker 构建见 [下载与编译 Curvine](/zh-cn/docs/Deploy/Deploy-Curvine-Cluster/Preparation/compile)。
 
 ## 测试
 
