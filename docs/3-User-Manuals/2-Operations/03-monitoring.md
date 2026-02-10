@@ -3,7 +3,7 @@ This chapter describes the observable monitoring metrics of Curvine, used for mo
 
 ## Metrics Collection
 
-Master, worker, fuse, and s3 gateway nod expose monitoring metrics through HTTP interfaces. These metrics can be collected by Prometheus and visualized through Grafana.
+Master, worker, FUSE, and S3 gateway nodes expose monitoring metrics through HTTP interfaces. These metrics can be collected by Prometheus and visualized through Grafana.
 
 - Master metrics: `http://URL_ADDRESS:9000/metrics`
 - Worker metrics: `http://URL_ADDRESS:9001/metrics`

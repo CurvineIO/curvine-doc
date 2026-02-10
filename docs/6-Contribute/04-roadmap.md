@@ -6,8 +6,8 @@ This roadmap outlines the goals our team is pursuing and our vision for the enti
 The evolution of Curvine in 2025 is marked by a series of major feature updates. These enhancements stem from community feedback and the latest demands in real-world scenarios, reflecting our ongoing commitment to excellence.
 
 ## Join Us
-- For existing tasks with trackable issues, you can directly comment on them in [GitHub Issues](https://github.com/curvineio/curvine/issues)
-- For open suggestions, please submit them through [GitHub Discussions](https://github.com/curvineio/curvine/discussions)
+- For existing tasks with trackable issues, you can directly comment on them in [GitHub Issues](https://github.com/CurvineIO/curvine/issues)
+- For open suggestions, please submit them through [GitHub Discussions](https://github.com/CurvineIO/curvine/discussions)
 - We are committed to developing an open-source ecosystem, and we welcome global contributors to join!
 
 ---

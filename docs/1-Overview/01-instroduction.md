@@ -206,13 +206,17 @@ Curvine is designed for high-performance, high-concurrency, and massive data cac
  &emsp; Benefiting from Rust language features, in big data shuffle acceleration scenarios, comparing resource consumption between Curvine and Alluxio in production environments shows that memory usage is reduced by over 90%, and CPU usage is reduced by over 50%.
 
 ## 🧩 Modular Architecture
-Curvine adopts a modular design and is mainly composed of the following core components：
+
+Curvine adopts a modular design and is mainly composed of the following core components (see [Development Guide](../6-Contribute/01-development-guide.md) for the full layout):
 
 - **orpc**: A high-performance network communication framework that supports asynchronous RPC calls.
 - **curvine-common**: A shared library containing protocol definitions, error handling, and common utilities.
 - **curvine-server**: A server component that includes Master and Worker implementations.
 - **curvine-client**: A client library that provides APIs for interacting with the server.
 - **curvine-fuse**: A FUSE file system interface that allows Curvine to be mounted as a local file system.
-- **curvine-libsdk**: An SDK library that supports multi - language access.
+- **curvine-libsdk**: An SDK library that supports multi-language access (Java, Python, Rust).
+- **curvine-ufs**: UFS backends (OpenDAL-based) for S3, HDFS, WebHDFS, and other storage.
+- **curvine-cli**: Command-line tool (`cv`) for mount, fs, load, report, node, and cluster management.
+- **curvine-s3-gateway**: S3-compatible object storage HTTP API.
 - **curvine-web**: A web management interface and API.
-- **curvine-tests**: A testing framework and performance benchmarking tool.
+- **curvine-tests**: Integration tests and performance benchmarking utilities (e.g. curvine-bench).

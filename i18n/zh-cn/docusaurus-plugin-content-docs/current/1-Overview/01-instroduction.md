@@ -207,13 +207,16 @@ Curvine 为高性能、高并发以及海量数据缓存设计，可以在很多
 
 ## 🧩 模块化架构
 
-Curvine 采用模块化设计，主要由以下核心组件构成：
+Curvine 采用模块化设计，主要由以下核心组件构成（完整目录见 [开发指南](../6-Contribute/01-development-guide.md)）：
 
-- **orpc**: 一个支持异步 RPC 调用的高性能网络通信框架
-- **curvine-common**: 包含协议定义、错误处理和通用工具的共享库
-- **curvine-server**: 服务端组件，包含 Master 和 Worker 实现
-- **curvine-client**: 提供与服务器交互 API 的客户端库
-- **curvine-fuse**: FUSE 文件系统接口，支持将 Curvine 挂载为本地文件系统
-- **curvine-libsdk**: 支持多语言访问的 SDK 库
-- **curvine-web**: Web 管理界面和 API
-- **curvine-tests**: 测试框架与性能基准测试工具
+- **orpc**：支持异步 RPC 的高性能网络通信框架
+- **curvine-common**：协议定义、错误处理与通用工具共享库
+- **curvine-server**：服务端，包含 Master 与 Worker 实现
+- **curvine-client**：与服务器交互的客户端库
+- **curvine-fuse**：FUSE 文件系统接口，支持挂载为本地文件系统
+- **curvine-libsdk**：多语言 SDK（Java、Python、Rust）
+- **curvine-ufs**：UFS 后端（基于 OpenDAL：S3、HDFS、WebHDFS 等）
+- **curvine-cli**：命令行工具 `cv`（mount、fs、load、report、node 等）
+- **curvine-s3-gateway**：S3 兼容对象存储 HTTP API
+- **curvine-web**：Web 管理界面与 API
+- **curvine-tests**：集成测试与压测工具（如 curvine-bench）

@@ -44,19 +44,19 @@ S3 网关作为 Curvine 系统的前端接口，将标准的 S3 API 请求转换
 
 ## 服务管理
 
-S3 网关提供了便捷的服务管理脚本，位于 `build/bin/curvine-s3-gateway.sh`。
+S3 网关在安装目录（如 `build/dist` 或解压后的发布包）下提供脚本 **`bin/curvine-s3-gateway.sh`**。以下示例均假定在该目录下执行。
 
 ### 启动服务
 
 ```bash
 # 使用默认配置启动
-./build/bin/curvine-s3-gateway.sh start
+bin/curvine-s3-gateway.sh start
 
 # 指定配置文件启动
-./build/bin/curvine-s3-gateway.sh start --conf /path/to/curvine-cluster.toml
+bin/curvine-s3-gateway.sh start --conf /path/to/curvine-cluster.toml
 
 # 指定监听地址和区域
-./build/bin/curvine-s3-gateway.sh start \
+bin/curvine-s3-gateway.sh start \
     --listen 0.0.0.0:9000 \
     --region us-west-2
 ```
@@ -65,21 +65,21 @@ S3 网关提供了便捷的服务管理脚本，位于 `build/bin/curvine-s3-gat
 
 ```bash
 # 优雅停止服务
-./build/bin/curvine-s3-gateway.sh stop
+bin/curvine-s3-gateway.sh stop
 ```
 
 ### 查看服务状态
 
 ```bash
 # 查看服务运行状态
-./build/bin/curvine-s3-gateway.sh status
+bin/curvine-s3-gateway.sh status
 ```
 
 ### 重启服务
 
 ```bash
 # 重启服务
-./build/bin/curvine-s3-gateway.sh restart
+bin/curvine-s3-gateway.sh restart
 ```
 
 ### 查看日志
@@ -200,7 +200,7 @@ S3 网关提供了完整的凭据管理功能，支持添加、生成、列出�
 
 ```bash
 # 添加新的访问凭据
-./build/bin/curvine-s3-gateway.sh credential add \
+bin/curvine-s3-gateway.sh credential add \
     --access-key AKIAEXAMPLEKEY123 \
     --secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
     --description "生产环境访问密钥"
@@ -210,7 +210,7 @@ S3 网关提供了完整的凭据管理功能，支持添加、生成、列出�
 
 ```bash
 # 生成新的随机凭据
-./build/bin/curvine-s3-gateway.sh credential generate \
+bin/curvine-s3-gateway.sh credential generate \
     --description "自动生成的测试密钥"
 ```
 
@@ -218,17 +218,17 @@ S3 网关提供了完整的凭据管理功能，支持添加、生成、列出�
 
 ```bash
 # 列出所有凭据（隐藏密钥）
-./build/bin/curvine-s3-gateway.sh credential list
+bin/curvine-s3-gateway.sh credential list
 
 # 显示完整凭据信息（包含密钥）
-./build/bin/curvine-s3-gateway.sh credential list --show-secrets
+bin/curvine-s3-gateway.sh credential list --show-secrets
 ```
 
 ### 查看缓存统计
 
 ```bash
 # 查看凭据缓存统计信息
-./build/bin/curvine-s3-gateway.sh credential stats
+bin/curvine-s3-gateway.sh credential stats
 ```
 
 ### 凭据存储
@@ -403,17 +403,17 @@ frontend s3_frontend
 
 ```bash
 # 节点 1
-./build/bin/curvine-s3-gateway.sh start \
+bin/curvine-s3-gateway.sh start \
     --conf /etc/curvine-cluster.toml \
     --listen 0.0.0.0:9900
 
 # 节点 2  
-./build/bin/curvine-s3-gateway.sh start \
+bin/curvine-s3-gateway.sh start \
     --conf /etc/curvine-cluster.toml \
     --listen 0.0.0.0:9900
 
 # 节点 3
-./build/bin/curvine-s3-gateway.sh start \
+bin/curvine-s3-gateway.sh start \
     --conf /etc/curvine-cluster.toml \
     --listen 0.0.0.0:9900
 ```
@@ -431,7 +431,7 @@ enable_distributed_auth = true
 credentials_path = "/system/auth/credentials.jsonl"
 
 # 共享多部分上传目录
-multipart_temp = "/shared/curvine-multipart"
+put_temp_dir = "/shared/curvine-temp"
 ```
 
 #### 健康检查
@@ -474,7 +474,7 @@ cache_refresh_interval_secs = 60
 1. **端口被占用**
    ```bash
    # 更换监听端口
-   ./build/bin/curvine-s3-gateway.sh start --listen 0.0.0.0:9901
+   bin/curvine-s3-gateway.sh start --listen 0.0.0.0:9901
    ```
 
 2. **认证失败**
@@ -484,10 +484,10 @@ cache_refresh_interval_secs = 60
    echo $AWS_SECRET_ACCESS_KEY
    
    # 检查凭据存储中是否存在相应凭据
-   ./build/bin/curvine-s3-gateway.sh credential list
+   bin/curvine-s3-gateway.sh credential list
    
    # 查看凭据存储路径和统计信息
-   ./build/bin/curvine-s3-gateway.sh credential stats
+   bin/curvine-s3-gateway.sh credential stats
    
    # 查看认证相关日志
    export RUST_LOG=curvine_s3_gateway::auth=debug
@@ -496,10 +496,10 @@ cache_refresh_interval_secs = 60
 3. **配置文件错误**
    ```bash
    # 验证配置文件
-   ./build/bin/curvine-s3-gateway.sh start --conf /path/to/config.toml
+   bin/curvine-s3-gateway.sh start --conf /path/to/config.toml
    
    # 使用默认配置
-   ./build/bin/curvine-s3-gateway.sh start
+   bin/curvine-s3-gateway.sh start
    ```
 
 ### 调试模式
@@ -507,11 +507,11 @@ cache_refresh_interval_secs = 60
 ```bash
 # 启用详细日志
 export RUST_LOG=debug
-./build/bin/curvine-s3-gateway.sh start
+bin/curvine-s3-gateway.sh start
 
 # 启用跟踪级别日志
 export RUST_LOG=trace
-./build/bin/curvine-s3-gateway.sh start
+bin/curvine-s3-gateway.sh start
 ```
 
 通过以上配置和优化，您可以构建 S3 网关高效的访问缓存在 Curvine 中的数据。
