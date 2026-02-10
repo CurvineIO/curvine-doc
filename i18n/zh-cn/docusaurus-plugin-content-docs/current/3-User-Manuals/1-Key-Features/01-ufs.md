@@ -1,52 +1,66 @@
 # 数据编排
-Curvine 提供 UFS（统一文件系统）视图来管理所有支持分布式存储系统，包括 s3/hdfs 等。
+
+Curvine 提供 UFS（统一文件系统）视图来管理所有支持的分布式存储系统，包括 S3、HDFS 等。
+
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
 flowchart TD
-%% 应用层
-subgraph 应用层
-App[应用]
-end
-%% UFS后端层
-subgraph UFS后端层 - curvine-ufs
-UEnum[UfsFileSystem枚举]
-OFS[Opendal文件系统]
-ODO[OpenDAL操作器]
-end
-%% 统一文件系统层
-subgraph 统一文件系统层
-UFS[统一文件系统]
-subgraph 路径解析
-GM["get_mount()"<br/>检查挂载点]
-TP["toggle_path()"<br/>转换CV ↔ UFS]
-end
-MC[挂载缓存<br/>基于TTL的缓存]
-end
-%% 外部存储层
-subgraph 外部存储
-S3[S3/OSS/COS]
-HDFS[HDFS/WebHDFS]
-Azure[Azure Blob]
-GCS[Google云存储]
-end
-%% curvine缓存层
-subgraph curvine缓存层
-CFS[curvine文件系统]
-FSC[FsClient<br/>RPC到Master]
-end
-%% 连接关系
-App --> UFS
-UFS --> GM
-UFS --> TP
-UFS --> MC
-UFS --> UEnum
-MC --> CFS
-CFS --> FSC
-UEnum --> OFS
-OFS --> ODO
-ODO --> S3
-ODO --> HDFS
-ODO --> Azure
-ODO --> GCS
+    subgraph Application_Layer["应用层"]
+        App[应用]
+    end
+
+    subgraph UFS_Backend["UFS 后端 (curvine-ufs)"]
+        UEnum[UfsFileSystem 枚举]
+        OFS[Opendal 文件系统]
+        ODO[OpenDAL 操作器]
+    end
+
+    subgraph Unified_FS["统一文件系统层"]
+        UFS[统一文件系统]
+        subgraph Path_Resolution["路径解析"]
+            GM["get_mount()"<br/>检查挂载点]
+            TP["toggle_path()"<br/>转换 CV ↔ UFS]
+        end
+        MC[挂载缓存<br/>基于 TTL 的缓存]
+    end
+
+    subgraph External_Storage["外部存储"]
+        S3[S3/OSS/COS]
+        HDFS[HDFS/WebHDFS]
+        Azure[Azure Blob]
+        GCS[Google 云存储]
+    end
+
+    subgraph Curvine_Cache["Curvine 缓存层"]
+        CFS[Curvine 文件系统]
+        FSC[FsClient<br/>RPC 到 Master]
+    end
+
+    App --> UFS
+    UFS --> GM
+    UFS --> TP
+    UFS --> MC
+    UFS --> UEnum
+    MC --> CFS
+    CFS --> FSC
+    UEnum --> OFS
+    OFS --> ODO
+    ODO --> S3
+    ODO --> HDFS
+    ODO --> Azure
+    ODO --> GCS
+
+    %% 样式（与部署架构 / 裸机部署一致）
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    classDef ufsStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef unifiedStyle fill:#38a169,stroke:#276749,color:#fff,stroke-width:2px
+    classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
+    classDef cacheStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    class App appStyle
+    class UEnum,OFS,ODO ufsStyle
+    class UFS,GM,TP,MC unifiedStyle
+    class S3,HDFS,Azure,GCS storageStyle
+    class CFS,FSC cacheStyle
 ```
 ## 挂载
 Curvine 支持通过挂载到不同的 Curvine 路径来连接多个 UFS 源。Curvine 不提供默认的 UFS 配置，这意味着如果您要从 UFS 加载数据，必须先挂载 UFS 源。
@@ -90,7 +104,7 @@ bin/cv mount s3://ai/xuen-test /s3 \
 | `--ttl-action` | enum | `none` | 过期策略：`delete`/`none` | `delete` |
 | `--replicas` | int | `1` | 数据副本数（1-5） | `3` |
 | `--block-size` | size | `128MB` | 缓存块大小 | `64MB`, `128MB`, `256MB` |
-| `--consistency-strategy` | enum | `always` | 一致性策略 | `none`/`always`/`period` |
+| `--consistency-strategy` | enum | `always` | 一致性策略 | `none` / `always` |
 | `--storage-type` | enum | `disk` | 存储介质类型 | `mem`/`ssd`/`disk` |
 
 ### 挂载模式

@@ -45,7 +45,7 @@ OpenDAL 是一个数据访问层，提供统一的 API 来访问各种存储服�
 
 ```bash
 # 挂载 S3 存储桶到本地路径
-./dist/bin/cv mount s3://flink/user /mnt/s3 \
+bin/cv mount s3://flink/user /mnt/s3 \
     -c s3.endpoint_url=http://s3v2.dg-access-test.wanyol.com \
     -c s3.region_name=cn-south-1 \
     -c s3.credentials.access=*** \
@@ -56,13 +56,13 @@ OpenDAL 是一个数据访问层，提供统一的 API 来访问各种存储服�
 
 ```bash
 # 挂载阿里云 OSS
-./dist/bin/cv mount oss://my-bucket/data /mnt/oss \
+bin/cv mount oss://my-bucket/data /mnt/oss \
     -c oss.endpoint_url=https://oss-cn-hangzhou.aliyuncs.com \
     -c oss.credentials.access_key_id=*** \
     -c oss.credentials.access_key_secret=***
 
 # 挂载 HDFS (需要特殊环境配置)
-./dist/bin/cv mount hdfs://namenode:9000/data /mnt/hdfs
+bin/cv mount hdfs://namenode:9000/data /mnt/hdfs
 ```
 
 ### Load 功能 - 加载外部数据
@@ -73,7 +73,7 @@ OpenDAL 是一个数据访问层，提供统一的 API 来访问各种存储服�
 
 ```bash
 # 从 S3 加载单个文件
-./dist/bin/cv load s3://flink/user/simple_test.txt \
+bin/cv load s3://flink/user/simple_test.txt \
     -c s3.endpoint_url=http://s3v2.dg-access-test.wanyol.com \
     -c s3.region_name=cn-south-1 \
     -c s3.credentials.access=*** \
@@ -84,13 +84,13 @@ OpenDAL 是一个数据访问层，提供统一的 API 来访问各种存储服�
 
 ```bash
 # 从 OSS 加载整个目录
-./dist/bin/cv load oss://my-bucket/datasets/ \
+bin/cv load oss://my-bucket/datasets/ \
     -c oss.endpoint_url=https://oss-cn-hangzhou.aliyuncs.com \
     -c oss.credentials.access_key_id=*** \
     -c oss.credentials.access_key_secret=***
 
 # 从 HDFS 加载
-./dist/bin/cv load hdfs://namenode:9000/data/logs/
+bin/cv load hdfs://namenode:9000/data/logs/
 ```
 
 ### 配置参数说明

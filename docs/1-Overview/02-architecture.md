@@ -4,22 +4,26 @@ This chapter provides an in-depth introduction to Curvine's technical architectu
 
 ## Architecture Overview
 
-Curvine adopts a layered distributed architecture design that ensures clear component responsibilities with excellent scalability and high availability. The entire architecture is primarily divided into three layers: control layer, compute layer, and storage layer, which collaborate to complete data storage, processing, and management tasks.
+Curvine adopts a layered distributed architecture design that ensures clear component responsibilities with excellent scalability and high availability. The entire architecture is primarily divided into three layers: **control layer** (Master), **storage layer** (Workers), and **access layer** (clients: FUSE, SDK, CLI, S3 gateway), which collaborate to complete data storage, processing, and management tasks.
 
-Curvine cache consists of three main components:
+Curvine consists of three main server-side roles plus clients and UFS:
 ![mount-arch](./img/curvine.png)
 
-**Curvine Client**: Data read/write operations are implemented by the client, which calls Curvine server-side interfaces through RPC to perform data read/write operations. The client needs to interact with both Master and Worker nodes. The client supports multiple access methods:
+**Curvine Client**: Data read/write operations are implemented by the client, which calls Curvine server-side interfaces through RPC (metadata from Master, block data from Workers). The client supports multiple access methods:
 
-- **FUSE**: Curvine mounts to servers in a POSIX-compatible manner, functioning as local storage
-- **Hadoop Java SDK**: Curvine provides Hadoop Java SDK supporting the Hadoop ecosystem
-- **Rust SDK**: Curvine provides Rust SDK supporting the Rust ecosystem
+- **FUSE**: POSIX-compatible mount, functioning as local storage
+- **Hadoop Java SDK**: Java client for the Hadoop ecosystem
+- **Rust / Python SDK**: Native SDKs for Rust and Python
+- **S3 gateway**: S3-compatible object API
+- **CLI (`cv`)**: Command-line management, mount, fs operations, load, report, node
 
-**Master**: The core control node of the system, responsible for cluster state management, task scheduling, metadata management, and other critical functions. Master achieves distributed consistency and high availability through Raft protocol without depending on external components.
+**Master**: The core control node; responsible for metadata (directory tree, file inodes, block locations), Worker registration, block allocation, and UFS mount table. Master can run as multiple nodes forming a Raft group for high availability; only the Raft leader serves metadata writes.
 
-**Worker**: Responsible for actual data storage and management, handling data read/write requests
+**Worker**: Stores block data and serves block read/write RPC; reports to Master via heartbeat. Does not hold file system metadata.
 
-**UFS**: Curvine provides users with a unified file system view through data orchestration technology.
+**UFS**: Underlying storage (S3, HDFS, etc.) accessed through Curvine’s data orchestration; Curvine provides a unified file system view over mounted UFS paths and native paths.
+
+For deployment topology and component roles, see [Deployment Architecture](../2-Deploy/2-Deploy-Curvine-Cluster/0-Deployment-Architecture.md). For internal data flow (journal, replay, client read/write), see [Basic Architecture](../5-Architecture/01-introduction.md).
 
 ## High-Performance Design
 

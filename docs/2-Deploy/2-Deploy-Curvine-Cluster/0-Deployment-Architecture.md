@@ -6,7 +6,7 @@ sidebar_position: 0
 
 Before deploying a cluster, you need to understand the roles of each Curvine component and their interaction patterns. The following diagram shows the typical deployment architecture of Curvine, divided into three layers from top to bottom:
 - **Application Layer**: Includes curvine-fuse, applications accessed via SDK, CLI management tools, etc. For details, refer to [Access Methods](../../3-User-Manuals/4-Access/01-fuse.md).
-- **Curvine Cluster Service Layer**: Consists of curvine-master and curvine-worker forming the Curvine cluster.
+- **Curvine Cluster Service Layer**: Consists of **curvine-master** (can be multiple nodes for HA, forming a Raft group) and **curvine-worker** nodes forming the Curvine cluster.
 - **UFS Cluster**: As the underlying storage backend, connected to the Curvine cluster through [mounting](../../3-User-Manuals/1-Key-Features/01-ufs.md#mounting), such as S3, HDFS, and other clusters.
 
 ```mermaid
@@ -71,7 +71,8 @@ flowchart TD
 
 ## Component Roles
 
-**Master Node**: Responsible for metadata management, worker node coordination, and load balancing
+**Master nodes** (can be multiple for high availability): Responsible for metadata management, worker node coordination, and load balancing
+- Deployed as a Raft group (one leader, multiple followers); clients talk to the current leader
 - Maintains file system metadata (directory structure, file locations, etc.)
 - Manages worker node registration and health checks
 - Handles client metadata requests
@@ -91,6 +92,8 @@ flowchart TD
 
 ## Relationship between curvine master, curvine worker, and curvine fuse
 
+Master is deployed as **multiple nodes** (Raft group). Clients and FUSE communicate with the current master leader; the diagram below shows the logical roles.
+
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
 flowchart LR
@@ -100,13 +103,17 @@ flowchart LR
         App -- POSIX System Calls --> fuse
     end
 
-    subgraph Sever_Side
-        master[curvine-master<br/>Metadata Management]
+    subgraph Server_Side["Server side (Master can be multiple nodes)"]
+        subgraph Master_Group["curvine-master (Raft group)"]
+            M1[Master 1]
+            M2[Master 2]
+            MN[Master N]
+        end
         worker[curvine-worker<br/>Data Storage]
-        master -- Coordination --> worker
+        M1 -- Coordination --> worker
     end
 
-    fuse -- RPC Communication  --> master
+    fuse -- RPC --> M1
     fuse -- Data Read/Write  --> worker
 
     %% Styles
@@ -117,7 +124,7 @@ flowchart LR
     
     class App appStyle
     class fuse fuseStyle
-    class master masterStyle
+    class M1,M2,MN masterStyle
     class worker workerStyle
 ```
 

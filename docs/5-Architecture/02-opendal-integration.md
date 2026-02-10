@@ -43,7 +43,7 @@ The `mount` feature allows mounting external storage systems into Curvine's name
 
 ```bash
 # Mount S3 bucket to local path
-./dist/bin/cv mount s3://flink/user /mnt/s3 \
+bin/cv mount s3://flink/user /mnt/s3 \
     -c s3.endpoint_url=http://s3v2.dg-access-test.wanyol.com \
     -c s3.region_name=cn-south-1 \
     -c s3.credentials.access=*** \
@@ -54,13 +54,13 @@ The `mount` feature allows mounting external storage systems into Curvine's name
 
 ```bash
 # Mount Alibaba Cloud OSS
-./dist/bin/cv mount oss://my-bucket/data /mnt/oss \
+bin/cv mount oss://my-bucket/data /mnt/oss \
     -c oss.endpoint_url=https://oss-cn-hangzhou.aliyuncs.com \
     -c oss.credentials.access_key_id=*** \
     -c oss.credentials.access_key_secret=***
 
 # Mount HDFS (requires special environment setup)
-./dist/bin/cv mount hdfs://namenode:9000/data /mnt/hdfs
+bin/cv mount hdfs://namenode:9000/data /mnt/hdfs
 ```
 
 ### Load Feature - Loading External Data
@@ -71,7 +71,7 @@ The `load` feature allows directly loading data from external storage into Curvi
 
 ```bash
 # Load single file from S3
-./dist/bin/cv load s3://flink/user/simple_test.txt \
+bin/cv load s3://flink/user/simple_test.txt \
     -c s3.endpoint_url=http://s3v2.dg-access-test.wanyol.com \
     -c s3.region_name=cn-south-1 \
     -c s3.credentials.access=*** \
@@ -82,13 +82,13 @@ The `load` feature allows directly loading data from external storage into Curvi
 
 ```bash
 # Load entire directory from OSS
-./dist/bin/cv load oss://my-bucket/datasets/ \
+bin/cv load oss://my-bucket/datasets/ \
     -c oss.endpoint_url=https://oss-cn-hangzhou.aliyuncs.com \
     -c oss.credentials.access_key_id=*** \
     -c oss.credentials.access_key_secret=***
 
 # Load from HDFS
-./dist/bin/cv load hdfs://namenode:9000/data/logs/
+bin/cv load hdfs://namenode:9000/data/logs/
 ```
 
 ### Configuration Parameters

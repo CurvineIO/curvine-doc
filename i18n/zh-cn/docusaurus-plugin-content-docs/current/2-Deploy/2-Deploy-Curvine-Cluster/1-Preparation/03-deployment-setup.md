@@ -39,19 +39,19 @@ curvine没有最小资源要求，使用很小的资源就支撑极高的并发�
 
 ## 创建安装包
 
-编译软件安装包，如何编译可以参考[快速开始](../../1-quick-start.md)。
+编译并打包。编译步骤见 [下载和编译 Curvine](./02-compile.md)。
 
-执行如下命令，创建一个安装包：
-``` 
+在项目根目录执行：
+```bash
 make dist
 ```
-编译成功后，会在项目根目录生成一个tar.gz包，这个文件就是curvine的安装包。
-可以用这个安装包部署或者构建镜像。
+该命令会先执行 `make all`（如尚未编译），再将 `build/dist` 打成一个 tar.gz，生成在**项目根目录**，文件名形如 `curvine-<平台>-<架构>-<时间戳>.tar.gz`；若设置 `RELEASE_VERSION`（如 `RELEASE_VERSION=v1.0.0 make dist`），则形如 `curvine-<版本>-<平台>-<架构>.tar.gz`。该压缩包即为用于部署或构建运行时镜像的安装包。
 
 ## 配置文件修改
-环境变量配置文件在conf/curvine-env.sh，这个文件是一个bash脚本，用于配置curvine的环境变量。
-需要修改的环境变量为 LOCAL_HOSTNAME，该环境变量非常重要，用于指定curvine的主机名，curvine集群需要依靠它识别集群成员。
-建议修改为本机hostname：
+
+解压安装包后（或直接使用 `build/dist` 时），环境脚本在 `conf/curvine-env.sh`，主配置在 `conf/curvine-cluster.toml`。（源码树中模板在 `etc/`，构建时会复制到 `build/dist/conf`。）
+
+必须正确设置的环境变量是 **`LOCAL_HOSTNAME`**（或下文覆盖项），集群依赖其识别成员。建议设为本机 hostname：
 ```
 export LOCAL_HOSTNAME=$(hostname)
 ```
@@ -118,7 +118,7 @@ file_name = "curvine.log"
 ```
 
 :::danger
-journal配置的master_addrs的hostname，一定要和master启动的hostname保持一致， 否则会无法启动
+**journal_addrs** 中每条配置的 hostname 必须与该 master 进程启动时本机 hostname（或 `LOCAL_HOSTNAME`）一致，否则该 master 无法加入 Raft 组。
 :::
 
 如果需要使用java hadoop 客户端，修改curvine-site.xml中fs.cv.master_addrs值，示例如下：

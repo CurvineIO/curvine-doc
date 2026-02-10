@@ -20,13 +20,14 @@ The directory structure after extraction is as follows:
 └── webui
 ```
 
-Execute 
-```
-export CURVINE_MASTER_HOSTNAME=localhost # Can also be set to an IP address.
+From the **extracted package directory** (the one containing `bin/`, `conf/`, `lib/`), run:
+
+```bash
+export CURVINE_MASTER_HOSTNAME=localhost   # Or your machine hostname / IP for production.
 ./bin/restart-all.sh
 ```
 
-to start all services on a single machine, including:
+This starts all services on a single machine, including:
 - curvine-master
 - curvine-worker
 - curvine-fuse
@@ -38,7 +39,7 @@ to start all services on a single machine, including:
 If you are setting up in a k8s or other container environment, please ensure that the container's hostname is resolvable or accessible.
 :::
 
-By default, FUSE is mounted under the `/curvine-fuse` path. For service status monitoring, refer to [Standalone Mode](2-Deploy-Curvine-Cluster/2-Standalone-Mode.md).
+By default, FUSE is mounted under the `/curvine-fuse` path. For service status monitoring, refer to [Standalone Mode](./2-Deploy-Curvine-Cluster/2-Standalone-Mode.md).
 
 ## Read/Write Data Testing
 

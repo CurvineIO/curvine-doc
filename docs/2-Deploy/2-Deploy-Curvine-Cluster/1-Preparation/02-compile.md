@@ -15,7 +15,8 @@ This chapter introduces how to download and compile Curvine.
 | **RHEL 9**          | ≥5.14.0            | 9.5            | fuse3-3.10.2 |
 | **Ubuntu 22**       | ≥5.15.0            | 22.4           | fuse3-3.10.5 |
 
-Download the source code:
+Download the source code (clone into an empty directory, or use a new folder name in place of `./`):
+
 ```bash
 git clone https://github.com/CurvineIO/curvine.git ./
 ```
@@ -23,60 +24,40 @@ git clone https://github.com/CurvineIO/curvine.git ./
 ## Local Compilation
 
 :::warning
-Please ensure that the prerequisite dependencies are installed and configured in the environment variables. For the installation process of related environment dependencies, you can refer to the [Environment Initialization Tutorial](./01-prerequisites.md)
-
-or
-
-[Docker Environment Initialization](https://github.com/CurvineIO/curvine/blob/main/curvine-docker/compile/Dockerfile_rocky9)
+Please ensure that the prerequisite dependencies are installed and configured. See the [Environment Initialization Tutorial](./01-prerequisites.md) or the [Dockerfile for a reference environment](https://github.com/CurvineIO/curvine/blob/main/curvine-docker/compile/Dockerfile_rocky9).
 :::
 
-Then, use the make command for full compilation. The compiled results are located in `build/dist`:
+Optional: check that the build environment is ready:
+
+```bash
+make check-env
+```
+
+Then build. The compiled output is under `build/dist` (contains `bin/`, `conf/`, `lib/`, etc.—the same layout used for deployment):
+
 ```bash
 make all
 ```
 
-:::note
-For more make parameters, you can type `make` or `make help` to view, as shown below:
+You can also call the build script directly (e.g. to see all options):
+
 ```bash
-Environment:
-  make check-env                   - Check build environment dependencies
-
-Building:
-  make build ARGS='<args>'         - Build with specific arguments passed to build.sh
-  make all                         - Same as 'make build'
-  make format                      - Format code using pre-commit hooks
-
-Docker:
-  make docker-build                - Build using Docker compilation image
-  make docker-build-cached         - Build using cached Docker compilation image
-  make docker-build-img            - Build compilation Docker image (interactive)
-
-CSI (Container Storage Interface):
-  make csi-build                   - Build curvine-csi Go binary
-  make csi-run                     - Run curvine-csi from source
-  make csi-docker-build            - Build curvine-csi Docker image
-  make csi-docker-push             - Push curvine-csi Docker image
-  make csi-docker                  - Build and push curvine-csi Docker image
-  make csi-docker-fast             - Build curvine-csi Docker image quickly (no push)
-  make csi-fmt                     - Format curvine-csi Go code
-  make csi-vet                     - Run go vet on curvine-csi code
-
-Other:
-  make cargo ARGS='<args>'         - Run arbitrary cargo commands
-  make help                        - Show this help message
-
-Parameters:
-  ARGS='<args>'  - Additional arguments to pass to build.sh
-
-Examples:
-  make build                                  - Build entire project in release mode
-  make build ARGS='-d'                       - Build entire project in debug mode
-  make build ARGS='-p server -p client'       - Build only server and client components
-  make build ARGS='-p object'                  - Build S3 object gateway
-  make build ARGS='--package core --ufs s3'   - Build core packages with S3 native SDK
-  make cargo ARGS='test --verbose'            - Run cargo test with verbose output
-  make csi-docker-fast                        - Build curvine-csi Docker image quickly
+sh build/build.sh          # build all (release)
+sh build/build.sh -h       # show help and package/ufs options
+sh build/build.sh -p core  # build only server, client, cli
 ```
+
+To create a distribution archive for deployment, see [Deployment Preparation](./03-deployment-setup.md#create-installation-package) (`make dist`).
+
+:::note
+More make targets: run `make` or `make help`. Summary:
+
+- **Environment:** `make check-env` — Check build dependencies (also run automatically by `make build`).
+- **Building:** `make build` / `make all` — Build; output in `build/dist`. `make dist` — Build and create tar.gz in project root. `make dist-only` — Package existing `build/dist` only.
+- **Partial builds:** `make build ARGS='-p core'` (server+client+cli), `make build ARGS='-p core -p fuse'`, `make build ARGS='-p object'` (S3 gateway), `make build ARGS='-d'` (debug). Use `make build-hdfs` for HDFS support (native + WebHDFS); `make build ARGS='--skip-java-sdk'` to skip Java SDK.
+- **Docker:** `make docker-build` — Build **runtime** image from source. `make docker-build-compile` — Build compilation image (interactive). `make docker-compile` — Compile in container, output to local `build/dist`.
+- **CSI:** `make curvine-csi` — Build curvine-csi Docker image.
+- **Example:** `RELEASE_VERSION=v1.0.0 make dist` — Build and package with a version tag.
 :::
 
 ## Docker Compilation
@@ -87,59 +68,62 @@ If your system environment is macOS or Windows, or your Linux version is not in 
 
 ### 1. Using Curvine-provided Compilation Images
 
-Curvine provides compilation images based on `rocky9` on DockerHub: `curvine/curvine-compile:latest`
+Curvine provides compilation images on Docker Hub: `curvine/curvine-compile:latest` (and optionally `curvine/curvine-compile:build-cached` with cached dependencies).
 
 :::tip
-We recommend using the curvine-compile image as a sandbox development environment, where both compilation and execution run within Docker containers.
+Use the compile image as a sandbox: run compilation (and optionally execution) inside the container, with the repo mounted at `/workspace`.
 :::
 
-For a quick try, you only need to execute:
+**Option A — Compile in container, output to local `build/dist`:**
 ```bash
-make docker-build 
+make docker-compile
 ```
+(Uses image `curvine/curvine-compile:build-cached`; result appears in `build/dist`.)
 
-**Persistent Development Container**
+**Option B — Persistent development container:**
 ```bash
-cd curvine
 docker run -itd --name curvine-compile \
   -u root --privileged=true \
-  -v .:/workspace \
-  -w /workspace \
+  -v $(pwd):/workspace -w /workspace \
   --network host \
   curvine/curvine-compile:latest /bin/bash
 
-# The container runs in the background, you can attach directly later
 docker exec -it curvine-compile /bin/bash
+# inside container: make all
 ```
 
 ### 2. Advanced: Build Your Own Compilation Image
 
 :::tip
-If you encounter network environment issues or cannot conveniently use the official Docker images, you can choose to build your own compilation image locally.
+If you cannot use the official images (e.g. network restrictions), build the compilation image locally from the Dockerfiles in `curvine-docker/compile`.
 :::
 
-The downloaded code includes various Dockerfiles for building compilation images in the `curvine-docker/compile` directory. You can choose the appropriate file to build a compilation image. Here's an example using Rocky9 to build a compilation image and start a container for compilation:
+Available Dockerfiles under `curvine-docker/compile/`:
+
+- **Dockerfile_rocky9** — Rocky Linux 9 (recommended baseline)
+- **Dockerfile_rocky9_cached** — Rocky 9 with dependency cache (faster rebuilds)
+- **Dockerfile_ubuntu22** — Ubuntu 22.04
+- **Dockerfile_ubuntu24** — Ubuntu 24.04
+- **Dockerfile_amzn2** — Amazon Linux 2
+
+From the **project root**:
 
 ```bash
-cd curvine/curvine-docker/compile
+# Build the compilation image (choose one Dockerfile)
+docker build -f curvine-docker/compile/Dockerfile_rocky9 -t curvine-compile:rocky9 curvine-docker/compile
 
-docker build -f curvine-docker/compile/Dockerfile_rocky9 -t curvine-compile:rocky9 .
-
-cd ../..
-
+# Run container and compile
 docker run -itd --name curvine-compile \
   -u root --privileged=true \
-  -v .:/workspace \
-  -w /workspace \
+  -v $(pwd):/workspace -w /workspace \
   --network host \
-  curvine-compile:rock9:latest /bin/bash
+  curvine-compile:rocky9 /bin/bash
 
-# After entering the container
-make all
-
-# The container runs in the background, you can attach directly later
-# docker exec -it curvine-compile /bin/bash
+docker exec -it curvine-compile /bin/bash
+# inside: make all
 ```
+
+Compiled output is in `build/dist` inside the container (and on the host if you mounted the repo).
 
 :::warning
 If there are significant differences between your compilation image's OS version and the host machine's OS version, or they are not from the same distribution, the Docker-compiled artifacts may not run directly on the host machine due to libc or ABI incompatibilities.

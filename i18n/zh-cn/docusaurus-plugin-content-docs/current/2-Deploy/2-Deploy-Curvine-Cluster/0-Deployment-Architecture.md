@@ -5,7 +5,7 @@ sidebar_position: 0
 # 部署架构
 在部署集群之前，您需要了解清楚curvine各个组件的作用，以及交互模式。下图展示了curvine的典型部署架构，自上而下分为三层：
 - 应用层：包括 curvine-fuse、通过 SDK 接入的应用、CLI 运维工具等。详细内容请参考[接入方式](../../3-User-Manuals/4-Access/01-fuse.md)。
-- curvine集群服务层：由 curvine-master 和 curvine-worker 组成 curvine 集群。
+- **Curvine 集群服务层**：由 **curvine-master**（可多节点部署形成 Raft 组，实现高可用）与 **curvine-worker** 节点共同组成 Curvine 集群。
 - UFS集群作为底层存储后端通过[挂载](../../3-User-Manuals/1-Key-Features/01-ufs.md#挂载)的方式接入到curvine集群上，比如S3、HDFS等集群
 
 ```mermaid
@@ -66,11 +66,12 @@ flowchart TD
     class S3Bucket,HDFSCluster storageStyle
 ```
 ## 组件作用
-**Master节点**：负责元数据管理、工作节点协调和负载均衡
+**Master 节点**（可多节点部署以实现高可用）：负责元数据管理、Worker 协调与负载均衡
+- 以 Raft 组形式部署（一主多从）；客户端与当前 Leader 通信
 - 维护文件系统元数据（目录结构、文件位置等）
-- 管理Worker节点注册和健康检查
-- 处理客户端的元数据请求
-- 使用Raft共识算法确保元数据一致性
+- 管理 Worker 节点注册与健康检查
+- 处理客户端元数据请求
+- 通过 Raft 共识算法保证元数据一致性
 
 **Worker节点**：负责数据存储和处理 
 - 存储实际数据块（支持内存、SSD、HDD多级缓存）
@@ -84,21 +85,30 @@ flowchart TD
 
 **客户端库**：提供多语言API，通过RPC与Master节和Worker节点通信
 
-## curvine master, curvine worker 和 curvine fuse 的关系
+## curvine master、curvine worker 与 curvine fuse 的关系
+
+Master 以**多节点**（Raft 组）形式部署；客户端与 FUSE 与当前 Master Leader 通信。下图表示逻辑角色关系。
+
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
 flowchart LR
     subgraph 客户端层
-    App[应用程序<br/>ls,cat,cp]
-    fuse[curvine-fuse<br/>FUSE 守护进程]
-    App -- POSIX 系统调用 --> fuse
+        App[应用程序<br/>ls,cat,cp]
+        fuse[curvine-fuse<br/>FUSE 守护进程]
+        App -- POSIX 系统调用 --> fuse
     end
-    subgraph 服务端
-    master[curvine-master<br/>元数据管理]
-    worker[curvine-worker<br/>数据存储]
-    master -- 协调 --> worker
+
+    subgraph 服务端["服务端（Master 可为多节点）"]
+        subgraph Master组["curvine-master（Raft 组）"]
+            M1[Master 1]
+            M2[Master 2]
+            MN[Master N]
+        end
+        worker[curvine-worker<br/>数据存储]
+        M1 -- 协调 --> worker
     end
-    fuse -- RPC 通信 --> master
+
+    fuse -- RPC --> M1
     fuse -- 数据读写 --> worker
 
     %% Styles
@@ -109,7 +119,7 @@ flowchart LR
     
     class App appStyle
     class fuse fuseStyle
-    class master masterStyle
+    class M1,M2,MN masterStyle
     class worker workerStyle
 ```
 ## curvine fuse 使用场景

@@ -46,7 +46,7 @@ io.curvine.bench.CurvineBenchV2 \
 -fileSize 100mb \
 -fileNum 10000 \
 -checksum true \
--clearDir fasle
+-clearDir false
 ```
 
 ## Client Test Results

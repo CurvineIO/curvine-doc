@@ -4,35 +4,57 @@ sidebar_position: 2
 
 # Benchmark Guide
 
-This guide provides instructions for running performance benchmarks on Curvine.
+This guide describes how to run the benchmarks and performance tests provided in the Curvine repository. Scripts and tools are under `build/` and `build/tests/` in the [Curvine source repo](https://github.com/CurvineIO/curvine).
 
 ## Overview
 
-Curvine provides several benchmarking tools to evaluate performance across different scenarios:
+- **Metadata benchmark**: Java-based metadata operations (NNBench-style), script `build/tests/meta-bench.sh`.
+- **Throughput benchmark**: Rust client or FUSE read/write via `build/tests/curvine-bench.sh`; Java client via `build/tests/java-bench.sh`.
+- **FIO benchmark**: FIO against the FUSE mount, script `build/tests/fio-test.sh`.
 
-- **Meta Benchmark**: Tests metadata operations performance
-- **Concurrent Benchmark**: Tests concurrent read/write performance
-- **FIO Benchmark**: Tests filesystem performance using FIO tool
+A running Curvine cluster (Master + Worker; FUSE optional for FUSE benchmarks) is required. Build first with `make all`, then run scripts from `build/dist/` or set `CURVINE_HOME` to the installation directory.
 
 ## Prerequisites
 
-- Curvine cluster deployed and running
-- Test data prepared
-- Benchmark tools compiled
+- Curvine cluster running (see [Quick Start](../../2-Deploy/1-quick-start.md) or [Bare Metal Deployment](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/02-Bare-Metal-Deployment.md)).
+- Config at `conf/curvine-cluster.toml`. For metadata/Java benchmarks: Java and Maven; `lib/curvine-hadoop-*shade.jar` (built with Java SDK).
 
 ## Running Benchmarks
 
-### Metadata Performance Test
+### Metadata performance (meta-bench)
 
-Refer to the [Metadata Performance Testing](../4-Benchmark/01-meta.md) documentation for detailed instructions.
+Script: `build/tests/meta-bench.sh`. Runs Java class `io.curvine.bench.NNBenchWithoutMR` (createWrite, openRead, rename, delete, rmdir). From repo root with `CURVINE_HOME` set to installation (e.g. `build/dist`):
 
-### Concurrent Performance Test
+```bash
+build/tests/meta-bench.sh createWrite   # or openRead, rename, delete, rmdir
+```
 
-Refer to the [Concurrent Performance Testing](../4-Benchmark/02-concurrent.md) documentation for detailed instructions.
+See [Metadata Performance Testing](../../4-Benchmark/01-meta.md) for details and results.
 
-### FIO Performance Test
+### Throughput (curvine-bench, java-bench)
 
-Refer to the [FIO Performance Testing](../4-Benchmark/03-fio.md) documentation for detailed instructions.
+**Rust client**: `bin/curvine-bench.sh` runs `lib/curvine-bench`:
+
+```bash
+bin/curvine-bench.sh fs.write /fs-bench
+bin/curvine-bench.sh fs.read /fs-bench
+bin/curvine-bench.sh fuse.write /curvine-fuse/fs-bench
+bin/curvine-bench.sh fuse.read /curvine-fuse/fs-bench
+```
+
+**Java client**: `bin/java-bench.sh` uses `io.curvine.bench.CurvineBenchV2` with `lib/curvine-hadoop-*shade.jar`.
+
+See [Concurrent Performance Testing](../../4-Benchmark/02-concurrent.md) for parameters and examples.
+
+### FIO (fio-test)
+
+Script: `build/tests/fio-test.sh`. Runs FIO against the FUSE mount path (default `/curvine-fuse/fio-test`). FUSE must be mounted.
+
+```bash
+bin/fio-test.sh
+```
+
+See [FIO Performance Testing](../../4-Benchmark/03-fio.md) for commands and result examples.
 
 ## Best Practices
 

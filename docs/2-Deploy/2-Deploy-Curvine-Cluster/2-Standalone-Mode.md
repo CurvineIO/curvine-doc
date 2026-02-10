@@ -6,11 +6,9 @@ sidebar_position: 1
 
 This chapter introduces how to start a local cluster.
 
-Compile the software installation package. For compilation instructions, refer to [Download and Compile Curvine](1-Preparation/02-compile.md)
+Compile the software installation package. For compilation instructions, refer to [Download and Compile Curvine](1-Preparation/02-compile.md).
 
-The compiled artifacts are located in the `build/dist` directory. Start a local cluster:
-
-The compiled artifacts are located in the `build/dist` directory. Start a local cluster:
+The compiled artifacts are in `build/dist`. Start a local cluster from that directory:
 ```bash
 cd build/dist
 ./bin/restart-all.sh
