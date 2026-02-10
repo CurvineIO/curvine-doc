@@ -16,7 +16,7 @@ sidebar_position: 2
 
 ## 前置条件
 
-- Curvine 集群已运行（见 [快速开始](../../2-Deploy/1-quick-start.md) 或 [裸机部署](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/02-Bare-Metal-Deployment.md)）。
+- Curvine 集群已运行（见 [快速开始](/zh-cn/docs/Deploy/quick-start) 或 [裸机部署](/zh-cn/docs/Deploy/Deploy-Curvine-Cluster/Distributed-Mode/Bare-Metal-Deployment)）。
 - 配置文件 `conf/curvine-cluster.toml`。元数据/Java 压测需 Java 与 Maven，以及 `lib/curvine-hadoop-*shade.jar`（随 Java SDK 构建）。
 
 ## 运行压测
@@ -29,7 +29,7 @@ sidebar_position: 2
 build/tests/meta-bench.sh createWrite   # 或 openRead, rename, delete, rmdir
 ```
 
-详细步骤与结果见 [元数据性能测试](../../4-Benchmark/01-meta.md)。
+详细步骤与结果见 [元数据性能测试](/zh-cn/docs/Benchmark/meta)。
 
 ### 吞吐（curvine-bench、java-bench）
 
@@ -44,7 +44,7 @@ bin/curvine-bench.sh fuse.read /curvine-fuse/fs-bench
 
 **Java 客户端**：`bin/java-bench.sh` 使用 `io.curvine.bench.CurvineBenchV2` 与 `lib/curvine-hadoop-*shade.jar`。
 
-参数与示例见 [并发性能测试](../../4-Benchmark/02-concurrent.md)。
+参数与示例见 [并发性能测试](/zh-cn/docs/Benchmark/concurrent)。
 
 ### FIO（fio-test）
 
@@ -54,7 +54,7 @@ bin/curvine-bench.sh fuse.read /curvine-fuse/fs-bench
 bin/fio-test.sh
 ```
 
-命令与结果示例见 [FIO 性能测试](../../4-Benchmark/03-fio.md)。
+命令与结果示例见 [FIO 性能测试](/zh-cn/docs/Benchmark/fio)。
 
 ## 建议
 

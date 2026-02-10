@@ -101,7 +101,7 @@ The client is any component that uses the Curvine file system: **FUSE**, **Rust/
 
 1. **Metadata**: The client asks the Master for file metadata and **block locations** (which Worker(s) hold which block IDs, offsets, lengths). The Master returns `FileBlocks` (file status + list of block locations).
 2. **Data**: The client reads block data from the corresponding Worker(s) via block-read RPC. It may use **parallel reads** and **read-ahead** (configurable chunk size, slice size, read-ahead length).
-3. **Cache hit**: If the path is under a Curvine-native file (not a UFS mount), data is read from Workers as above. For paths under a **UFS mount**, the [unified file system](../../3-User-Manuals/1-Key-Features/01-ufs.md) and [cache behavior](../../3-User-Manuals/1-Key-Features/02-cache.md) apply: the client may serve from Curvine cache when valid, or from UFS on cache miss (with optional automatic caching when TTL is set).
+3. **Cache hit**: If the path is under a Curvine-native file (not a UFS mount), data is read from Workers as above. For paths under a **UFS mount**, the [unified file system](/docs/User-Manuals/Key-Features/ufs) and [cache behavior](/docs/User-Manuals/Key-Features/cache) apply: the client may serve from Curvine cache when valid, or from UFS on cache miss (with optional automatic caching when TTL is set).
 
 ### Write path
 
@@ -109,7 +109,7 @@ Write behavior depends on the **mount write type** (for UFS mounts) or the nativ
 
 1. **Allocate blocks**: The client requests new blocks from the Master. The Master chooses Worker(s) (and replicas if needed), records block allocations in the journal (e.g. `AddBlock`, `CompleteFile`), and returns block locations to the client.
 2. **Write data**: The client sends block data to the assigned Worker(s) via block-write RPC. The Worker persists data to its BlockStore.
-3. **Write types** (for UFS-mounted paths, see [Data Orchestration — Mount Modes](../../3-User-Manuals/1-Key-Features/01-ufs.md#mount-modes)):
+3. **Write types** (for UFS-mounted paths, see [Data Orchestration — Mount Modes](/docs/User-Manuals/Key-Features/ufs#mount-modes)):
    - **Cache**: Data is written only to Curvine (Workers); not written to UFS.
    - **Through**: Data is written only to UFS; cache is bypassed.
    - **AsyncThrough** (default): Data is written to Curvine first (return immediately), then asynchronously synced to UFS.
@@ -129,4 +129,4 @@ For native Curvine paths (non-UFS), writes go to Workers and are recorded in the
 | **Worker** | Block storage (BlockStore/BlockDataset), block read/write RPC, heartbeat to Master. |
 | **Client** | Get metadata and block locations from Master; read/write block data from/to Workers; for UFS mounts, apply write type and cache/consistency behavior. |
 
-For deployment topology and startup order, see [Deployment Architecture](../../2-Deploy/2-Deploy-Curvine-Cluster/0-Deployment-Architecture.md). For UFS and cache semantics, see [Data Orchestration](../../3-User-Manuals/1-Key-Features/01-ufs.md) and [Cache](../../3-User-Manuals/1-Key-Features/02-cache.md).
+For deployment topology and startup order, see [Deployment Architecture](/docs/Deploy/Deploy-Curvine-Cluster/Deployment-Architecture). For UFS and cache semantics, see [Data Orchestration](/docs/User-Manuals/Key-Features/ufs) and [Cache](/docs/User-Manuals/Key-Features/cache).

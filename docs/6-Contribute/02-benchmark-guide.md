@@ -16,7 +16,7 @@ A running Curvine cluster (Master + Worker; FUSE optional for FUSE benchmarks) i
 
 ## Prerequisites
 
-- Curvine cluster running (see [Quick Start](../../2-Deploy/1-quick-start.md) or [Bare Metal Deployment](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/02-Bare-Metal-Deployment.md)).
+- Curvine cluster running (see [Quick Start](/docs/Deploy/quick-start) or [Bare Metal Deployment](/docs/Deploy/Deploy-Curvine-Cluster/Distributed-Mode/Bare-Metal-Deployment)).
 - Config at `conf/curvine-cluster.toml`. For metadata/Java benchmarks: Java and Maven; `lib/curvine-hadoop-*shade.jar` (built with Java SDK).
 
 ## Running Benchmarks
@@ -29,7 +29,7 @@ Script: `build/tests/meta-bench.sh`. Runs Java class `io.curvine.bench.NNBenchWi
 build/tests/meta-bench.sh createWrite   # or openRead, rename, delete, rmdir
 ```
 
-See [Metadata Performance Testing](../../4-Benchmark/01-meta.md) for details and results.
+See [Metadata Performance Testing](/docs/Benchmark/meta) for details and results.
 
 ### Throughput (curvine-bench, java-bench)
 
@@ -44,7 +44,7 @@ bin/curvine-bench.sh fuse.read /curvine-fuse/fs-bench
 
 **Java client**: `bin/java-bench.sh` uses `io.curvine.bench.CurvineBenchV2` with `lib/curvine-hadoop-*shade.jar`.
 
-See [Concurrent Performance Testing](../../4-Benchmark/02-concurrent.md) for parameters and examples.
+See [Concurrent Performance Testing](/docs/Benchmark/concurrent) for parameters and examples.
 
 ### FIO (fio-test)
 
@@ -54,7 +54,7 @@ Script: `build/tests/fio-test.sh`. Runs FIO against the FUSE mount path (default
 bin/fio-test.sh
 ```
 
-See [FIO Performance Testing](../../4-Benchmark/03-fio.md) for commands and result examples.
+See [FIO Performance Testing](/docs/Benchmark/fio) for commands and result examples.
 
 ## Best Practices
 

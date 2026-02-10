@@ -135,7 +135,7 @@ Clients, command line tools, fuse, etc. can all access the UFS file system throu
 :::tip
 - Curvine does not cache UFS metadata, so there is no data consistency issue when accessing. Accessing UFS through Curvine is no different from accessing UFS directly.
 When Curvine cache data read fails, it automatically falls back to reading data from UFS.
-- If using the cv command, you can use the `cache-only` parameter to temporarily disable unified access and view only files cached in Curvine. See the [fs subcommand](../2-Operations/02-cli.md#3-fs-subcommand) for details.
+- If using the cv command, you can use the `cache-only` parameter to temporarily disable unified access and view only files cached in Curvine. See the [fs subcommand](/docs/User-Manuals/Operations/cli#3-fs--file-system-operations) for details.
 :::
 
 ## Disabling Unified Access

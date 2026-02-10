@@ -101,7 +101,7 @@ Client 指使用 Curvine 文件系统的任何一方：**FUSE**、**Rust/Java/Py
 
 1. **元数据**：Client 向 Master 请求文件元数据与 **块位置**（哪些 Worker 持有哪些块 ID、偏移、长度）。Master 返回 `FileBlocks`（文件状态 + 块位置列表）。
 2. **数据**：Client 通过块读 RPC 从对应 Worker 读取块数据。可配置 **并行读** 与 **读前向**（chunk 大小、slice 大小、读前向长度）。
-3. **缓存命中**：若路径为 Curvine 原生文件（非 UFS 挂载），数据按上述方式从 Worker 读取。若路径在 **UFS 挂载** 下，则 [统一文件系统](../../3-User-Manuals/1-Key-Features/01-ufs.md) 与 [缓存行为](../../3-User-Manuals/1-Key-Features/02-cache.md) 生效：在缓存有效时从 Curvine 返回，未命中时从 UFS 读取（可配置 TTL 下的自动缓存）。
+3. **缓存命中**：若路径为 Curvine 原生文件（非 UFS 挂载），数据按上述方式从 Worker 读取。若路径在 **UFS 挂载** 下，则 [统一文件系统](/zh-cn/docs/User-Manuals/Key-Features/ufs) 与 [缓存行为](/zh-cn/docs/User-Manuals/Key-Features/cache) 生效：在缓存有效时从 Curvine 返回，未命中时从 UFS 读取（可配置 TTL 下的自动缓存）。
 
 ### 写路径
 
@@ -109,7 +109,7 @@ Client 指使用 Curvine 文件系统的任何一方：**FUSE**、**Rust/Java/Py
 
 1. **分配块**：Client 向 Master 申请新块。Master 选择 Worker（及副本），将块分配记入日志（如 `AddBlock`、`CompleteFile`），并返回块位置给 Client。
 2. **写数据**：Client 通过块写 RPC 将数据发往指定 Worker。Worker 将数据持久化到 BlockStore。
-3. **写类型**（UFS 挂载路径见 [数据编排 — 挂载模式](../../3-User-Manuals/1-Key-Features/01-ufs.md#挂载模式)）：
+3. **写类型**（UFS 挂载路径见 [数据编排 — 挂载模式](/zh-cn/docs/User-Manuals/Key-Features/ufs#挂载模式)）：
    - **Cache**：仅写入 Curvine（Worker），不写 UFS。
    - **Through**：仅写 UFS，绕过缓存。
    - **AsyncThrough**（默认）：先写 Curvine 后立即返回，再异步同步到 UFS。
@@ -129,4 +129,4 @@ Client 指使用 Curvine 文件系统的任何一方：**FUSE**、**Rust/Java/Py
 | **Worker** | 块存储（BlockStore/BlockDataset）、块读写 RPC、向 Master 心跳。 |
 | **Client** | 从 Master 获取元数据与块位置；从 Worker 读写块数据；UFS 挂载下按写类型与缓存/一致性策略执行。 |
 
-部署拓扑与启动顺序见 [部署架构](../../2-Deploy/2-Deploy-Curvine-Cluster/0-Deployment-Architecture.md)。UFS 与缓存语义见 [数据编排](../../3-User-Manuals/1-Key-Features/01-ufs.md) 与 [缓存](../../3-User-Manuals/1-Key-Features/02-cache.md)。
+部署拓扑与启动顺序见 [部署架构](/zh-cn/docs/Deploy/Deploy-Curvine-Cluster/Deployment-Architecture)。UFS 与缓存语义见 [数据编排](/zh-cn/docs/User-Manuals/Key-Features/ufs) 与 [缓存](/zh-cn/docs/User-Manuals/Key-Features/cache)。

@@ -118,7 +118,7 @@ file_name = "curvine.log"
 
 ## 调试工具
 
-- **CLI**：`bin/cv report`、`bin/cv node`、`bin/cv fs ls ...` 查看集群与路径（见 [命令行工具](../../3-User-Manuals/2-Operations/02-cli.md)）。  
+- **CLI**：`bin/cv report`、`bin/cv node`、`bin/cv fs ls ...` 查看集群与路径（见 [命令行工具](/zh-cn/docs/User-Manuals/Operations/cli)）。  
 - **gdb**：在 gdb 下运行或挂载进程；core 需先 `ulimit -c unlimited` 并设置 `kernel.core_pattern`。  
 - **strace**：跟踪系统调用（如 `strace -f -e trace=network ./lib/curvine-server --service worker --conf conf/curvine-cluster.toml`）。
 
