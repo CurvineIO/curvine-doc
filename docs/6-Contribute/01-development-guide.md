@@ -66,7 +66,7 @@ Align with the repository’s [CONTRIBUTING.md](https://github.com/CurvineIO/cur
 - **Node.js / npm**: For Web UI (e.g. npm 9+).
 - **Python**: 3.7+ for scripts and Python SDK.
 
-Detailed install steps per OS are in the doc [Environment Initialization](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/01-prerequisites.md).
+Detailed install steps per OS are in the doc [Environment Initialization](/docs/Deploy/Deploy-Curvine-Cluster/Preparation/prerequisites).
 
 ### Clone and check environment
 
@@ -112,7 +112,7 @@ make check-env
   make cargo ARGS='clippy --release --all-targets -- --deny warnings'
   ```
 
-See [Download and Compile Curvine](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/02-compile.md) for more build options and Docker-based builds.
+See [Download and Compile Curvine](/docs/Deploy/Deploy-Curvine-Cluster/Preparation/compile) for more build options and Docker-based builds.
 
 ## Test
 

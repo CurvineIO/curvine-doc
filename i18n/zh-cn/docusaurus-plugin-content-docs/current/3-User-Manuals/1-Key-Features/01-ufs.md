@@ -135,7 +135,7 @@ UFS 挂载后，Curvine 提供了一个统一的文件系统视图，您可以�
 :::tip
 - Curvine 不缓存 UFS 元数据，因此不存在访问数据一致性问题。从 Curvine访问 UFS 和直接访问 UFS 没有区别。
 当 Curvine 缓存数据读取失败时，自动回退到UFS读取数据。
-- 如果使用cv命令，可以通过cache-only参数来临时关闭统一访问，以查看仅缓存在curvine中的文件。 详见[fs子命令](../2-Operations/02-cli.md#3-fs-子命令)
+- 如果使用cv命令，可以通过cache-only参数来临时关闭统一访问，以查看仅缓存在curvine中的文件。 详见 [fs 子命令](/zh-cn/docs/User-Manuals/Operations/cli)
 :::
 
 ## 关闭统一访问
