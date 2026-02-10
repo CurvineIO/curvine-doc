@@ -1,38 +1,38 @@
 # Data Orchestration
 
-Curvine provides UFS (Unified File System) view to manage all supported distributed storage systems, including s3/hdfs etc.
+Curvine provides a UFS (Unified File System) view to manage all supported distributed storage systems, including S3, HDFS, and others.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
 flowchart TD
-    subgraph Application Layer
+    subgraph Application_Layer["Application Layer"]
         App[Application]
     end
 
-    subgraph UFS Backend Layer - curve-ufs
+    subgraph UFS_Backend["UFS Backend (curvine-ufs)"]
         UEnum[UfsFileSystem enum]
         OFS[OpendalFileSystem]
         ODO[OpenDAL Operator]
     end
 
-    subgraph Unified File System Layer
+    subgraph Unified_FS["Unified File System Layer"]
         UFS[UnifiedFileSystem]
-        
-        subgraph Path Resolution
+        subgraph Path_Resolution["Path Resolution"]
             GM["get_mount()"<br/>Check mount point]
             TP["toggle_path()"<br/>Convert CV ↔ UFS]
         end
         MC[MountCache<br/>TTL-based cache]
     end
 
-    subgraph External Storage
+    subgraph External_Storage["External Storage"]
         S3[S3/OSS/COS]
         HDFS[HDFS/WebHDFS]
         Azure[Azure Blob]
         GCS[Google Cloud Storage]
     end
 
-    subgraph Curve Cache Layer
-        CFS[CurveFileSystem]
+    subgraph Curvine_Cache["Curvine Cache Layer"]
+        CFS[CurvineFileSystem]
         FSC[FsClient<br/>RPC to Master]
     end
 
@@ -49,6 +49,18 @@ flowchart TD
     ODO --> HDFS
     ODO --> Azure
     ODO --> GCS
+
+    %% Styles (align with deployment-architecture / bare-metal)
+    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
+    classDef ufsStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef unifiedStyle fill:#38a169,stroke:#276749,color:#fff,stroke-width:2px
+    classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
+    classDef cacheStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
+    class App appStyle
+    class UEnum,OFS,ODO ufsStyle
+    class UFS,GM,TP,MC unifiedStyle
+    class S3,HDFS,Azure,GCS storageStyle
+    class CFS,FSC cacheStyle
 ```
 ## Mounting
 
@@ -92,7 +104,7 @@ You can use command line, API to access ufs directories and files after UFS is m
 | `--ttl-action` | enum | `none` | Expiration policy: `delete`/`none` | `delete` |
 | `--replicas` | int | `1` | Number of data replicas (1-5) | `3` |
 | `--block-size` | size | `128MB` | Cache block size | `64MB`, `128MB`, `256MB` |
-| `--consistency-strategy` | enum | `always` | Consistency strategy | `none`/`always`/`period` |
+| `--consistency-strategy` | enum | `always` | Consistency strategy | `none` / `always` |
 | `--storage-type` | enum | `disk` | Storage medium type | `mem`/`ssd`/`disk` |
 
 ### Mount Modes
@@ -123,7 +135,7 @@ Clients, command line tools, fuse, etc. can all access the UFS file system throu
 :::tip
 - Curvine does not cache UFS metadata, so there is no data consistency issue when accessing. Accessing UFS through Curvine is no different from accessing UFS directly.
 When Curvine cache data read fails, it automatically falls back to reading data from UFS.
-- If using the cv command, you can use the cache-only parameter to temporarily disable unified access to view files only cached in curvine. See [fsSubcommand](../2-Operations/02-cli.md#3-fs-subcommand)subcommand for details.
+- If using the cv command, you can use the `cache-only` parameter to temporarily disable unified access and view only files cached in Curvine. See the [fs subcommand](../2-Operations/02-cli.md#3-fs-subcommand) for details.
 :::
 
 ## Disabling Unified Access

@@ -19,13 +19,14 @@ sidebar_position: 0
 ```
 
 
-执行 
-```
-export CURVINE_MASTER_HOSTNAME=localhost # 也可以设置为ip。
-./bin/restart-all.sh
-````
+在**解压后的目录**（包含 `bin/`、`conf/`、`lib/` 的目录）下执行：
 
-便可以在单机上启动所有的服务，包括
+```bash
+export CURVINE_MASTER_HOSTNAME=localhost   # 生产环境可改为本机 hostname 或 IP
+./bin/restart-all.sh
+```
+
+即可在单机上启动所有服务，包括
 - curvine-master
 - curvine-worker
 - curvine-fuse
@@ -37,7 +38,7 @@ export CURVINE_MASTER_HOSTNAME=localhost # 也可以设置为ip。
 如果您是在k8s等容器环境下设置，请一定要确认容器的hostname是可解析或者可访问的
 :::
 
-默认fuse挂载在`/curvine-fuse` 路径下,  服务状态监测可以参考[单机模式](2-Deploy-Curvine-Cluster/2-Standalone-Mode.md)
+默认 FUSE 挂载在 `/curvine-fuse`。服务状态监测见 [单机模式](./2-Deploy-Curvine-Cluster/2-Standalone-Mode.md)。
 
 ## 读写数据
 curvine提供了benchmark工具，用于测试curvine的读写性能；在快速开始中，我们可以借助这些脚本进行读写数据测试。

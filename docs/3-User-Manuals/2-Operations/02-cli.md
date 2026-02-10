@@ -1,185 +1,356 @@
 # Command Line Tools
 
-This section introduces the command-line tools supported by Curvine and their usage methods. Curvine provides native command-line tool `cv`, as well as hdfs-compatible command-line tool `curvine` (deprecated). Additionally, Curvine implements POSIX-standard FUSE interface, allowing direct access to Curvine filesystem through standard Linux commands after mounting Curvine in the system.
+This section describes the command-line tools supported by Curvine and how to use them. Curvine provides:
 
-## Rust Native Command Line Tool `cv`
-You can directly execute `cv` command to get help:
+- **Native CLI `cv`**: The main Rust-based CLI (recommended). The binary is typically invoked as `bin/cv` from the distribution directory (e.g. `build/dist/bin/cv`).
+- **HDFS-compatible CLI `curvine`**: Deprecated; prefer `cv` for new usage.
+- **POSIX / FUSE**: After mounting Curvine via FUSE, you can use standard Linux commands (`ls`, `cp`, `mv`, etc.) on the mount point.
+
+All `cv` commands accept optional global options:
+
+| Global option | Description |
+|---------------|-------------|
+| `-c, --conf <PATH>` | Configuration file path (optional). Default can be set via `CURVINE_CONF_FILE`. |
+| `--master-addrs <ADDRS>` | Master address list, e.g. `m1:8995,m2:8995`. |
+
+---
+
+## Rust native CLI: `cv`
+
+Get a quick overview with:
+
 ```bash
-Usage: curvine-cli <COMMAND>
+cv --help
+```
+
+Example output:
+
+```
+Usage: cv [OPTIONS] <COMMAND>
 
 Commands:
-  fs
-  report
-  load         Loading external files into Curvine
-  load-status  Query loading task status
-  cancel-load  Cancel loading task
-  mount        mount ufs to curvine
-  umount       unmount ufs
-  node         Node command
-  version      show cli version
-  help         Print this message or the help of the given subcommand(s)
-
-Options:
-  -h, --help     Print help
-  -V, --version  Print version
+  fs           File system operations
+  report       Cluster status and capacity
+  load         Load data from UFS into Curvine
+  load-status  Query load job status
+  cancel-load  Cancel a load job
+  mount        Mount UFS path to Curvine
+  umount       Unmount UFS from Curvine
+  node         Manage worker nodes (list, decommission)
+  version      Show CLI version
+  help         Print help
 ```
 
-### 1. `report` Subcommand
+Use `cv <command> --help` for subcommand-specific options.
 
-Use `cv report` subcommand to view cluster status, `cv report -h` to view available parameters.
+**Conventions:** In this doc the CLI is referred to as `cv` (the name of the binary in the distribution, e.g. `build/dist/bin/cv`). When run via `cargo run -p curvine-cli`, the program name in help may appear as `curvine-cli`. Arguments in angle brackets (e.g. `<PATH>`, `<JOB_ID>`) are positional; optional parts are in square brackets.
 
-| Command Format                 | Description                                    |
-|-------------------------------|------------------------------------------------|
-| bin/cv report            | Output cluster summary information             |
-| bin/cv json         | Output detailed cluster information in JSON format                    |
-| bin/cv report capacity | Output cluster summary and detailed capacity information for each worker |
-| bin/cv report used    | Output used capacity information for each worker          |
-| bin/cv report available    | Output available capacity information for each worker          |
+---
 
-### 2. `node` Subcommand
+### 1. `report` — Cluster status
 
-Use `cv node` subcommand to manage workers in the cluster, `cv node -h` to view available parameters.
+**Usage:** `cv report [json|all|capacity|used|available] [OPTIONS]`
 
-| Parameter                     | Description                             |
-|-------------------------------|-----------------------------------------|
-| -l, --list                    | List all worker nodes                   |
-| --add-decommission            | Add decommission nodes                  |
-| --remove-decommission         | Remove decommission nodes               |
+View cluster summary and capacity. Run `cv report --help` for full options.
 
-### 3. `fs` Subcommand
-Use `cv fs` subcommand to execute hdfs commands. The `fs` subcommand provides mainstream file operation functionality, command formats and descriptions are as follows:
+| Command | Description |
+|---------|-------------|
+| `cv report` | Cluster summary (default; includes worker list). |
+| `cv report json` | Full cluster info in JSON. |
+| `cv report all [--show-workers true\|false]` | Same as default; control whether to list workers. |
+| `cv report capacity [WORKER_ADDRESS]` | Capacity summary: cluster-wide, or for one worker (by address). |
+| `cv report used` | Used capacity per worker. |
+| `cv report available` | Available capacity per worker. |
 
-| Command Format                 | Description                                    |
-|-------------------------------|------------------------------------------------|
-| bin/cv fs ls /         | List files and directories in specified directory           |
-| bin/cv fs mkdir /dir   | Create directory                             |
-| bin/cv fs rm /file     | Delete file                             |
-| bin/cv fs cat /file    | Display file content                         |
-| bin/cv fs put /local/file /hdfs/path | Upload local file to Curvine |
-| bin/cv fs get /hdfs/path /local/file | Download file from Curvine to local |
-| bin/cv fs stat /file | Query file or directory status |
-| bin/cv fs count /path | Count files in directory |
-| bin/cv fs touch /path | Create file |
-| bin/cv fs df | File system available space |
-| bin/cv fs du /path | Calculate directory space usage |
-| bin/cv fs mv src/path dst/path | Rename file or move file to target path |
-| bin/cv fs blocks /file | Display file block information |
+Examples:
 
-:::tip
-The `--cache-only` parameter can be used with all cv fs subcommands to view files only cached in curvine. This parameter only affects the current command execution.
-:::
-
-Specifically, the `cv fs ls` subcommand supports `hdfs`-like parameters, including:
-
-| Parameter | Description |
-|-----------|-------------|
-| -C, --path-only | Display only the paths of files and directories |
-| -d, --directory | List directories as regular files |
-| -H, --human-readable | Display file sizes in human-readable format |
-| -q, --hide-non-printable | Replace non-printable characters with ? |
-| -R, --recursive | Recursively list directory contents |
-| -r, --reverse | Reverse sort order |
-| -t, --mtime | Sort by modification time (newest first) |
-| -S, --size | Sort by file size |
-| -u, --atime | Use last access time instead of modification time for display and sorting |
-| -l, --long-format | Display detailed information of files and directories |
-| -h, --help | Show help information |
-
-### 4. `mount` Subcommand
-Use `cv mount` subcommand to mount underlying storage to Curvine. Currently supports `s3` protocol.
-
-`cv mount` subcommand supports the following configuration parameters:
-
-| Parameter | Description |
-|-----------|-------------|
-| --config key=value | Set key-value configuration parameters |
-| --conf /path | Specify configuration file path |
-| --update | Update existing mount point configuration |
-| --mnt-type TYPE | Set mount type |
-| --consistency-strategy STRATEGY | Set consistency strategy |
-| --ttl-ms DURATION | Set data TTL time, in milliseconds |
-| --ttl-action ACTION | Set action after TTL expiration |
-| --replicas N | Set replica count |
-| --block-size SIZE | Set block size |
-| --storage-type TYPE | Set storage type |
-
-Example: Mount `s3://testing` to `/s3-testing`
 ```bash
-bin/cv mount s3://s3/testing /s3-testing \
--c s3.endpoint_url=http://hostname.com \
--c s3.region_name=cn \
--c s3.credentials.access=access_key \
--c s3.credentials.secret=secret_key \
--c s3.path_style=true
+bin/cv report
+bin/cv report json
+bin/cv report capacity
+bin/cv report capacity 192.168.1.10
+bin/cv report used
+bin/cv report available
 ```
 
-:::warning
-When mount executes mounting, it will check the availability of the UFS storage to be mounted and configuration, otherwise mounting will fail with `service error` prompt. Please ensure UFS is in normal state.
-:::
+---
 
-Check mount list, mount command without parameters.
+### 2. `node` — Worker management
+
+**Usage:** `cv node [OPTIONS] [-- <NODES>...]`
+
+Manage workers (list, add/remove decommission list). Run `cv node --help` for details.
+
+| Option | Description |
+|--------|-------------|
+| `-l, --list` | List all worker nodes (live and lost). |
+| `--add-decommission` | Add workers to decommission list (requires one or more NODES). |
+| `--remove-decommission` | Remove workers from decommission list (requires one or more NODES). |
+
+`<NODES>`: one or more `hostname:port`. You can pass multiple nodes as space-separated arguments or as a single comma-separated list (e.g. `host1:9000,host2:9000`).
+
+Examples:
+
+```bash
+bin/cv node -l
+bin/cv node --add-decommission host1:9000 host2:9000
+bin/cv node --add-decommission host1:9000,host2:9000
+bin/cv node --remove-decommission host1:9000
+```
+
+---
+
+### 3. `fs` — File system operations
+
+**Usage:** `cv fs [OPTIONS] <COMMAND> [ARGS]`
+
+Run HDFS-style file operations against Curvine. Use `cv fs --help` and `cv fs <subcommand> --help` for full options.
+
+Global flag for `fs`:
+
+| Flag | Description |
+|------|-------------|
+| `--cache-only` | Only show/operate on data cached in Curvine (disable unified UFS view). Applies to the current command only. |
+
+**Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `cv fs ls [path]` | List directory (default path `/`). |
+| `cv fs mkdir <path> [-p\|--parents]` | Create directory; `-p` creates parents as needed. |
+| `cv fs put <local_path> <remote_path>` | Upload local file to Curvine. |
+| `cv fs get <path> <local_path>` | Download file from Curvine to local. |
+| `cv fs cat <path>` | Print file contents. |
+| `cv fs touch <path>` | Create empty file or update timestamp. |
+| `cv fs rm <path> [-r\|--recursive]` | Remove file or directory; `-r` for recursive. |
+| `cv fs stat <path>` | Show file or directory status. |
+| `cv fs count <path>` | Count files/directories under path. |
+| `cv fs mv <src_path> <dst_path>` | Move or rename. |
+| `cv fs du <path> [-h\|--human-readable] [-v\|--verbose]` | Directory space usage. |
+| `cv fs df [-h\|--human-readable]` | File system space (capacity/used/available). |
+| `cv fs chmod <mode> <path> [--recursive]` | Set permissions (e.g. `755`). |
+| `cv fs chown <owner:group> <path> [--recursive]` | Set owner and group. |
+| `cv fs blocks <path> [--format table\|json]` | Show block locations for a file (default: table). |
+
+Examples:
+
+```bash
+bin/cv fs ls /
+bin/cv fs ls / --cache-only
+bin/cv fs mkdir /data
+bin/cv fs mkdir -p /data/a/b
+bin/cv fs put ./local.txt /data/remote.txt
+bin/cv fs get /data/remote.txt ./local.txt
+bin/cv fs cat /data/remote.txt
+bin/cv fs rm /data/old.txt
+bin/cv fs rm -r /data/dir
+bin/cv fs stat /data
+bin/cv fs count /data
+bin/cv fs mv /data/a /data/b
+bin/cv fs du -h /data
+bin/cv fs df -h
+bin/cv fs chmod 755 /data/script.sh
+bin/cv fs chown user:group /data
+bin/cv fs blocks /data/file.txt --format json
+```
+
+**`cv fs ls` options (HDFS-style):**
+
+| Option | Description |
+|--------|-------------|
+| `-C, --path-only` | Print paths only. |
+| `-d, --directory` | List directories as plain files. |
+| `-H, --human-readable` | Human-readable sizes. |
+| `-q, --hide-non-printable` | Replace non-printable chars with `?`. |
+| `-R, --recursive` | List recursively. |
+| `-r, --reverse` | Reverse sort order. |
+| `-t, --mtime` | Sort by modification time (newest first). |
+| `-S, --size` | Sort by size. |
+| `-u, --atime` | Use last access time for display/sort. |
+| `-l, --long-format` | Long listing format. |
+
+---
+
+### 4. `mount` — Mount UFS to Curvine
+
+**Usage:** `cv mount [UFS_PATH CV_PATH] [OPTIONS]` — with no arguments, lists all mount points.
+
+Mount an underlying storage path (UFS) to a Curvine path. Supported protocols include **S3** and **HDFS**. Run `cv mount --help` for full options. Global options (e.g. `-c, --conf` for config file) also apply; in the mount context, `-c` is short for `--config` (UFS key=value), not the config file.
+
+**List mount points (no arguments):**
+
 ```bash
 bin/cv mount
 ```
 
-:::warning
-A UFS path can only be mounted to one Curvine directory. Mounting to curvine root path is not supported; nested mounting is not supported. If curvine://a/b is already mounted, then curvine://a or curvine://a/b/c etc. cannot mount other UFS.
-:::
-
-Unmount underlying storage:
-```
-bin/cv umount /s3-testing/
-```
-
-### 5. load Subcommand
-Use `cv load` subcommand to load UFS data into Curvine.
-
-:::warning
-Before loading data, you need to mount the underlying storage to curvine first
-:::
+**List mount points with validity check:**
 
 ```bash
-bin/cv load s3://my-bucket/test.data
+bin/cv mount --check
 ```
 
-When successful, the load command output will show jobid. You can use $jobid to check load status, see the following load-status command:
+**Mount options (when providing UFS path and Curvine path):**
+
+| Option | Description |
+|--------|-------------|
+| `-c, --config <key=value>` | UFS config key=value (can be repeated). |
+| `--update` | Update existing mount config. |
+| `--mnt-type <TYPE>` | Mount type (default: `cst`). |
+| `--consistency-strategy <STRATEGY>` | Consistency strategy (default: `none`). |
+| `--ttl-ms <DURATION>` | TTL in duration form, e.g. `7d` (default: `7d`). |
+| `--ttl-action <ACTION>` | Action when TTL expires: `none`, `delete`, `persist`, `evict`, `flush` (default: `delete`). |
+| `--replicas <N>` | Replica count. |
+| `--block-size <SIZE>` | Block size (e.g. `128MB`). |
+| `-s, --storage-type <TYPE>` | Storage type. |
+| `--write-type <TYPE>` | Write type: `cache`, `through`, `async_through`, `cache_through` (default: `async_through`). |
+| `--provider <PROVIDER>` | UFS provider: `auto`, `oss-hdfs`, `opendal`. |
+| `--check` | When listing, check each mount and show Valid/Invalid. |
+
+Example — mount S3 bucket to `/s3-testing`:
+
 ```bash
-bin/cv load-status $jobid
+bin/cv mount s3://bucket/prefix /s3-testing \
+  -c s3.endpoint_url=http://hostname.com \
+  -c s3.region_name=cn \
+  -c s3.credentials.access=access_key \
+  -c s3.credentials.secret=secret_key \
+  -c s3.path_style=true
 ```
-You can use `-w,--watch` parameter to monitor the status of loading tasks
 
-## POSIX Commands
+:::warning
+Mount performs basic availability and config checks on the UFS. If the UFS is unreachable or misconfigured, mount can fail with a `service error`. Ensure the UFS is reachable and credentials are correct.
+:::
 
-Curvine implements a POSIX-compliant FUSE (Filesystem in Userspace) interface.
-After mounting Curvine in Linux systems, users can interact through standard Linux file operation commands. This implementation has the following technical characteristics:
+:::warning
+A UFS path can be mounted to only one Curvine path. Mounting at the Curvine root is not supported; nested mounts are not supported. If `curvine://a/b` is already mounted, you cannot mount another UFS at `curvine://a` or `curvine://a/b/c`.
+:::
 
-**System Compatibility:**
-1. Complies with FUSE 3.0 interface specifications and is compatible with FUSE 2.0
-2. Compatible with mainstream file system operation semantics like ext4/xfs
-3. Supports Linux kernel 3.10+ versions
+---
 
-**Functional Features:**
-1. Provides complete POSIX file operation interface
-2. Supports atomic operation guarantees
+### 5. `umount` — Unmount UFS
 
-**Command Line Operation Support:**
-Users can operate through the following core Linux commands:
+**Usage:** `cv umount <CURVINE_PATH>`
+
+Unmount a previously mounted Curvine path:
+
+```bash
+bin/cv umount /s3-testing
+```
+
+---
+
+### 6. `load` — Load UFS data into Curvine
+
+**Usage:** `cv load [OPTIONS] <PATH>`
+
+Submit a job to load data from UFS into Curvine. The UFS path must already be mounted (see `mount`).
+
+| Argument / Option | Description |
+|-------------------|-------------|
+| `<PATH>` | UFS path to load (positional, required). |
+| `-w, --watch` | After submit, watch load job status until completion/failure. |
+| `-c, --conf <path>` | Config file (default from `CURVINE_CONF_FILE`). |
+
+Example:
+
+```bash
+bin/cv load s3://my-bucket/path/to/data
+bin/cv load s3://my-bucket/path/to/data --watch
+```
+
+On success, the command prints a **job ID**. Use it with `load-status` or `cancel-load`.
+
+:::warning
+The underlying storage must be mounted to Curvine before loading (see `cv mount`).
+:::
+
+---
+
+### 7. `load-status` — Query load job status
+
+**Usage:** `cv load-status [OPTIONS] <JOB_ID>`
+
+Query (and optionally watch) a load job by job ID.
+
+| Argument / Option | Description |
+|-------------------|-------------|
+| `<JOB_ID>` | Load job ID (positional, required). |
+| `-v, --verbose` | Verbose output. |
+| `-w, --watch <INTERVAL>` | Poll status periodically; default `5s`. Supports e.g. `5s`, `1m`. |
+| `-c, --conf <path>` | Config file (default from `CURVINE_CONF_FILE`). |
+
+Examples:
+
+```bash
+bin/cv load-status <job_id>
+bin/cv load-status <job_id> --watch
+bin/cv load-status <job_id> -w 1s
+```
+
+Use Ctrl+C to stop watching.
+
+---
+
+### 8. `cancel-load` — Cancel load job
+
+**Usage:** `cv cancel-load [OPTIONS] <JOB_ID>`
+
+Cancel a load job by job ID.
+
+| Argument / Option | Description |
+|-------------------|-------------|
+| `<JOB_ID>` | Load job ID (positional, required). |
+| `-c, --conf <path>` | Config file (default from `CURVINE_CONF_FILE`). |
+
+Example:
+
+```bash
+bin/cv cancel-load <job_id>
+```
+
+---
+
+### 9. `version` — CLI version
+
+**Usage:** `cv version`
+
+Print the CLI version:
+
+```bash
+bin/cv version
+```
+
+---
+
+## POSIX commands (FUSE mount)
+
+Curvine provides a POSIX-compliant FUSE interface. After mounting the Curvine FUSE filesystem (e.g. via `bin/curvine-fuse.sh start`), you can use standard Linux commands on the mount point.
+
+**Characteristics:**
+
+- FUSE 3.0–compatible (and compatible with FUSE 2.0).
+- Semantics aligned with common filesystems (e.g. ext4, xfs).
+- Supports Linux kernel 3.10+.
+- POSIX file operations and atomic behavior where applicable.
+
+**Typical commands:**
+
 ```bash
 # Basic file operations
 ls, cp, mv, rm, mkdir
 
-# File content operations
+# Content operations
 cat, grep, sed, awk
 
-# File system management
+# Filesystem info
 df -h, du -sh, stat
 
-# Permission management
+# Permissions
 chmod, chown, getfacl
 
-# Symbolic link operations
+# Symbolic links
 ln -s, readlink
 
-# Extended attribute operations
+# Extended attributes
 getfattr, setfattr, listxattr
 ```

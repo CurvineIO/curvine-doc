@@ -44,19 +44,19 @@ The S3 gateway serves as the frontend interface for the Curvine system, converti
 
 ## Service Management
 
-The S3 gateway provides convenient service management scripts located at `build/bin/curvine-s3-gateway.sh`.
+The S3 gateway provides a service management script **`bin/curvine-s3-gateway.sh`** in the installation directory (e.g. `build/dist` or the extracted release package). The examples below assume you are in that directory.
 
 ### Start Service
 
 ```bash
 # Start with default configuration
-./build/bin/curvine-s3-gateway.sh start
+bin/curvine-s3-gateway.sh start
 
 # Start with custom configuration file
-./build/bin/curvine-s3-gateway.sh start --conf /path/to/curvine-cluster.toml
+bin/curvine-s3-gateway.sh start --conf /path/to/curvine-cluster.toml
 
 # Start with custom listen address and region
-./build/bin/curvine-s3-gateway.sh start \
+bin/curvine-s3-gateway.sh start \
     --listen 0.0.0.0:9000 \
     --region us-west-2
 ```
@@ -65,21 +65,21 @@ The S3 gateway provides convenient service management scripts located at `build/
 
 ```bash
 # Gracefully stop service
-./build/bin/curvine-s3-gateway.sh stop
+bin/curvine-s3-gateway.sh stop
 ```
 
 ### Check Service Status
 
 ```bash
 # Check service running status
-./build/bin/curvine-s3-gateway.sh status
+bin/curvine-s3-gateway.sh status
 ```
 
 ### Restart Service
 
 ```bash
 # Restart service
-./build/bin/curvine-s3-gateway.sh restart
+bin/curvine-s3-gateway.sh restart
 ```
 
 ### View Logs
@@ -200,7 +200,7 @@ The S3 gateway provides comprehensive credential management functionality, suppo
 
 ```bash
 # Add new access credentials
-./build/bin/curvine-s3-gateway.sh credential add \
+bin/curvine-s3-gateway.sh credential add \
     --access-key AKIAEXAMPLEKEY123 \
     --secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
     --description "Production access key"
@@ -210,7 +210,7 @@ The S3 gateway provides comprehensive credential management functionality, suppo
 
 ```bash
 # Generate new random credentials
-./build/bin/curvine-s3-gateway.sh credential generate \
+bin/curvine-s3-gateway.sh credential generate \
     --description "Auto-generated test key"
 ```
 
@@ -218,17 +218,17 @@ The S3 gateway provides comprehensive credential management functionality, suppo
 
 ```bash
 # List all credentials (secrets hidden)
-./build/bin/curvine-s3-gateway.sh credential list
+bin/curvine-s3-gateway.sh credential list
 
 # Show complete credential information (including secrets)
-./build/bin/curvine-s3-gateway.sh credential list --show-secrets
+bin/curvine-s3-gateway.sh credential list --show-secrets
 ```
 
 ### View Cache Statistics
 
 ```bash
 # View credential cache statistics
-./build/bin/curvine-s3-gateway.sh credential stats
+bin/curvine-s3-gateway.sh credential stats
 ```
 
 ### Credential Storage
@@ -403,17 +403,17 @@ Start gateway instances on each node:
 
 ```bash
 # Node 1
-./build/bin/curvine-s3-gateway.sh start \
+bin/curvine-s3-gateway.sh start \
     --conf /etc/curvine-cluster.toml \
     --listen 0.0.0.0:9900
 
 # Node 2  
-./build/bin/curvine-s3-gateway.sh start \
+bin/curvine-s3-gateway.sh start \
     --conf /etc/curvine-cluster.toml \
     --listen 0.0.0.0:9900
 
 # Node 3
-./build/bin/curvine-s3-gateway.sh start \
+bin/curvine-s3-gateway.sh start \
     --conf /etc/curvine-cluster.toml \
     --listen 0.0.0.0:9900
 ```
@@ -430,8 +430,8 @@ Ensure all gateway instances use the same Curvine cluster configuration:
 enable_distributed_auth = true
 credentials_path = "/system/auth/credentials.jsonl"
 
-# Shared multipart upload directory
-multipart_temp = "/shared/curvine-multipart"
+# Shared temporary directory for PUT operations (multipart and regular)
+put_temp_dir = "/shared/curvine-temp"
 ```
 
 #### Health Checks
@@ -474,7 +474,7 @@ cache_refresh_interval_secs = 60
 1. **Port Already in Use**
    ```bash
    # Change listen port
-   ./build/bin/curvine-s3-gateway.sh start --listen 0.0.0.0:9901
+   bin/curvine-s3-gateway.sh start --listen 0.0.0.0:9901
    ```
 
 2. **Authentication Failures**
@@ -484,10 +484,10 @@ cache_refresh_interval_secs = 60
    echo $AWS_SECRET_ACCESS_KEY
    
    # Check if credentials exist in credential store
-   ./build/bin/curvine-s3-gateway.sh credential list
+   bin/curvine-s3-gateway.sh credential list
    
    # View credential store path and statistics
-   ./build/bin/curvine-s3-gateway.sh credential stats
+   bin/curvine-s3-gateway.sh credential stats
    
    # View authentication logs
    export RUST_LOG=curvine_s3_gateway::auth=debug
@@ -496,10 +496,10 @@ cache_refresh_interval_secs = 60
 3. **Configuration File Errors**
    ```bash
    # Validate configuration file
-   ./build/bin/curvine-s3-gateway.sh start --conf /path/to/config.toml
+   bin/curvine-s3-gateway.sh start --conf /path/to/config.toml
    
    # Use default configuration
-   ./build/bin/curvine-s3-gateway.sh start
+   bin/curvine-s3-gateway.sh start
    ```
 
 ### Debug Mode
@@ -507,11 +507,11 @@ cache_refresh_interval_secs = 60
 ```bash
 # Enable verbose logging
 export RUST_LOG=debug
-./build/bin/curvine-s3-gateway.sh start
+bin/curvine-s3-gateway.sh start
 
 # Enable trace level logging
 export RUST_LOG=trace
-./build/bin/curvine-s3-gateway.sh start
+bin/curvine-s3-gateway.sh start
 ```
 
 With these configurations and optimizations, you can build an efficient S3 gateway to access data cached in Curvine.

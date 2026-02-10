@@ -41,19 +41,19 @@ This is for reference only. Actual requirements depend on your specific business
 
 ## Create Installation Package
 
-Compile the software installation package. For compilation instructions, refer to [Quick Start](../../1-quick-start.md).
+Compile and package the software. For compilation steps, see [Download and Compile Curvine](./02-compile.md).
 
-Execute the following command to create an installation package:
+From the project root, run:
 ```bash
 make dist
 ```
-After successful compilation, a tar.gz package will be generated in the project root directory. This file is the Curvine installation package that can be used for deployment or building images.
+This runs `make all` (if needed), then packages the contents of `build/dist` into a tar.gz file. The archive is created in the **project root** with a name like `curvine-<platform>-<arch>-<timestamp>.tar.gz`, or `curvine-<version>-<platform>-<arch>.tar.gz` if you set `RELEASE_VERSION` (e.g. `RELEASE_VERSION=v1.0.0 make dist`). This archive is the Curvine installation package for deployment or for building runtime images.
 
 ## Configuration File Modification
 
-The environment variable configuration file is located at `conf/curvine-env.sh`. This file is a bash script used to configure Curvine's environment variables.
-The environment variable that needs to be modified is `LOCAL_HOSTNAME`, which is very important as it specifies the hostname for Curvine. The Curvine cluster relies on it to identify cluster members.
-It's recommended to set it to the local hostname:
+After unpacking the installation package (or when using `build/dist`), the environment script is at `conf/curvine-env.sh` and the main config at `conf/curvine-cluster.toml`. (In the source tree, templates live under `etc/` and are copied to `build/dist/conf` during build.)
+
+The environment variable that must be set correctly is **`LOCAL_HOSTNAME`** (or the overrides below). The cluster uses it to identify members. Recommended:
 ```bash
 export LOCAL_HOSTNAME=$(hostname)
 ```
@@ -118,7 +118,7 @@ file_name = "curvine.log"
 ```
 
 :::danger
-The hostname configured in journal's master_addrs must be consistent with the hostname when master starts, otherwise it cannot start
+The hostname in each entry of **journal_addrs** must match the hostname (or `LOCAL_HOSTNAME`) of the machine when that master process starts; otherwise the master cannot join the Raft group.
 :::
 
 If you need to use the Java Hadoop client, modify the `fs.cv.master_addrs` value in `curvine-site.xml`, example:

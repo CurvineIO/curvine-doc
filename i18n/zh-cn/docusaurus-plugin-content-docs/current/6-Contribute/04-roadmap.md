@@ -5,8 +5,8 @@
 Curvine 在 2025 年的演进以一系列主要功能更新为标志，这些增强功能源于社区反馈和实际场景中的最新需求，体现了我们对卓越的持续追求。
 
 ## 加入我们
-- 对于存在可跟踪问题的任务，可直接在 [GitHub Issues](https://github.com/curvineio/curvine/issues) 中评论
-- 开放式建议请通过 [GitHub Discussions](https://github.com/curvineio/curvine/discussions) 提出
+- 对于存在可跟踪问题的任务，可直接在 [GitHub Issues](https://github.com/CurvineIO/curvine/issues) 中评论
+- 开放式建议请通过 [GitHub Discussions](https://github.com/CurvineIO/curvine/discussions) 提出
 - 我们致力于发展开源生态系统，欢迎全球贡献者加入！
 
 ---
