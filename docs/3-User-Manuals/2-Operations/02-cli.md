@@ -203,10 +203,30 @@ bin/cv mount --check
 | `--block-size <SIZE>` | Block size (e.g. `128MB`). |
 | `-s, --storage-type <TYPE>` | Storage type. |
 | `--write-type <TYPE>` | Write type: `cache`, `through`, `async_through`, `cache_through` (default: `async_through`). |
-| `--provider <PROVIDER>` | UFS provider: `auto`, `oss-hdfs`, `opendal`. |
+| `--provider <PROVIDER>` | UFS provider: `auto`, `oss-hdfs`, `opendal`. See details below. |
 | `--check` | When listing, check each mount and show Valid/Invalid. |
 
-Example — mount S3 bucket to `/s3-testing`:
+
+**About `--provider` parameter**: For example, with OSS, `oss://test-bucket` could be either a standard object storage bucket or an OSS-HDFS accelerated bucket.
+`--provider` specifies the implementation to use (see [Appendix: UFS Mount Parameters](#appendix-ufs-mount-parameters)).
+
+| Value | Description | Supported Protocols |
+|-------|-------------|---------------------|
+| `auto` | System auto-selects based on URI protocol (default). OSS defaults to JindoSDK (oss-hdfs) if available; S3, HDFS, WebHDFS, COS, GCS, Azure use OpenDAL. | All |
+| `oss-hdfs` | Use JindoSDK for OSS access, suitable for Alibaba Cloud OSS / OSS-HDFS lakehouse scenarios. | `oss://` only |
+| `opendal` | Use OpenDAL for object storage or HDFS, no JVM dependency, supports S3/OSS/COS/GCS/Azure/HDFS/WebHDFS. | `s3://`, `oss://`, `hdfs://`, `webhdfs://`, `cos://`, `gcs://`, `azblob://`, etc. |
+
+Examples
+
+OSS (JindoSDK, for lakehouse):
+```bash
+bin/cv mount oss://my-bucket/prefix /oss-data --provider oss-hdfs \
+  -c oss.endpoint=oss-cn-hangzhou.aliyuncs.com \
+  -c oss.accessKeyId=xxx \
+  -c oss.accessKeySecret=yyy
+```
+
+Mount S3 bucket to `/s3-testing` (when provider not specified, S3 uses auto → opendal):
 
 ```bash
 bin/cv mount s3://bucket/prefix /s3-testing \
@@ -214,8 +234,10 @@ bin/cv mount s3://bucket/prefix /s3-testing \
   -c s3.region_name=cn \
   -c s3.credentials.access=access_key \
   -c s3.credentials.secret=secret_key \
-  -c s3.path_style=true
+  -c s3.force.path.style=true
 ```
+
+For detailed parameter lists of each UFS type (S3, OSS, HDFS, WebHDFS), see [Appendix: UFS Mount Parameters](#appendix-ufs-mount-parameters) at the end.
 
 :::warning
 Mount performs basic availability and config checks on the UFS. If the UFS is unreachable or misconfigured, mount can fail with a `service error`. Ensure the UFS is reachable and credentials are correct.
@@ -354,3 +376,60 @@ ln -s, readlink
 # Extended attributes
 getfattr, setfattr, listxattr
 ```
+
+---
+
+## Appendix: UFS Mount Parameters
+
+The following are the parameters for each UFS type passed via `-c key=value` when using `cv mount`. **Required** means it must be provided; **Optional** means it can be omitted (has a default or can be inferred from the mount URI).
+
+### S3 (`s3://`, `s3a://`)
+
+Used with `--provider opendal` or auto-selection.
+
+| Parameter | Required/Optional | Description |
+|-----------|-------------------|-------------|
+| `s3.endpoint_url` | Required | S3 service endpoint URL; must start with `http://` or `https://`. |
+| `s3.credentials.access` | Required | Access Key ID. |
+| `s3.credentials.secret` | Required | Secret Access Key. |
+| `s3.region_name` | Optional | Region name; recommended for AWS endpoints, optional for others (default: `undefined`). |
+| `s3.force.path.style` | Optional | Whether to use path-style access (e.g. for MinIO), `true`/`false`, default `false`. |
+| `s3.retry_times` | Optional | Request retry count, default `3`. |
+| `s3.connect_timeout` | Optional | Connection timeout, e.g. `30s`, default `30s`. |
+| `s3.read_timeout` | Optional | Read timeout, e.g. `120s`, default `120s`. |
+
+### OSS (`oss://`)
+
+For Alibaba Cloud OSS / OSS-HDFS (JindoSDK or OpenDAL OSS).
+
+| Parameter | Required/Optional | Description |
+|-----------|-------------------|-------------|
+| `oss.endpoint` | Required | OSS endpoint address (e.g. `oss-cn-hangzhou.aliyuncs.com` or full URL). |
+| `oss.accessKeyId` | Required | Alibaba Cloud AccessKey ID. |
+| `oss.accessKeySecret` | Required | Alibaba Cloud AccessKey Secret. |
+| `oss.region` | Optional | Region. |
+| `oss.data.endpoint` | Optional | Data access endpoint. |
+| `oss.second.level.domain.enable` | Optional | Enable second-level domain, `true`/`false`, default `true`. |
+| `oss.data.lake.storage.enable` | Optional | Enable lakehouse storage, `true`/`false`, default `true`. |
+
+### HDFS (`hdfs://`)
+
+| Parameter | Required/Optional | Description |
+|-----------|-------------------|-------------|
+| `hdfs.namenode` | Optional | NameNode address, e.g. `hdfs://namenode:9000/`. If not provided, inferred from mount URI authority. |
+| `hdfs.root` | Optional | Root path, default `/`. If not provided, inferred from mount path. |
+| `hdfs.user` | Optional | HDFS username; if not set, uses environment variable `HADOOP_USER_NAME` or `USER`. |
+| `hdfs.atomic_write_dir` | Optional | Set to `true` to use `atomic_write_dir` directory under root for atomic writes. |
+| `hdfs.kerberos.ccache` | Optional | Kerberos credential cache path; can also be specified via environment variable `KRB5CCNAME`. |
+| `hdfs.kerberos.krb5_conf` | Optional | `krb5.conf` file path; sets environment variable `KRB5_CONFIG`. |
+| `hdfs.kerberos.keytab` | Optional | Keytab file path; sets environment variable `KRB5_KTNAME`. |
+
+### WebHDFS (`webhdfs://`)
+
+HTTP-based HDFS interface.
+
+| Parameter | Required/Optional | Description |
+|-----------|-------------------|-------------|
+| `webhdfs.endpoint` | Optional | WebHDFS service address, e.g. `http://namenode:9870`. If not provided, inferred from URI authority. |
+| `webhdfs.root` | Optional | Root path, default `/`. |
+| `webhdfs.delegation` | Optional | Delegation token for authentication. |

@@ -682,6 +682,8 @@ kubectl exec dynamic-pv-test -- cat /usr/share/nginx/html/index.html
 | `controller.container.args` | array | See values.yaml | Container start arguments |
 | `controller.container.env.CSI_ENDPOINT` | string | `unix:///csi/csi.sock` | CSI socket endpoint address |
 | `controller.container.livenessProbe.failureThreshold` | int | `5` | Liveness probe failure threshold |
+| `controller.container.livenessProbe.httpGet.path` | string | `"/healthz"` | Liveness probe HTTP path |
+| `controller.container.livenessProbe.httpGet.port` | string | `healthz` | Liveness probe HTTP port name |
 | `controller.container.livenessProbe.initialDelaySeconds` | int | `10` | Liveness probe initial delay seconds |
 | `controller.container.livenessProbe.periodSeconds` | int | `10` | Liveness probe check period (seconds) |
 | `controller.container.livenessProbe.timeoutSeconds` | int | `3` | Liveness probe timeout (seconds) |
@@ -709,12 +711,15 @@ kubectl exec dynamic-pv-test -- cat /usr/share/nginx/html/index.html
 | `node.name` | string | `curvine-csi-node` | Node DaemonSet name |
 | `node.priorityClassName` | string | `system-node-critical` | Node priority class name (node critical level) |
 | `node.dnsPolicy` | string | `ClusterFirstWithHostNet` | DNS policy (cluster first + host network) |
+| `node.fuseDebugEnabled` | boolean | `false` | Enable FUSE debug mode (sets FUSE_DEBUG_ENABLED env) |
 | `node.mountMode` | string | `standalone` | Mount mode: `standalone` (independent pod) or `embedded` (embedded in CSI container) |
 | `node.container.name` | string | `csi-plugin` | Main container name |
 | `node.container.command` | array | `["/opt/curvine/csi"]` | Container start command |
 | `node.container.args` | array | See values.yaml | Container start arguments |
 | `node.container.env.CSI_ENDPOINT` | string | `unix:///csi/csi.sock` | CSI socket endpoint address |
 | `node.container.livenessProbe.failureThreshold` | int | `5` | Liveness probe failure threshold |
+| `node.container.livenessProbe.httpGet.path` | string | `"/healthz"` | Liveness probe HTTP path |
+| `node.container.livenessProbe.httpGet.port` | string | `healthz` | Liveness probe HTTP port name |
 | `node.container.livenessProbe.initialDelaySeconds` | int | `10` | Liveness probe initial delay seconds |
 | `node.container.livenessProbe.periodSeconds` | int | `10` | Liveness probe check period (seconds) |
 | `node.container.livenessProbe.timeoutSeconds` | int | `3` | Liveness probe timeout (seconds) |
@@ -787,24 +792,6 @@ node:
 | Parameter Path | Type | Default | Description |
 |---------|------|--------|------|
 | `rbac.create` | boolean | `true` | Whether to create RBAC resources (ClusterRole/ClusterRoleBinding) |
-
-#### ConfigMap Configuration (Curvine Cluster Configuration)
-
-| Parameter Path | Type | Default | Description |
-|---------|------|--------|------|
-| `configMap.name` | string | `curvine-config` | ConfigMap name |
-| `configMap.defaultMode` | octal | `0755` | File default permission mode |
-| `configMap.data.curvineClusterToml` | string | See values.yaml | Curvine cluster configuration file (TOML format) |
-| `configMap.data.curvineEnvSh` | string | See values.yaml | Curvine environment variables script |
-
-#### Curvine Cluster Configuration Parameters in ConfigMap
-
-| Configuration Item | Type | Default | Description |
-|-------|------|--------|------|
-| `client.master_addrs` | array | `[{hostname: "localhost", port: 8995}]` | Curvine Master node address list |
-| `log.level` | string | `"info"` | Log level (debug/info/warn/error) |
-| `log.log_dir` | string | `"stdout"` | Log output directory (stdout for standard output) |
-| `log.file_name` | string | `"curvine.log"` | Log file name |
 
 #### StorageClass Parameters (Configured at Usage Time)
 

@@ -203,10 +203,30 @@ bin/cv mount --check
 | `--block-size <SIZE>` | 块大小（如 `128MB`）。 |
 | `-s, --storage-type <TYPE>` | 存储类型。 |
 | `--write-type <TYPE>` | 写类型：`cache`、`through`、`async_through`、`cache_through`（默认：`async_through`）。 |
-| `--provider <PROVIDER>` | UFS 提供方：`auto`、`oss-hdfs`、`opendal`。 |
+| `--provider <PROVIDER>` | UFS 提供方：`auto`、`oss-hdfs`、`opendal`。详见下文。 |
 | `--check` | 列出时检查每个挂载点并显示 Valid/Invalid。 |
 
-示例：将 S3 桶挂载到 `/s3-testing`：
+
+**--provider参数的特别说明**,  以oss场景为例，同样是oss://test-bucket， 可能是普通对象存储桶，也可能是oss-hdfs加速桶。
+`--provider` 可以指定挂载该 UFS 时使用的底层实现（见 [附录：UFS 挂载参数](#附录ufs-挂载参数)）。
+
+| 取值 | 说明 | 适用协议 |
+|------|------|----------|
+| `auto` | 由系统根据 URI 协议自动选择（默认）。OSS 默认优先 JindoSDK（oss-hdfs）；S3、HDFS、WebHDFS、COS、GCS、Azure 等使用 OpenDAL。 | 全部 |
+| `oss-hdfs` | 使用 JindoSDK 访问 OSS，适合阿里云 OSS / OSS-HDFS 湖仓场景。 | 仅 `oss://` |
+| `opendal` | 使用 OpenDAL 访问对象存储或 HDFS，无 JVM 依赖，支持 S3/OSS/COS/GCS/Azure/HDFS/WebHDFS。 | `s3://`、`oss://`、`hdfs://`、`webhdfs://`、`cos://`、`gcs://`、`azblob://` 等 |
+
+示例
+
+OSS（JindoSDK，适合湖仓）
+```bash
+bin/cv mount oss://my-bucket/prefix /oss-data --provider oss-hdfs \
+  -c oss.endpoint=oss-cn-hangzhou.aliyuncs.com \
+  -c oss.accessKeyId=xxx \
+  -c oss.accessKeySecret=yyy
+```
+
+将 S3 桶挂载到 `/s3-testing`（不指定 provider 时 S3 使用 auto → opendal）：
 
 ```bash
 bin/cv mount s3://bucket/prefix /s3-testing \
@@ -214,8 +234,10 @@ bin/cv mount s3://bucket/prefix /s3-testing \
   -c s3.region_name=cn \
   -c s3.credentials.access=access_key \
   -c s3.credentials.secret=secret_key \
-  -c s3.path_style=true
+  -c s3.force.path.style=true
 ```
+
+各 UFS 类型（S3、OSS、HDFS、WebHDFS）的详细参数列表见文末 [附录：UFS 挂载参数](#附录ufs-挂载参数)。
 
 :::warning
 执行挂载时会对 UFS 做基本可用性与配置检查。若 UFS 不可达或配置错误，可能挂载失败并提示 `service error`。请确保 UFS 可访问且凭证正确。
@@ -354,3 +376,60 @@ ln -s, readlink
 # 扩展属性
 getfattr, setfattr, listxattr
 ```
+
+---
+
+## 附录：UFS 挂载参数
+
+以下为 `cv mount` 时通过 `-c key=value` 传入的各 UFS 类型参数说明。**必填**表示必须提供；**可选**表示可不提供（有默认值或可从挂载 URI 自动推导）。
+
+### S3（`s3://`、`s3a://`）
+
+通过 `--provider opendal` 或自动选择时使用。
+
+| 参数 | 必填/可选 | 描述 |
+|------|-----------|------|
+| `s3.endpoint_url` | 必填 | S3 服务地址，须以 `http://` 或 `https://` 开头。 |
+| `s3.credentials.access` | 必填 | Access Key ID。 |
+| `s3.credentials.secret` | 必填 | Secret Access Key。 |
+| `s3.region_name` | 可选 | 区域名；AWS 端点建议填写，其他可选（默认 `undefined`）。 |
+| `s3.force.path.style` | 可选 | 是否使用路径风格访问（如 MinIO），`true`/`false`，默认 `false`。 |
+| `s3.retry_times` | 可选 | 请求重试次数，默认 `3`。 |
+| `s3.connect_timeout` | 可选 | 连接超时，如 `30s`，默认 `30s`。 |
+| `s3.read_timeout` | 可选 | 读超时，如 `120s`，默认 `120s`。 |
+
+### OSS（`oss://`）
+
+用于阿里云 OSS / OSS-HDFS（JindoSDK 或 OpenDAL OSS）。
+
+| 参数 | 必填/可选 | 描述 |
+|------|-----------|------|
+| `oss.endpoint` | 必填 | OSS 端点地址（如 `oss-cn-hangzhou.aliyuncs.com` 或完整 URL）。 |
+| `oss.accessKeyId` | 必填 | 阿里云 AccessKey ID。 |
+| `oss.accessKeySecret` | 必填 | 阿里云 AccessKey Secret。 |
+| `oss.region` | 可选 | 区域。 |
+| `oss.data.endpoint` | 可选 | 数据访问端点。 |
+| `oss.second.level.domain.enable` | 可选 | 是否启用二级域名，`true`/`false`，默认 `true`。 |
+| `oss.data.lake.storage.enable` | 可选 | 是否启用湖仓存储，`true`/`false`，默认 `true`。 |
+
+### HDFS（`hdfs://`）
+
+| 参数 | 必填/可选 | 描述 |
+|------|-----------|------|
+| `hdfs.namenode` | 可选 | NameNode 地址，如 `hdfs://namenode:9000/`。不填时从挂载 URI 的 authority 推导。 |
+| `hdfs.root` | 可选 | 根路径，默认 `/`。不填时可从挂载路径自动推导。 |
+| `hdfs.user` | 可选 | HDFS 用户名；未设置时使用环境变量 `HADOOP_USER_NAME` 或 `USER`。 |
+| `hdfs.atomic_write_dir` | 可选 | 设为 `true` 时在 root 下使用 `atomic_write_dir` 目录做原子写。 |
+| `hdfs.kerberos.ccache` | 可选 | Kerberos 凭据缓存路径；也可通过环境变量 `KRB5CCNAME` 指定。 |
+| `hdfs.kerberos.krb5_conf` | 可选 | `krb5.conf` 文件路径；会设置环境变量 `KRB5_CONFIG`。 |
+| `hdfs.kerberos.keytab` | 可选 | Keytab 文件路径；会设置环境变量 `KRB5_KTNAME`。 |
+
+### WebHDFS（`webhdfs://`）
+
+基于 HTTP 的 HDFS 接口。
+
+| 参数 | 必填/可选 | 描述 |
+|------|-----------|------|
+| `webhdfs.endpoint` | 可选 | WebHDFS 服务地址，如 `http://namenode:9870`。不填时从 URI 的 authority 推导。 |
+| `webhdfs.root` | 可选 | 根路径，默认 `/`。 |
+| `webhdfs.delegation` | 可选 | Delegation token，用于认证。 |

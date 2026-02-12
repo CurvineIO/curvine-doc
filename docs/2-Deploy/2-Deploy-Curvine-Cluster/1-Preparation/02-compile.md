@@ -130,3 +130,31 @@ If there are significant differences between your compilation image's OS version
 
 Therefore, for Docker-compiled artifacts, we strongly recommend running them on the same OS version or within Docker containers!
 :::
+
+
+## UFS Module Support
+
+Curvine supports multiple storage backends including OSS, HDFS, S3, MinIO, and more. By default, these are integrated via OpenDAL. Curvine also provides optimized implementations for OSS and HDFS. You can compile with specific modules using `make all --ufs oss-hdfs`.
+
+Supported parameters:
+| Parameter       | Description                                |
+|-----------------|---------------------------------------------|
+| oss-hdfs        | Use JindoSDK for Alibaba Cloud             |
+| opendal-oss     | Use OpenDAL for OSS object storage         |
+| opendal-hdfs    | Run in native mode                         |
+| opendal-s3      | Use OpenDAL for S3 object storage          |
+| opendal-azblob  | Use OpenDAL for Azure Blob                 |
+
+
+:::warning
+When compiling the `oss-hdfs` module, you need to set JindoSDK environment variables:
+```bash
+export JINDOSDK_HOME=/opt/jindosdk-6.10.3
+export LD_LIBRARY_PATH="${JINDOSDK_HOME}/lib/native:${LD_LIBRARY_PATH}"
+make all --ufs oss-hdfs
+```
+:::
+
+To compile multiple UFS modules simultaneously, specify `--ufs` multiple times, e.g. `make all --ufs oss-hdfs --ufs opendal-oss`
+
+Note that both OSS accelerated buckets and standard object storage buckets use the `oss://test-bucket` format. When mounting OSS storage, you need to specify the appropriate module. For detailed mount usage, see the CLI mount section.

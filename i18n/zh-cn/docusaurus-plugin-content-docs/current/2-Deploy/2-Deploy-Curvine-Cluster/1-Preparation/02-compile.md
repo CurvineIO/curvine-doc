@@ -119,3 +119,30 @@ docker exec -it curvine-compile /bin/bash
 
 因此， 对于docker编译出来的产物，强烈建议在相同的os版本或者docker容器中运行！
 :::
+
+
+## 拓展模块支持
+curvine 底层存储支持对接oss、hdfs、s3、minio等多种不同的存储，默认情况下这些存储通过opendal实现对接。 curvine针对oss和hdfs实现也提供了特定优化版本。 你可以通过`make all --ufs oss-hdfs` 这种方式来编译拓展模块。
+
+支持的参数包括
+| 参数            | 说明                                |
+|-----------------|-------------------------------------|
+| oss-hdfs        | 对接阿里jindo-sdk                   |
+| opendal-oss     | 通过opendal对接OSS对象存储          |
+| opendal-hdfs    | 以native模式运行                    |
+| opendal-s3      | 通过opendal对接S3对象存储           |
+| opendal-azblob  | 通过opendal对接Azure Blob           |
+
+
+:::warning
+在`oss-hdfs` 模块编译中，你需要指定jindo的环境变量，例如：
+```bash
+export export JINDOSDK_HOME=/opt/jindosdk-6.10.3
+export LD_LIBRARY_PATH="${JINDOSDK_HOME}/lib/native:${LD_LIBRARY_PATH}"
+make all `--ufs oss-hdfs`
+```
+:::
+
+如果需要同时编译多个拓展模块支持，可以多次指定--ufs，比如`make all --ufs oss-hdfs --ufs opendal-oss`
+
+你需要关注到，对于oss加速桶和默认对象存储桶，在使用的时候都是oss://test-bucket的模式，因此在挂载oss存储的时候，需要指定特定的模块支持，关于挂载的详细用法参考cli mount章节
