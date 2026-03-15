@@ -1,0 +1,63 @@
+pull_request_rules:
+  - name: Auto-merge documentation PRs
+    description: Automatically merge documentation PRs when CI passes and has approval
+    conditions:
+      - base=main
+      - label=documentation
+      - check-success=test-deploy
+      - "#approved-reviews-by>=1"
+      - -title~^WIP
+      - -draft
+    actions:
+      merge:
+        method: squash
+        commit_message_template: |
+          {{ title }}
+          
+          {{ body }}
+      delete_head_branch:
+
+  - name: Notify on documentation PR without review
+    description: Request review for documentation PRs without approval
+    conditions:
+      - base=main
+      - label=documentation
+      - "#approved-reviews-by=0"
+      - -closed
+    actions:
+      request_reviews:
+        users:
+          - lzjqsdd
+
+  - name: Auto-label blog posts
+    description: Automatically add documentation label to blog post PRs
+    conditions:
+      - base=main
+      - files~=^blog/
+      - -label=documentation
+    actions:
+      label:
+        add:
+          - documentation
+
+  - name: Auto-label docs changes
+    description: Automatically add documentation label to docs folder changes
+    conditions:
+      - base=main
+      - files~=^docs/
+      - -label=documentation
+    actions:
+      label:
+        add:
+          - documentation
+
+  - name: Auto-label i18n changes
+    description: Automatically add documentation label to i18n changes
+    conditions:
+      - base=main
+      - files~=^i18n/
+      - -label=documentation
+    actions:
+      label:
+        add:
+          - documentation
