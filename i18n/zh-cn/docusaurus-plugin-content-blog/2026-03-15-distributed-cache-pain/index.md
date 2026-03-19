@@ -1,10 +1,3 @@
----
-authors: [david]
-tags: [reflection, distributed-cache, architecture]
----
-
-<!-- truncate -->
-
 # 分布式缓存之殇：理想与现实
 
 在经历了半年的开源之旅，调研了多个用户，我们对分布式缓存这个模式的利弊有了清晰的认识。针对分布式缓存的应用场景局限性，这里做一个简单的反思。
