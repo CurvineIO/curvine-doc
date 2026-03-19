@@ -1,10 +1,3 @@
----
-authors: [barry]
-tags: [architecture, cache-mode, fs-mode, posix]
----
-
-<!-- truncate -->
-
 # Curvine: Next-Generation Unified Data Access Layer, Combining POSIX and High-Speed Cache
 
 In our practice with distributed cache, we have identified core pain points users face: insufficient POSIX semantics support, high resource consumption, and complex operations. To better address these challenges, we have restructured Curvine's architecture and development roadmap, creating a next-generation unified data access layer that combines strong POSIX semantics with high-performance caching, delivering a qualitative improvement in remote data access experience.
