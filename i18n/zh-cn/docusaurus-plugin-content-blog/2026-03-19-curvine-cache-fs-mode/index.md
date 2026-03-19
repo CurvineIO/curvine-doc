@@ -1,10 +1,3 @@
----
-authors: [barry]
-tags: [architecture, cache-mode, fs-mode, posix]
----
-
-<!-- truncate -->
-
 # Curvine：下一代统一数据接入层，兼顾 Posix 和高速缓存
 
 在分布式缓存的实践过程中，我们发现用户面临着 POSIX 语义支持不足、资源消耗高、运维复杂等核心痛点。为了更好地解决这些问题，我们对 Curvine 的模式和发展路线进行了全新调整，打造这一兼具强 POSIX 语义与高性能缓存的下一代统一数据接入层，让远程数据访问体验迎来质的提升。
