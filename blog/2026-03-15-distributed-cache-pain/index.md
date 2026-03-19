@@ -1,10 +1,3 @@
----
-authors: [david]
-tags: [reflection, distributed-cache, architecture]
----
-
-<!-- truncate -->
-
 # The Pain of Distributed Cache: Ideal vs. Reality
 
 After six months of open-source journey and surveying multiple users, we have gained a clear understanding of the pros and cons of the distributed cache model. In light of the limitations of distributed cache application scenarios, here is a simple reflection.
