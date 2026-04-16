@@ -4,18 +4,12 @@ sidebar_position: 1
 
 # Deployment Preparation
 
-This chapter introduces the preparations before deploying Curvine.
+This chapter covers the practical preparation needed before deploying Curvine from a release package or from a locally built `build/dist`.
 
-## Operating System
+## Supported Runtime Baseline
 
-Curvine has excellent cross-platform capabilities and supports running on various operating systems across almost all mainstream architectures, including but not limited to Linux, macOS, Windows, etc. It supports different CPU architectures such as arm64, x86_64, etc.
+The current `main` branch and release workflow are Linux-first. The officially documented tested distributions are:
 
-Here are the recommended operating system versions:
-- Linux: `Rocky` >= 9, `CentOS` >= 7, `Ubuntu` > 22.04
-- macOS
-- Windows
-
-**Supported Distributions**
 | Operating System | Kernel Requirement | Tested Version | Dependencies |
 | --- | --- | --- | --- |
 | CentOS 7 | ≥3.10.0 | 7.6 | fuse2-2.9.2 |
@@ -23,6 +17,8 @@ Here are the recommended operating system versions:
 | Rocky Linux 9 | ≥5.14.0 | 9.5 | fuse3-3.10.2 |
 | RHEL 9 | ≥5.14.0 | 9.5 | fuse3-3.10.2 |
 | Ubuntu 22 | ≥5.15.0 | 22.4 | fuse3-3.10.5 |
+
+macOS has partial support in the codebase and can be useful for development or limited local testing. Windows should be treated as limited support, not as a primary deployment target.
 
 ## Resource Requirements
 
@@ -49,23 +45,40 @@ make dist
 ```
 This runs `make all` (if needed), then packages the contents of `build/dist` into a tar.gz file. The archive is created in the **project root** with a name like `curvine-<platform>-<arch>-<timestamp>.tar.gz`, or `curvine-<version>-<platform>-<arch>.tar.gz` if you set `RELEASE_VERSION` (e.g. `RELEASE_VERSION=v1.0.0 make dist`). This archive is the Curvine installation package for deployment or for building runtime images.
 
-## Configuration File Modification
+## Environment Script and Main Config
 
-After unpacking the installation package (or when using `build/dist`), the environment script is at `conf/curvine-env.sh` and the main config at `conf/curvine-cluster.toml`. (In the source tree, templates live under `etc/` and are copied to `build/dist/conf` during build.)
+After unpacking the installation package, the key files are:
 
-The environment variable that must be set correctly is **`LOCAL_HOSTNAME`** (or the overrides below). The cluster uses it to identify members. Recommended:
+- `conf/curvine-env.sh`: shell-side environment setup
+- `conf/curvine-cluster.toml`: main cluster configuration
+
+The environment script exports these important variables:
+
+- `CURVINE_MASTER_HOSTNAME`: defaults to local hostname
+- `CURVINE_WORKER_HOSTNAME`: defaults to the last IP returned by `hostname -I` on Linux
+- `CURVINE_CLIENT_HOSTNAME`: defaults to local hostname
+- `CURVINE_CONF_FILE`: points to `conf/curvine-cluster.toml`
+
+In multi-NIC, container, or multi-node deployments, you should usually set these explicitly instead of relying on autodetection.
+
 ```bash
-export LOCAL_HOSTNAME=$(hostname)
+export CURVINE_MASTER_HOSTNAME=master1
+export CURVINE_WORKER_HOSTNAME=10.0.0.21
+export CURVINE_CLIENT_HOSTNAME=client1
 ```
+
 :::warning
-CURVINE_MASTER_HOSTNAME and CURVINE_WORKER_HOSTNAME are used to explicitly specify the IP addresses of Master and Worker nodes. In multi-network interface environments, it is recommended to explicitly specify them. By default, `hostname -I` is executed and the last IP is taken. You can also modify the IP acquisition method in conf/curvine-env.sh yourself.
+The current scripts do not use a `LOCAL_HOSTNAME` variable as the primary runtime input. When documenting deployment or debugging hostname issues, prefer the `CURVINE_*_HOSTNAME` variables above.
 :::
 
-Curvine's configuration file is located at `conf/curvine-cluster.toml`. This is a TOML format configuration file containing various Curvine configurations. The configurations that typically need modification are:
-1. Configure master node addresses
-2. Configure worker storage directories
+`conf/curvine-cluster.toml` is the main TOML configuration file. The most common changes are:
 
-Here's an example configuration:
+1. Master / journal addresses
+2. Worker storage directories
+3. Client-side `master_addrs`
+4. Log destinations and levels
+
+Example:
 ```toml
 format_master = false
 format_worker = false
@@ -78,8 +91,8 @@ meta_dir = "data/meta"
 log = { level = "info", log_dir = "logs", file_name = "master.log" }
 
 [journal]
-# Configure raft master node list. hostname must match LOCAL_HOSTNAME environment variable, otherwise master nodes cannot be identified.
-# id must be an integer and cannot be duplicated. port is the master raft port, default is 8996
+# Raft peer list. Each hostname must match the effective master hostname
+# on the corresponding node.
 journal_addrs = [
     {id = 1, hostname = "master1", port = 8996},
     {id = 2, hostname = "master2", port = 8996},
@@ -103,7 +116,7 @@ data_dir = [
 log = { level = "info", log_dir = "logs", file_name = "worker.log" }
 
 [client]
-# Configure master addresses, port is master RPC port, default is 8995
+# Master RPC addresses
 master_addrs = [
     { hostname = "master1", port = 8995 },
     { hostname = "master2", port = 8995 },
@@ -118,10 +131,10 @@ file_name = "curvine.log"
 ```
 
 :::danger
-The hostname in each entry of **journal_addrs** must match the hostname (or `LOCAL_HOSTNAME`) of the machine when that master process starts; otherwise the master cannot join the Raft group.
+Each hostname in `journal_addrs` must match the effective master hostname on that node, after `CURVINE_MASTER_HOSTNAME` overrides are applied. If they do not match, that Master will fail to join the Raft group.
 :::
 
-If you need to use the Java Hadoop client, modify the `fs.cv.master_addrs` value in `curvine-site.xml`, example:
+If you need the Java Hadoop client path, update `conf/curvine-site.xml` as well:
 ```xml
 <property>
     <name>fs.cv.master_addrs</name>

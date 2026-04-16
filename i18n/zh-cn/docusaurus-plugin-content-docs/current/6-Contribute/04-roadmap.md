@@ -1,66 +1,34 @@
-# Curvine 2025 路线图
+# Curvine 路线图
 
-## 概述
-本路线图概述了我们团队追求的目标以及我们对整个社区的愿景。  
-Curvine 在 2025 年的演进以一系列主要功能更新为标志，这些增强功能源于社区反馈和实际场景中的最新需求，体现了我们对卓越的持续追求。
+本页只保留参考仓库中能够直接确认的路线图信息。
 
-## 加入我们
-- 对于存在可跟踪问题的任务，可直接在 [GitHub Issues](https://github.com/CurvineIO/curvine/issues) 中评论
-- 开放式建议请通过 [GitHub Discussions](https://github.com/CurvineIO/curvine/discussions) 提出
-- 我们致力于发展开源生态系统，欢迎全球贡献者加入！
+旧的 2025 里程碑表已经不再与当前参考仓库状态一致。当前仓库顶层 `README.md` 给出的做法，是把路线图入口指向一个名为 `Roadmap 2026` 的 GitHub Discussion，而不是在仓库内维护一份带发布日期的计划表。
 
----
+## 在哪里关注规划
 
-## 核心功能规划
+- `README.md` 中当前的路线图链接
+- GitHub Issues：跟踪具体实现任务
+- GitHub Discussions：讨论路线图与设计方向
 
-### 1. 缓存功能完善
-- [ ] 缓存数据自动清理
-- [ ] 支持主流存储系统：
-    - HDFS
-    - S3
-    - OSS (OSS-HDFS)
-- [ ] 缓存数据预加载
+## 当前仓库可见的贡献方向
 
-### 2. 数据写一致性
-- [ ] 写入时自动管理缓存并刷新到存储系统
-- [ ] Pipeline 多副本复制与自动维护
-- [ ] 强一致性协议支持
+| 方向 | 当前仓库位置 |
+|------|--------------|
+| 核心运行时与 RPC | `orpc/`、`curvine-common/`、`curvine-server/`、`curvine-client/` |
+| FUSE 与命令行工具 | `curvine-fuse/`、`curvine-cli/` |
+| 存储后端与数据访问 | `curvine-ufs/`、`curvine-s3-gateway/`、`curvine-libsdk/` |
+| Web 与管理面 | `curvine-web/` |
+| 测试、压测与回归工具 | `curvine-tests/`、`build/tests/`、`curvine-tests/benchmark/` |
+| Kubernetes 与打包资源 | `curvine-csi/`、`curvine-docker/` |
 
-### 3. Shuffle 支持
-- [ ] 文件聚合功能
-- [ ] 集成 Spark RSS (Remote Shuffle Service)
+## 对贡献者的规划建议
 
-### 4. 性能优化
-- [ ] ORPC 使用 `io_uring` 实现全链路零拷贝（解决云环境 `splice` 失效问题）
-- [ ] FUSE 全链路零拷贝（性能对齐 Client 模式）
-- [ ] RDMA 网络支持
+- 以当前仓库目录、构建脚本和测试覆盖面为准，而不是沿用过时的里程碑表。
+- 顶层目录只能说明当前存在相关工作面，不代表具体发布日期承诺。
+- 对于参考仓库中没有明确落地的存储或协议能力，不要在文档里继续扩写未发布承诺。
 
-### 5. 云原生支持
-- [ ] Curvine Operator
-- [ ] Curvine CSI 驱动
+## 如何参与
 
----
-
-## 版本发布计划
-
-### 2025 年里程碑
-| 版本号          | 发布日期   | 核心功能                          |
-|-----------------|------------|-----------------------------------|
-| `0.1.1-beta`    | 2025-07    | 使用 Curvine FUSE 作为 Spark Shuffle 本地盘（通过 TPC-DS 测试） |
-| `0.2.1-beta`    | 2025-08    | Shuffle 功能完成 + Spark 集成测试  |
-|                 |            | `io_uring` 加速读写               |
-|                 |            | HDFS 协议支持                     |
-| `0.2.2-beta`    | 2025-08    | 云原生 CSI 支持                   |
-| `0.3.1-beta`    | 2025-09    | 缓存自动清理 + 多存储系统适配      |
-
-### 大版本规划
-| 版本号          | 时间节点   | 目标场景                          |
-|-----------------|------------|-----------------------------------|
-| `1.0.0-base`   | 2025-12-30 | 大数据场景完备支持：              |
-|                 |            | - Shuffle 优化                    |
-|                 |            | - 本地 Spill 支持                 |
-|                 |            | - 热数据缓存加速                  |
-| `2.0.0-base`   | 2026-09-30 | AI 场景增强：                     |
-|                 |            | - 训练加速框架集成                |
-|                 |            | - RDMA/GDS 支持                  |
-
+- 如果已有对应任务，直接在 GitHub Issues 中参与讨论。
+- 如果是更宽泛的方向建议，优先在 GitHub Discussions 中提出。
+- 更新文档时，确保命令、构建产物和功能描述都与参考仓库当前实际可见的状态一致。

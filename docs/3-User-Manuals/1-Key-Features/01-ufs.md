@@ -75,21 +75,21 @@ Curvine persists the mount table in metadata, so there is no need to remount whe
 
 Mount command:
 ```bash
-bin/cv mount ufs_path curvine_path [configs]
+bin/cv mount <UFS_PATH> <CV_PATH> [OPTIONS]
 ```
 
 - ufs_path: UFS path, e.g., s3://bucket/path.
 - curvine_path: Curvine path, e.g., /ufs/path.
-- configs: Optional parameters, e.g., access_key_id, secret_access_key, region, endpoint, etc.
+- options: Optional parameters such as `--config`, `--provider`, `--ttl-ms`, and `--write-type`.
 
 Example:
 ```
 bin/cv mount s3://ai/xuen-test /s3 \
--c s3.endpoint_url=http://hostname.com \
--c s3.region_name=cn \
--c s3.credentials.access=access_key \
--c s3.credentials.secret=secret_key \
--c s3.path_style=true
+--config s3.endpoint_url=http://hostname.com \
+--config s3.region_name=cn \
+--config s3.credentials.access=access_key \
+--config s3.credentials.secret=secret_key \
+--config s3.path_style=true
 ```
 
 :::tip
@@ -100,32 +100,38 @@ You can use command line, API to access ufs directories and files after UFS is m
 
 | Parameter | Type | Default | Description | Example |
 |-----------|------|---------|-------------|---------|
-| `--ttl-ms` | duration | `0` | Cache data expiration time | `24h`, `7d`, `30d` |
-| `--ttl-action` | enum | `none` | Expiration policy: `delete`/`none` | `delete` |
-| `--replicas` | int | `1` | Number of data replicas (1-5) | `3` |
-| `--block-size` | size | `128MB` | Cache block size | `64MB`, `128MB`, `256MB` |
-| `--consistency-strategy` | enum | `always` | Consistency strategy | `none` / `always` |
-| `--storage-type` | enum | `disk` | Storage medium type | `mem`/`ssd`/`disk` |
+| `--config <key=value>` | repeated | none | UFS backend parameters | `--config s3.endpoint_url=http://...` |
+| `--update` | bool | `false` | Update an existing mount | `--update` |
+| `--check-path-consist` | bool | `true` | Require the UFS path and Curvine path to map consistently | `--check-path-consist=false` |
+| `--read-verify-ufs` | bool | `false` | Compare cache reads against UFS metadata (`mtime` / `len`) | `--read-verify-ufs` |
+| `--ttl-ms` | duration | `7d` | TTL for the mount | `24h`, `7d`, `30d` |
+| `--replicas` | int | inherited | Replica count override | `3` |
+| `--block-size` | size | inherited | Block size override | `64MB`, `128MB`, `256MB` |
+| `--storage-type` | enum | inherited | Storage medium type | `mem` / `ssd` / `disk` |
+| `--write-type` | enum | `fs_mode` | Mount write behavior | `cache_mode` / `fs_mode` |
+| `--provider` | enum | `auto` | Force the backend implementation | `auto` / `oss-hdfs` / `opendal` |
 
 ### Mount Modes
-#### Write Cache
-WriteType controls the write behavior between Curvine cache and underlying storage (UFS)
-| Mode | Behavior (Sync/Async) | Consistency | Use Cases |
-|---|---|---|---|
-| Cache mode | Write only to Curvine cache, not sync to UFS | Cache-only consistency, no data in UFS | Temporary data, scratch data, disposable intermediate results |
-| Through mode | Write directly to UFS, bypass cache | Strong consistency, data directly persisted to UFS | Write-once-read-many scenarios, cache-unbeneficial data |
-| AsyncThrough mode (default) | Write to cache first, async sync to UFS, return immediately | Eventual consistency, cache readable immediately, UFS updated async | Machine learning training, scenarios balancing performance and persistence |
-| CacheThrough mode | Sync write to cache and UFS, wait for UFS completion | Strong consistency, ensure data exists in both cache and UFS | Shared data, scenarios requiring strong persistence guarantees |
+#### Write Type
 
-#### Read Cache
-ConsistencyStrategy determines whether consistency validation with underlying storage (UFS) is needed when reading logs
-| Mode | Behavior | Consistency | Use Cases |
-|---|---|---|---|
-| None | Trust cache, no consistency validation during reads | No consistency guarantee, may read stale data | High-performance read scenarios, relatively static base data, temporary data/intermediate results |
-| Always | Validate cache matches UFS on every read | Strong consistency guarantee, ensure latest data | Intermittent data updates, multi-client shared data, strong consistency requirement scenarios |
+The current `main` branch exposes only two write types:
+
+| Mode | Behavior | Typical use case |
+|---|---|---|
+| `cache_mode` | Write through to the underlying storage path and use Curvine mainly as a unified access / cached-read layer | Data that primarily lives in UFS |
+| `fs_mode` | Write into the Curvine namespace first; first mount of an `fs_mode` path can trigger metadata `resync` | Curvine-managed cached filesystem view over mounted data |
+
+#### Read Verification
+
+For read-side validation, the current user-facing control is `--read-verify-ufs`:
+
+| Mode | Behavior |
+|---|---|
+| disabled | Trust cached data and normal unified filesystem fallback rules |
+| enabled | Compare cache state against UFS metadata (`mtime` and length) before serving reads |
 
 :::note
-TTL controls read cache behavior in Curvine by determining cache validity to trigger automatic cache refresh or cleanup operations.
+For `s3://...` mounts, the CLI can auto-fill `s3.bucket_name` from the URI. For `hdfs://...` mounts, it can infer `hdfs.namenode` and `hdfs.root` from the URI. When Kerberos keys are present without `hdfs.kerberos.ccache` or `KRB5CCNAME`, the CLI prints a warning.
 :::
 
 ## Unified Access
@@ -135,7 +141,7 @@ Clients, command line tools, fuse, etc. can all access the UFS file system throu
 :::tip
 - Curvine does not cache UFS metadata, so there is no data consistency issue when accessing. Accessing UFS through Curvine is no different from accessing UFS directly.
 When Curvine cache data read fails, it automatically falls back to reading data from UFS.
-- If using the cv command, you can use the `cache-only` parameter to temporarily disable unified access and view only files cached in Curvine. See the [fs subcommand](/docs/User-Manuals/Operations/cli#3-fs--file-system-operations) for details.
+- If using the `cv` command, you can use `--cache-only` to temporarily disable unified access and view only files cached in Curvine. See the [CLI page](/docs/User-Manuals/Operations/cli) for details.
 :::
 
 ## Disabling Unified Access

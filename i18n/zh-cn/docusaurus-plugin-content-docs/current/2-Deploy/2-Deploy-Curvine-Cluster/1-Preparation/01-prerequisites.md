@@ -4,14 +4,12 @@ sidebar_position: 0
 
 # 环境初始化
 
-本章节，为您详细介绍常见的不同开发环境下的环境初始化工作, 包括`rocky9`, `centos8`, `ubuntu22.04+`, `macOS`。 由于每个人的环境不尽相同，下述提供的依赖安装方式，仅供参考。如果安装过程中存在问题，欢迎提交[issue](https://github.com/CurvineIO/curvine-doc/issues) 帮助完善文档。 
-
-不推荐使用windows作为开发环境，但是我们仍提供一个[windows环境初始化](#windows10)供您参考。
+本章节介绍 Curvine 常见开发环境的初始化方式。当前 `main` 分支以 Linux 为主；macOS 更适合作为开发和有限的本地测试环境。如果你在 Windows 上工作，建议通过 WSL 使用 Linux 环境，而不要把原生 Windows 视为主要构建目标。
 
 **依赖环境**
 - ​**GCC**: version 10 or later ([GCC Installation](https://gcc.gnu.org/install/))
 - ​**Rust**: version 1.86 or later ([Installation Guide](https://www.rust-lang.org/tools/install))
-- ​**Protobuf**: version 3.x+ [(Install Guide)](ttps://github.com/protocolbuffers/protobuf/releases/download/v27.2/protoc-27.2-linux-x86_64.zip )
+- ​**Protobuf**: version 3.x+ [(Install Guide)](https://github.com/protocolbuffers/protobuf/releases/download/v27.2/protoc-27.2-linux-x86_64.zip)
 - ​**Maven**: version 3.8 or later ([Install Guide](https://maven.apache.org/install.html))
 - ​**LLVM**: version 12 or later ([Installation Guide](https://llvm.org/docs/GettingStarted.html))
 - ​**FUSE**: libfuse2 or libfuse3 development packages

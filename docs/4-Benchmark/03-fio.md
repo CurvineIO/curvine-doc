@@ -1,54 +1,67 @@
-# FIO Performance Testing
+# FIO Benchmark
 
-This chapter introduces using FIO to test Curvine's performance.
+This page documents the checked-in FIO benchmark script in `build/tests/fio-test.sh`.
 
-## Test Environment
+## What the script checks before running
 
-The test machine configuration is as follows:
-- Worker machine type: i3en.24xlarge, Operating system: RedHat 9
-- Client machine type: c5n.18xlarge, Operating system: RedHat 9
-- FIO version: 3.5
+The current script:
 
-## Test Tools
+- uses `/curvine-fuse/fio-test` as the default test directory
+- verifies that the parent directory of the test path is a mount point
+- requires the `fio` command to be installed
 
-Using FIO to test Curvine's performance. The test cases are as follows:
+`build/tests/prepare_cluster.sh` makes the same assumption as the regression tooling: shell scripts should verify readiness, while cluster preparation is expected to happen before the script is invoked.
 
+## Default checked-in parameters
+
+The active defaults in `fio-test.sh` are:
+
+- Test directory: `/curvine-fuse/fio-test`
+- File size: `500m`
+- Runtime: `30s`
+- Parallel jobs: `1`
+- Direct I/O: `1`
+- Data verification: `1`
+- Cleanup after test: `1`
+
+You can override them with flags such as `--size`, `--runtime`, `--numjobs`, `--direct`, `--verify`, `--cleanup`, and `--json-output`.
+
+## Workloads actually run
+
+The checked-in script runs these FIO cases:
+
+1. Sequential write, `256KB` blocks
+2. Sequential read, `256KB` blocks
+3. Random write, `256KB` blocks
+4. Random read, `256KB` blocks
+5. Mixed random read/write, `256KB` blocks with `70%` reads
+
+Verification uses `crc32c` when `--verify 1` is left enabled.
+
+## How to run
+
+From the source tree:
+
+```bash
+# Default run
+bash build/tests/fio-test.sh
+
+# Larger files and more jobs
+bash build/tests/fio-test.sh --size 2G --runtime 60s --numjobs 4
+
+# Keep test files for inspection
+bash build/tests/fio-test.sh --cleanup 0
+
+# Emit JSON for regression tooling
+bash build/tests/fio-test.sh --json-output /tmp/fio-test-results.json
 ```
-# 256KB sequential read
-fio -iodepth=1 -rw=read \
--ioengine=libaio -bs=256k -group_reporting -size=100gb \
--filename=/curvine-fuse/0  -name=read_test --readonly \
--direct=1 --runtime=60 -numjobs={job_num}
 
-# 256K random read
-fio -iodepth=1 -rw=randread \
--ioengine=libaio -bs=256k -group_reporting -size=100gb \
--filename=/curvine-fuse/0  -name=read_test --readonly \
--direct=1 --runtime=60 -numjobs={job_num}
+## Regression integration
 
-# 4k random read
-fio -iodepth=1 -rw=randread \
--ioengine=libaio -bs=4k -group_reporting -size=100gb \
--filename=/curvine-fuse/0  -name=read_test --readonly \
--direct=1 --runtime=60 -numjobs={job_num}
-```
+`curvine-tests/README.md` describes FIO as part of the "Daily Test (Full)" flow, and `curvine-tests/regression/tests/fio_test.py` runs the packaged script from `build/dist/tests/fio-test.sh` with `--json-output`.
 
-## Test Results
+That means this script is both a local benchmark utility and a regression-facing performance smoke test.
 
-256KB sequential read:
+## Results
 
-| Threads | 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Throughput (GiB/s) | 2.2 | 3.7 | 6.8 | 8.9 | 9.2 | 9.5 | 9.2 | 9.2 |
-
-256K random read:
-
-| Threads | 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Throughput (GiB/s) | 0.3 | 0.7 | 1.4 | 2.8 | 5.2 | 7.8 | 8.7 | 9.0 |
-
-4k random read:
-
-| Threads | 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| IOPS(K) | 2.5 | 5.1 | 12.5 | 25.4 | 42.1 | 85.0 | 138.4 | 186 |
+The reference tree does not check in a canonical throughput table for FIO. The script prints live FIO output and can also write structured JSON results for later reporting, so benchmark numbers should be collected from the environment where the test actually ran.

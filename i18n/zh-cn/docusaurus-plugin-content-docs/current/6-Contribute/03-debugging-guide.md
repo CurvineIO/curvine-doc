@@ -4,43 +4,65 @@ sidebar_position: 3
 
 # 调试指南
 
-本文说明如何配置日志、查看日志与指标，以及如何基于 [Curvine 源码仓库](https://github.com/CurvineIO/curvine) 中的配置与二进制调试各组件。
+本文总结 Curvine 参考仓库中的运行时文件、日志路径、默认端口以及常见调试入口。
 
 ## 配置文件
 
-所有服务端与客户端组件共用 **集群配置文件**。默认路径为 `conf/curvine-cluster.toml`（相对于进程工作目录；从 `build/dist/` 启动时即该目录）。仓库示例在 `etc/curvine-cluster.toml`。
+默认集群配置文件为：
 
-配置为 TOML；主要段落包括 `[master]`、`[worker]`、`[journal]`、`[client]`、`[fuse]`、`[log]`、`[cli]`、`[s3_gateway]`。环境变量可覆盖：`CURVINE_MASTER_HOSTNAME`、`CURVINE_WORKER_HOSTNAME`、`CURVINE_CLIENT_HOSTNAME`、`CURVINE_CONF_FILE`。
+```text
+build/dist/conf/curvine-cluster.toml
+```
+
+源码中的示例文件位于 `etc/curvine-cluster.toml`。其中常见配置段包括：
+
+- `[master]`
+- `[journal]`
+- `[worker]`
+- `[client]`
+- `[fuse]`
+- `[log]`
+- `[s3_gateway]`
+- `[cli]`
+
+脚本中涉及的运行时环境变量包括：
+
+- `CURVINE_CONF_FILE`
+- `CURVINE_MASTER_HOSTNAME`
+- `CURVINE_WORKER_HOSTNAME`
+- `CURVINE_CLIENT_HOSTNAME`
+
+## 包装脚本与运行时文件
+
+`build/dist/bin/` 下的包装脚本会先 source `conf/curvine-env.sh`，再调用 `build/dist/lib/` 下的实际二进制。
+
+对于 `master`、`worker`、`fuse`，`build/bin/launch-process.sh` 还会统一管理：
+
+- pid 文件：`$CURVINE_HOME/<service>.pid`
+- stdout/stderr 输出：`$CURVINE_HOME/logs/<service>.out`
+- 默认配置路径：`CURVINE_CONF_FILE=$CURVINE_HOME/conf/curvine-cluster.toml`
+
+因此，如果通过包装脚本启动后立即失败，优先检查 `logs/master.out`、`logs/worker.out`、`logs/fuse.out`。
 
 ## 日志配置
 
-日志使用 orpc 的 **LogConf**：`level`、`log_dir`、`file_name`。若 `log_dir` 为 `stdout`（或空），则输出到标准输出；否则写入 `log_dir` 下文件。
+示例配置中的默认值如下。
 
 ### Master
 
-在 `curvine-cluster.toml` 中：
-
 ```toml
 [master]
-# ...
 log = { level = "info", log_dir = "stdout", file_name = "master.log" }
 ```
-
-- **level**：`trace`、`debug`、`info`、`warn`、`error`。
-- **log_dir**：控制台用 `stdout`，或填写目录路径则写文件。
-- **file_name**：日志文件名（如 `master.log`）。
 
 ### Worker
 
 ```toml
 [worker]
-# ...
 log = { level = "info", log_dir = "stdout", file_name = "worker.log" }
 ```
 
-### 客户端 / FUSE / 共用日志
-
-全局 `[log]` 被客户端库与 FUSE（Rust/Java/FUSE 客户端）使用：
+### Client 与 FUSE
 
 ```toml
 [log]
@@ -56,80 +78,138 @@ file_name = "curvine.log"
 log = { level = "warn", log_dir = "stdout", file_name = "cli.log" }
 ```
 
-**调试时**可将对应段落设为 `level = "debug"`（或 `trace`）。例如 Master 与客户端：
+当 `log_dir = "stdout"` 且组件通过包装脚本启动时，结构化日志最终会进入对应的 `logs/*.out` 文件，因为包装脚本把 stdout 重定向到了这些文件。若将 `log_dir` 改成目录路径，则需要直接查看该目录下的日志文件。
 
-```toml
-[master]
-log = { level = "debug", log_dir = "stdout", file_name = "master.log" }
+调试时建议将相关组件的日志级别提升到 `debug` 或 `trace`。
 
-[log]
-level = "debug"
-log_dir = "stdout"
-file_name = "curvine.log"
-```
+## 启动命令
 
-## 二进制与启动方式
-
-| 组件 | 启动方式 | 二进制 / 脚本 |
-|------|----------|----------------|
-| Master | `bin/curvine-master.sh start` | `lib/curvine-server --service master --conf conf/curvine-cluster.toml` |
-| Worker | `bin/curvine-worker.sh start` | `lib/curvine-server --service worker --conf conf/curvine-cluster.toml` |
-| FUSE | `bin/curvine-fuse.sh start` | `lib/curvine-fuse`（可传 `--conf`、`--mnt-path` 等） |
+| 组件 | 包装脚本命令 | 实际二进制 |
+|------|--------------|------------|
+| Master | `bin/curvine-master.sh start` | `lib/curvine-server --service master --conf $CURVINE_CONF_FILE` |
+| Worker | `bin/curvine-worker.sh start` | `lib/curvine-server --service worker --conf $CURVINE_CONF_FILE` |
+| FUSE | `bin/curvine-fuse.sh start` | `lib/curvine-fuse ... --conf $CURVINE_CONF_FILE` |
+| 本地集群 | `bin/local-cluster.sh start` | 依次通过包装脚本启动 Master 与 Worker |
 | S3 网关 | `bin/curvine-s3-gateway.sh start` | `lib/curvine-s3-gateway` |
-| CLI | `bin/cv` | `lib/curvine-cli` |
+| CLI | `bin/cv ...` | `lib/curvine-cli` |
 
-脚本从 `conf/curvine-env.sh`（在 `build/dist/` 下）读取 `CURVINE_HOME`；二进制位于 `$CURVINE_HOME/lib/`。
+`bin/curvine-fuse.sh` 默认挂载点为 `/curvine-fuse`，也支持通过 `--mnt-path` 传入自定义挂载点。
 
 ## 默认端口
 
-来自 curvine-common 默认值：
+这些默认值来自 `curvine-common/src/conf/cluster_conf.rs` 与示例配置：
 
-| 服务 | 默认端口 | 配置项 |
-|------|----------|--------|
-| Master RPC | 8995 | `[master]` `rpc_port` |
-| Master Web（指标/API） | 9000 | `[master]` `web_port` |
-| Raft（journal） | 8996 | `[journal]` `journal_addrs[].port` |
-| Worker RPC | 8997 | `[worker]` `rpc_port` |
-| Worker Web | 9001 | `[worker]` `web_port` |
-| FUSE 指标 | 9002 | `[fuse]` `web_port` |
-| S3 网关 | 9900 | `[s3_gateway]` `listen` |
+| 服务 | 默认端口 | 来源 |
+|------|----------|------|
+| Master RPC | `8995` | `DEFAULT_MASTER_PORT` |
+| Raft / journal | `8996` | `DEFAULT_RAFT_PORT` |
+| Worker RPC | `8997` | `DEFAULT_WORKER_PORT` |
+| Master Web / metrics | `9000` | `DEFAULT_MASTER_WEB_PORT` |
+| Worker Web / metrics | `9001` | `DEFAULT_WORKER_WEB_PORT` |
+| FUSE Web / metrics | `9002` | `DEFAULT_FUSE_WEB_PORT` |
+| S3 网关监听 | `9900` | 示例配置中的 `[s3_gateway].listen` |
 
-可用于连通性检查与指标采集（如 Prometheus）。
+## 常见调试流程
 
-## 常见调试场景
+### 服务启动失败
 
-### Master / Worker 无法连接
+1. 先查看包装脚本输出文件：
 
-1. **连通性**：在客户端或其它节点执行 `telnet <master-host> 8995`（Master RPC）、`telnet <worker-host> 8997`（Worker RPC）。  
-2. **配置**：Worker 的 `[worker]` 与 `master_addrs`（或 client 配置）须指向 Master RPC 地址（host:8995）；多节点时可设置 `CURVINE_MASTER_HOSTNAME` / `CURVINE_WORKER_HOSTNAME`。  
-3. **日志**：若写文件，查看 master/worker 的 `log_dir`/`file_name`（如 `tail -f /var/log/curvine/master.log`）；若 `log_dir = "stdout"` 则查看终端或 systemd/journal。
+   ```bash
+   tail -n 100 build/dist/logs/master.out
+   tail -n 100 build/dist/logs/worker.out
+   tail -n 100 build/dist/logs/fuse.out
+   ```
 
-### 性能问题
+2. 确认配置路径：
 
-1. **指标**：Master `curl http://<master>:9000/metrics`，Worker `curl http://<worker>:9001/metrics`（端口以配置为准）。  
-2. **系统**：使用 `htop`、`iostat -x 1`、`sar -n DEV 1` 查看 CPU、磁盘、网络。  
-3. **Profiling**：用 `perf record -g` 或其它 profiler 运行二进制；Rust 建议带 debug 符号（debug 构建或 release 开启 debuginfo）。
+   ```bash
+   echo "$CURVINE_CONF_FILE"
+   ```
+
+3. 检查 pid 文件是否陈旧：
+
+   ```bash
+   ls build/dist/*.pid
+   ```
+
+### Master / Worker 连通性问题
+
+在客户端或其它节点上使用 `nc` 或 `telnet`：
+
+```bash
+nc -vz <master-host> 8995
+nc -vz <worker-host> 8997
+```
+
+然后检查集群配置与 hostname 覆盖：
+
+- `CURVINE_MASTER_HOSTNAME`
+- `CURVINE_WORKER_HOSTNAME`
+- `conf/curvine-cluster.toml` 中的 journal 和 client 地址
+
+### 集群状态异常
+
+优先使用脚本和 CLI：
+
+```bash
+cd build/dist
+bin/local-cluster.sh status
+bin/cv report
+bin/cv node
+```
+
+### 指标与性能分析
+
+```bash
+curl http://<master>:9000/metrics
+curl http://<worker>:9001/metrics
+```
+
+然后结合 `htop`、`iostat -x 1`、`sar -n DEV 1`、`perf record -g` 等系统工具继续分析。
 
 ### FUSE 挂载问题
 
-1. **挂载**：检查 `mount | grep curvine`；卸载 `fusermount -u /curvine-fuse`（或你使用的 `--mnt-path`）。  
-2. **FUSE 调试**：将 `[log]` 或 `[fuse]` 的 `level` 设为 `debug`，或手动运行 `lib/curvine-fuse --conf conf/curvine-cluster.toml --mnt-path /mnt/curvine` 观察输出。  
-3. **权限**：`ls -la /dev/fuse`；确认用户属于 `fuse` 组：`groups $USER`。
+1. 检查挂载是否存在：
 
-## 调试工具
+   ```bash
+   mount | grep curvine
+   ```
 
-- **CLI**：`bin/cv report`、`bin/cv node`、`bin/cv fs ls ...` 查看集群与路径（见 [命令行工具](/zh-cn/docs/User-Manuals/Operations/cli)）。  
-- **gdb**：在 gdb 下运行或挂载进程；core 需先 `ulimit -c unlimited` 并设置 `kernel.core_pattern`。  
-- **strace**：跟踪系统调用（如 `strace -f -e trace=network ./lib/curvine-server --service worker --conf conf/curvine-cluster.toml`）。
+2. 如有需要，手动运行 FUSE：
 
-## Core 分析
+   ```bash
+   build/dist/lib/curvine-fuse --conf build/dist/conf/curvine-cluster.toml --mnt-path /mnt/curvine
+   ```
 
-1. 开启 core：`ulimit -c unlimited`；Linux 可设置 `echo '/tmp/core.%e.%p' | sudo tee /proc/sys/kernel/core_pattern`。  
-2. 用 gdb 打开：`gdb $CURVINE_HOME/lib/curvine-server /tmp/core.curvine-server.12345`，然后 `bt`、`info threads`。
+3. 检查 FUSE 权限：
 
-## 获取帮助
+   ```bash
+   ls -l /dev/fuse
+   groups "$USER"
+   ```
 
-- [GitHub Issues](https://github.com/CurvineIO/curvine/issues) 提交缺陷与功能建议。  
-- [CONTRIBUTING.md](https://github.com/CurvineIO/curvine/blob/main/CONTRIBUTING.md) 查看贡献与社区链接。
+## 低层调试工具
 
-反馈问题时请包含：操作系统、Curvine 版本（或 git commit）、相关配置（脱敏）、以及故障时间段的日志或指标片段。
+- `gdb`：本地调试和 core 分析
+- `strace -f -e trace=network ...`：排查连接问题
+- `perf`：CPU Profiling
+- `bin/cv fs ...`：从 Curvine 客户端视角检查路径与元数据
+
+## Core Dump
+
+```bash
+ulimit -c unlimited
+gdb build/dist/lib/curvine-server /tmp/core.curvine-server.12345
+```
+
+进入 gdb 后优先执行 `bt` 和 `info threads`。
+
+## 反馈问题时建议附带的信息
+
+- 操作系统与架构
+- Curvine 版本或 commit
+- 精确的包装脚本命令或二进制命令
+- 已脱敏的相关配置
+- 对应的 `logs/*.out` 或结构化日志片段
+- 指标信息与复现步骤

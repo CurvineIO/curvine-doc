@@ -31,9 +31,24 @@ git clone https://github.com/CurvineIO/curvine.git ./
 [Docker环境初始化](https://github.com/CurvineIO/curvine/blob/main/curvine-docker/compile/Dockerfile_rocky9)
 :::
 
-然后，使用make命令即可全量编译， 编译结果位于 `build/dist` 中
+可选：先检查构建环境：
+
+```bash
+make check-env
 ```
+
+然后使用 `make` 进行全量编译，输出位于 `build/dist`：
+
+```bash
 make all
+```
+
+也可以直接调用构建脚本：
+
+```bash
+sh build/build.sh          # 全量编译（release）
+sh build/build.sh -h       # 查看帮助和 package/ufs 选项
+sh build/build.sh -p core  # 只编译 server、client、cli
 ```
 
 
@@ -41,6 +56,7 @@ make all
 更多 make 目标可运行 `make` 或 `make help` 查看。简要说明（以仓库为准）：
 - **环境**：`make check-env` — 检查构建依赖
 - **构建**：`make build` / `make all` — 编译（输出在 `build/dist`）；`make dist` — 编译并打 tar.gz 到项目根目录；`make dist-only` — 仅对已有 `build/dist` 打包
+- **部分构建**：`make build ARGS='-p core'`（server+client+cli）、`make build ARGS='-p core -p fuse'`、`make build ARGS='-p object'`（S3 网关）、`make build ARGS='-d'`（debug）；`make build-hdfs` 用于 HDFS 支持；`make build ARGS='--skip-java-sdk'` 可跳过 Java SDK
 - **Docker**：`make docker-build` — 构建**运行时**镜像；`make docker-build-compile` — 构建编译用镜像（交互）；`make docker-compile` — 在容器内编译，输出到本地 `build/dist`
 - **CSI**：`make curvine-csi` — 构建 curvine-csi 镜像
 - **示例**：`make build ARGS='-p core'`、`make build ARGS='-p server -p client'`、`make build ARGS='-p object'`（S3 网关）、`RELEASE_VERSION=v1.0.0 make dist`
@@ -122,27 +138,38 @@ docker exec -it curvine-compile /bin/bash
 
 
 ## 拓展模块支持
-curvine 底层存储支持对接oss、hdfs、s3、minio等多种不同的存储，默认情况下这些存储通过opendal实现对接。 curvine针对oss和hdfs实现也提供了特定优化版本。 你可以通过`make all --ufs oss-hdfs` 这种方式来编译拓展模块。
+Curvine 底层存储支持对接 OSS、HDFS、S3、MinIO 等多种后端。默认情况下以 OpenDAL 后端为主；对于 OSS 与 HDFS，也可以构建特定实现。
 
-支持的参数包括
+常见的 `--ufs` 参数包括：
 | 参数            | 说明                                |
 |-----------------|-------------------------------------|
-| oss-hdfs        | 对接阿里jindo-sdk                   |
-| opendal-oss     | 通过opendal对接OSS对象存储          |
-| opendal-hdfs    | 以native模式运行                    |
-| opendal-s3      | 通过opendal对接S3对象存储           |
-| opendal-azblob  | 通过opendal对接Azure Blob           |
+| `oss-hdfs` | 对接阿里 JindoSDK / OSS-HDFS |
+| `opendal-oss` | 通过 OpenDAL 对接 OSS 对象存储 |
+| `opendal-hdfs` | 通过 OpenDAL 对接原生 HDFS |
+| `opendal-webhdfs` | 通过 OpenDAL 对接 WebHDFS |
+| `opendal-s3` | 通过 OpenDAL 对接 S3 |
+| `opendal-azblob` | 通过 OpenDAL 对接 Azure Blob |
 
 
 :::warning
-在`oss-hdfs` 模块编译中，你需要指定jindo的环境变量，例如：
+编译 `oss-hdfs` 模块时，需要准备 JindoSDK 运行时环境。例如：
 ```bash
-export export JINDOSDK_HOME=/opt/jindosdk-6.10.3
+export JINDOSDK_HOME=/opt/jindosdk-6.10.3
 export LD_LIBRARY_PATH="${JINDOSDK_HOME}/lib/native:${LD_LIBRARY_PATH}"
-make all `--ufs oss-hdfs`
+
+# 直接调用 build.sh
+sh build/build.sh --ufs oss-hdfs
+
+# 或通过 make 透传参数
+make build ARGS='--ufs oss-hdfs'
 ```
 :::
 
-如果需要同时编译多个拓展模块支持，可以多次指定--ufs，比如`make all --ufs oss-hdfs --ufs opendal-oss`
+如果需要同时编译多个扩展模块，可以多次指定 `--ufs`，例如：
 
-你需要关注到，对于oss加速桶和默认对象存储桶，在使用的时候都是oss://test-bucket的模式，因此在挂载oss存储的时候，需要指定特定的模块支持，关于挂载的详细用法参考cli mount章节
+```bash
+sh build/build.sh --ufs oss-hdfs --ufs opendal-oss
+make build ARGS='--ufs oss-hdfs --ufs opendal-oss'
+```
+
+需要注意的是，OSS 加速桶与普通 OSS 对象存储在 URI 上都可能表现为 `oss://bucket`。因此在挂载 OSS 时，建议结合 CLI 的 `--provider` 明确指定具体实现。详细挂载方式见 CLI 文档中的 `mount` 章节。
