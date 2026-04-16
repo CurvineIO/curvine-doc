@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Environment Initialization
 
-This chapter provides detailed environment initialization instructions for different common development environments, including `rocky9`, `centos8`, `ubuntu22.04+`, and `macOS`.
+This chapter summarizes common Curvine development environment setups. The current `main` branch is Linux-first; macOS is mainly useful for development and limited local testing. If you work from Windows, use a Linux environment through WSL rather than treating native Windows as the primary build target.
 
 **Dependencies**
 - **GCC**: version 10 or later ([GCC Installation](https://gcc.gnu.org/install/))
@@ -118,7 +118,7 @@ source /etc/profile
 mvn --version
 ```
 
-### Python Environment Installation
+### Ubuntu 22.04+ Python Environment Installation
 
 ⚠️ **Important: Ensure Python version ≥ 3.7**
 
@@ -159,7 +159,7 @@ sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 # sudo update-alternatives --config python3  # Choose default version
 ```
 
-### Python Environment Installation
+### Rocky Linux 9 Python Environment Installation
 
 ⚠️ **Important: Ensure Python version ≥ 3.7**
 
@@ -188,7 +188,7 @@ pip3 --version
 sudo alternatives --install /usr/bin/python python /usr/bin/python3 1
 ```
 
-### Python Environment Installation
+### CentOS 7 Legacy Python Environment Installation
 
 ```bash
 # CentOS 7 comes with a lower default Python version, need to manually install Python 3.9

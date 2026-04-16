@@ -1,116 +1,82 @@
-# Concurrent Performance Testing
+# Concurrent Read/Write Benchmark
 
-This chapter introduces the methods and results of Curvine concurrent performance testing.
+This page reflects the benchmark wrappers in `build/tests/curvine-bench.sh` and `build/tests/java-bench.sh`, plus the Rust benchmark implementation under `curvine-tests/src`.
 
-## Test Environment
+## Supported benchmark modes
 
-The test machine configuration is as follows:
+Both wrappers support the same four actions:
 
-- CPU: 80 cores
-- Memory: 256GB
-- Disk: 1 SSD
+- `fs.write`
+- `fs.read`
+- `fuse.write`
+- `fuse.read`
 
-## Test Tools
+The Rust wrapper launches `${CURVINE_HOME}/lib/curvine-bench`. The Java wrapper launches `io.curvine.bench.CurvineBenchV2`.
 
-Using Curvine's built-in performance testing tools for testing. The test tools are located in the bin directory:
+Default target directories come from the checked-in scripts:
 
-- curvine-bench: Testing using Rust client
-- java-bench: Testing using Java client
+- `fs.*` actions default to `/fs-bench`
+- `fuse.*` actions default to `/curvine-fuse/fs-bench`
 
-Test case: Using 40 threads to concurrently read and write 1000 files, each file size is 100MB; for disk read testing, page cache needs to be cleared each time.
+The top-level README and README_zh both describe `/curvine-fuse` as the default mount point for Curvine FUSE.
 
-Rust client testing, modify bin/curvine-bench.sh:
+## Default checked-in workload
 
-```
-${CURVINE_HOME}/lib/curvine-bench \
---action ${ACTION} \
---dir $DIR \
---conf $CURVINE_HOME/conf/curvine-cluster.toml \
---checksum true \
---client-threads 10 \
---buf-size 128KB \
---file-size 100MB \
---file-num 1000 \
-```
+The active wrapper settings in both scripts are:
 
-Java client testing, modify bin/java-bench.sh:
+- Client threads: `10`
+- File count: `10`
+- File size: `100MB`
+- Buffer size: `128KB`
+- Checksum: `true`
 
-```
-java -Xms10g -Xmx10g \
--Dcurvine.conf.dir=${CURVINE_HOME}/conf \
-io.curvine.bench.CurvineBenchV2 \
--action $ACTION \
--dataDir $DIR \
--threads 10 \
--bufferSize 128kb \
--fileSize 100mb \
--fileNum 10000 \
--checksum true \
--clearDir false
+Rust wrapper:
+
+```bash
+${CURVINE_HOME}/lib/curvine-bench --action ${ACTION} --dir $DIR --conf $CURVINE_HOME/conf/curvine-cluster.toml --checksum true --client-threads 10 --buf-size 128KB --file-size 100MB --file-num 10
 ```
 
-## Client Test Results
+Java wrapper:
 
-Running scripts:
-
-```
-# Rust client read/write data
-bin/curvine-bench.sh fs.write
-bin/curvine-bench.sh fs.read
-
-# Java client read/write data
-bin/java-bench.sh fs.write
-bin/java-bench.sh fs.read
+```bash
+java -Xms256m -Xmx1g -Dcurvine.conf.dir=${CURVINE_HOME}/conf io.curvine.bench.CurvineBenchV2 -action $ACTION -dataDir $DIR -threads 10 -bufferSize 128kb -fileSize 100mb -fileNum 10 -checksum true -clearDir false
 ```
 
-Rust client test results:
+Both wrappers still contain commented heavier profiles, but those are examples only. They are not the active defaults in the checked-in scripts.
 
-| Operation Type | Speed (GiB/s) |
-|----------------|---------------|
-| Write Memory   | 11.7          |
-| Read Memory    | 17.3          |
-| Write Disk     | 4.3           |
-| Read Disk      | 3.5           |
+## How the Rust benchmark behaves
 
-Java client test results:
+The current Rust implementation supports only the four actions above. For each run it:
 
-| Operation Type | Speed (GiB/s) |
-|----------------|---------------|
-| Write Memory   | 10.1          |
-| Read Memory    | 10.6          |
-| Write Disk     | 4.0           |
-| Read Disk      | 3.5           |
+- creates the target directory if needed
+- launches one task per file
+- writes or reads each file in `128KB` chunks until `100MB` per file is reached
+- prints total bytes, checksum, and the parsed arguments at the end
 
-## FUSE Test Results
+## How to run
 
-Using fuse3 for testing.
+From the source tree:
 
-Running scripts:
+```bash
+# Rust client against Curvine RPC
+bash build/tests/curvine-bench.sh fs.write
+bash build/tests/curvine-bench.sh fs.read
 
+# Rust client through the mounted FUSE path
+bash build/tests/curvine-bench.sh fuse.write /curvine-fuse/fs-bench
+bash build/tests/curvine-bench.sh fuse.read /curvine-fuse/fs-bench
+
+# Java client against Curvine RPC
+bash build/tests/java-bench.sh fs.write
+bash build/tests/java-bench.sh fs.read
+
+# Java client through the mounted FUSE path
+bash build/tests/java-bench.sh fuse.write /curvine-fuse/fs-bench
+bash build/tests/java-bench.sh fuse.read /curvine-fuse/fs-bench
 ```
-# Rust file api read/write data
-bin/curvine-bench.sh fuse.write
-bin/curvine-bench.sh fuse.read
 
-# Java file api read/write data
-bin/java-bench.sh fuse.write
-bin/java-bench.sh fuse.read
-```
+Before running `fuse.*` actions, make sure `/curvine-fuse` is mounted.
 
-Rust test results:
+## Results
 
-| Type        | Speed (GiB/s) |
-|-------------|---------------|
-| Memory Write| 10.6          |
-| Memory Read | 11.1          |
-| Disk Write  | 3.5           |
-| Disk Read   | 2.6           |
-
-Java test results:
-
-| Type        | Speed (GiB/s) |
-|-------------|---------------|
-| Memory Write| 9.0           |
-| Memory Read | 9.3           |
-| Disk Write  | 3.2           |
-| Disk Read   | 2.4           |
+The current reference tree does not publish official throughput tables for these wrappers. Treat any throughput numbers as environment-specific measurements, not repository defaults.

@@ -4,25 +4,23 @@ This section introduces Curvine's caching strategies and how to cache data.
 
 ### Write Strategies
 
-Write strategies control how data is written when files are located at UFS mount points. They are set per mount (e.g. `cv mount ... --write-type <type>`). The default is **AsyncThrough**.
+Write strategies control how data is written for mounted paths. In the current `main` branch they are set per mount through `cv mount ... --write-type <type>`. The default exposed by the CLI is **`fs_mode`**.
 
 | Strategy | CLI value | Behavior | Use Cases |
 |----------|-----------|----------|-----------|
-| Cache | `cache` | Writes only to Curvine cache | Temporary data, maximum performance requirements |
-| Through | `through` | Writes directly to UFS, bypassing cache | Write-once data, scenarios where caching provides no benefit |
-| CacheThrough | `cache_through` | Writes synchronously to both cache and UFS | Data sharing with strong consistency requirements |
-| AsyncThrough | `async_through` (default) | Writes to cache first, asynchronously syncs to UFS | Balancing performance and durability |
+| CacheMode | `cache_mode` | Write through to the underlying UFS path; Curvine mainly acts as a unified-access and cached-read layer | Data whose primary source of truth remains in UFS |
+| FsMode | `fs_mode` (CLI default) | Write into the Curvine namespace first; first mount may trigger metadata `resync` | Curvine-managed cached namespace over mounted data |
 
-### Consistency Strategies
+### Read Verification
 
-Curvine provides two strategies to validate cached data against UFS (configurable per mount via `--consistency-strategy`):
+The current read-side validation control is `--read-verify-ufs` on the mount:
 
 | Strategy | Behavior |
 |----------|----------|
-| **None** | No validation. Cached data is trusted; expired entries may be removed by TTL. May read stale data. |
-| **Always** | Validates on every file read: compares file length and last modified time (mtime) with UFS. If they match, data is read from cache; otherwise cache is treated as stale. |
+| disabled | Cached data is trusted and normal unified filesystem fallback rules apply |
+| enabled | On reads, Curvine compares cached file metadata against UFS (`mtime` and file length) before serving cached data |
 
-When validation fails (or cache miss), data is read directly from UFS and can be asynchronously loaded into Curvine if automatic caching is enabled for that mount.
+When validation fails, or when the cache misses, data is read directly from UFS. If automatic caching is enabled for that mount, Curvine can still submit a background load job.
 
 ## TTL Mechanism
 
@@ -36,7 +34,11 @@ When mounting UFS with `cv mount`, you can set TTL for that mount:
 | Option | Type | Default | Description | Example |
 |--------|------|---------|--------------|---------|
 | `--ttl-ms` | duration | `7d` (mount default) | Cache data expiration time | `24h`, `7d`, `30d` |
-| `--ttl-action` | enum | `delete` (mount default) | Action when TTL expires (see below) | `none`, `delete`, `persist`, `evict`, `flush` |
+
+For mount points, the action at expiration is derived from `write_type` in the current source:
+
+- `cache_mode` mounts default to `delete`
+- `fs_mode` mounts default to `free`
 
 **Client defaults**  
 In the client section of the cluster config (e.g. `curvine-cluster.toml`), `ttl_ms` (default `0`) and `ttl_action` (default `none`) can be set as defaults for non-mount paths or when creating files.
@@ -49,20 +51,18 @@ In the `[master]` section of the cluster config, use the following TOML keys:
 | `ttl_checker_interval` | duration | `1h` | Interval at which the TTL checker runs |
 | `ttl_checker_retry_attempts` | u32 | `3` | Maximum retry attempts for failed TTL operations |
 | `ttl_bucket_interval` | duration | `1h` | Bucket time interval for batching expired inodes |
-| `ttl_max_retry_duration` | duration | `30m` | Maximum duration for retrying failed TTL operations |
-| `ttl_retry_interval` | duration | `5s` | Interval between retry attempts |
+| `ttl_max_retry_duration` | duration | `10m` | Maximum duration for retrying failed TTL operations |
+| `ttl_retry_interval` | duration | `1s` | Interval between retry attempts |
 
 ### Action Types
 
-TTL supports five expiration actions (values: `none`, `delete`, `persist`, `evict`, `flush`):
+The current source exposes three TTL actions:
 
 | Action | Description |
 |--------|-------------|
 | **None** | No operation; expired data remains until explicitly removed or overwritten. |
 | **Delete** | Delete the file or directory from Curvine only (no export to UFS). |
-| **Persist** | Export to UFS if not already present (skip if exists); keep data in Curvine cache. |
-| **Evict** | Export to UFS if not already present (skip if exists); then remove from Curvine cache. |
-| **Flush** | Export to UFS (overwrite if exists); then remove from Curvine cache. |
+| **Free** | Release cached data while preserving the mounted namespace semantics used by `fs_mode` mounts. |
 
 ### Execution Flow
 

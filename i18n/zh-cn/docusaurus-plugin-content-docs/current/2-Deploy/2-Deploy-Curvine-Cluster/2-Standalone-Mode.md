@@ -4,48 +4,70 @@ sidebar_position: 1
 
 # 单机模式
 
-本章介绍如何启动一个本地集群
+本章说明如何从 `build/dist` 启动本地 Curvine 集群，以及发行包内置脚本的真实行为。
 
-编译软件安装包，如何编译可以参考[下载和编译curvine](1-Preparation/02-compile.md)
+## 启动本地集群
 
-编译的产物在build/dist目录下，启动一个本地集群：
-```
+先完成编译或解压 release 包，然后在 `build/dist` 下执行：
+
+```bash
 cd build/dist
 ./bin/restart-all.sh
 ```
 
+`restart-all.sh` 会依次执行：
+
+1. 对 `/curvine-fuse` 做懒卸载（若仍处于挂载状态）
+2. 杀掉旧的 Curvine 进程
+3. 启动 `curvine-master`
+4. 启动 `curvine-worker`
+5. 启动 `curvine-fuse`
+
+它不会额外启动独立的 `webui` 进程；Web 页面通过服务自身的 Web 端口和打包在 `webui/` 下的静态资源提供。
+
 :::tip
-如果你在编译阶段使用的docker容器，则运行curvine也推荐在相同的容器中运行。
+如果你是在 Docker 容器里完成编译，运行 Curvine 时也建议放在同一环境中，除非你确认宿主机运行时依赖与容器一致。
 :::
 
-restart-all.sh脚本会启动curvine master和worker， 并将master和worker的日志输出到logs目录下；
-同时会执行挂载一个fuse文件系统到`/curvine-fuse`目录下。
+## 日志与 PID 文件
 
+服务生命周期由 `bin/launch-process.sh` 管理。
 
-验证集群状态:
-```
+- 日志输出到 `logs/master.out`、`logs/worker.out`、`logs/fuse.out`
+- PID 文件位于 Curvine 根目录，例如 `master.pid`、`worker.pid`、`fuse.pid`
+
+## 验证状态
+
+查看集群概览：
+
+```bash
 ./bin/cv report
-
-输出如下：
-     active_master: localhost:8995
-       journal_nodes: 1,localhost:8996
-            capacity: 0.0B
-           available: 0.0B (0.00%)
-             fs_used: 14.0B (0.00%)
-         non_fs_used: 0.0B
-     live_worker_num: 1
-     lost_worker_num: 0
-           inode_num: 2
-           block_num: 1
-    live_worker_list: 192.168.xxx.xxx:8997,0.0B/0.0B (0.00%)
-    lost_worker_list:
 ```
 
-访问Master web ui界面：```http://your-hostname:9000```
-访问Worker web ui界面：```http://your-hostname:9001```
+确认 FUSE 已挂载：
+
+```bash
+mount | grep curvine-fuse
+ls -la /curvine-fuse
+```
+
+## Web 入口
+
+- Master Web：`http://<host>:9000`
+- Worker Web：`http://<host>:9001`
 
 :::tip
-如果您使用的docker容器，请注意使用 `--network host ` 或则添加端口映射`9000,9001,8995,8996`, 以确保在宿主机中可以正常访问
+如果你在 Docker 中运行，请使用 `--network host`，或者至少映射 `8995`、`8996`、`8997`、`9000`、`9001`；如果还需要访问 FUSE Web 端口，则再加上 `9002`。
 :::
 
-访问fuse本地挂载点：```ls /curvine-fuse```
+## 另一个本地脚本
+
+发行包还包含 `bin/local-cluster.sh`，它只管理 Master 与 Worker：
+
+```bash
+./bin/local-cluster.sh start
+./bin/local-cluster.sh status
+./bin/local-cluster.sh stop
+```
+
+如果你希望本地集群同时自动挂载 FUSE，优先使用 `restart-all.sh`；如果只需要服务端进程，可以使用 `local-cluster.sh`。

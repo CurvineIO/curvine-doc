@@ -1,130 +1,93 @@
-# Deployment 中使用动态 PV
+# 在 Deployment 中使用动态 PVC
 
-Deployment 适合无状态应用，多个副本共享同一存储。
+当前推荐流程使用 Curvine 源码树中的 `curvine-csi/examples` 示例清单：
 
-## 架构模式
+- `storage-class.yaml`
+- `pvc-curvine.yaml`
+- `deployment-curvine.yaml`
 
-```
-           Deployment (3 replicas)
-               /      |      \
-            Pod-1  Pod-2  Pod-3
-               \      |      /
-                Single PVC (RWX)
-                      |
-              Curvine Volume (Shared)
-```
+这个场景适合无状态业务：多个副本共享同一个由 Curvine 支撑的 PVC。
 
-## 完整示例
+## 示例拓扑
 
-```yaml
-# deployment-with-pvc.yaml
----
-# 1. 创建共享 PVC
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: shared-data-pvc
-  namespace: default
-spec:
-  storageClassName: curvine-sc
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 10Gi
+- `StorageClass`：`curvine-sc`
+- `PVC`：`curvine-shared-pvc`
+- `Namespace`：`curvine-system`
+- `Deployment`：`curvine-test-deployment`
+- `副本数`：`3`
+- `容器内挂载路径`：`/usr/share/nginx/html`
 
----
-# 2. 创建 Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-app
-  namespace: default
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: web-app
-  template:
-    metadata:
-      labels:
-        app: web-app
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: shared-storage
-          mountPath: /usr/share/nginx/html
-        command:
-        - /bin/sh
-        - -c
-        - |
-          if [ ! -f /usr/share/nginx/html/index.html ]; then
-            echo "<h1>App initialized by command</h1>" > /usr/share/nginx/html/index.html
-          fi
-          exec nginx -g 'daemon off;'
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 5
-      volumes:
-      - name: shared-storage
-        persistentVolumeClaim:
-          claimName: shared-data-pvc  # 共享同一 PVC
+## StorageClass 参数
 
----
-# 3. 创建 Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-app-service
-  namespace: default
-spec:
-  selector:
-    app: web-app
-  ports:
-  - port: 80
-    targetPort: 80
-  type: ClusterIP
-```
+`examples/storage-class.yaml` 中和动态建卷直接相关的参数如下：
 
-:::tip
-对于Devployment应用，kubernetes原生定位于无状态服务，也就是所有的副本pod默认都读写的是同一个pv的路径。 如果你的应用程序又需要在curvine上有不同的路径隔离， 也可以尝试使用 社区的open kruise的`CloneSets` 作为替代，支持VolumeCliamTemplates， 参考 https://openkruise.io/zh/docs/user-manuals/cloneset
-:::
+| 参数 | 示例值 | 含义 |
+| --- | --- | --- |
+| `master-addrs` | `m0:8995,m1:8995,m2:8995` | 必填，Curvine master 地址列表 |
+| `fs-path` | `/test-data` | Controller 为动态卷创建目录时使用的路径前缀 |
+| `path-type` | `DirectoryOrCreate` | 创建缺失父目录；如果改为 `Directory`，则要求目录已存在 |
+| `io-threads`、`worker-threads` | 示例中被注释 | 可选的 FUSE 调优参数 |
 
-## 部署和验证
+实现细节补充：Controller 代码在 `fs-path` 缺失时会默认回落到 `/`，但官方示例始终显式配置该参数。文档也建议沿用这种显式写法，目录布局和复用行为更清晰。
+
+## 应用示例
 
 ```bash
-# 1. 部署应用
-kubectl apply -f deployment-with-pvc.yaml
+cd /path/to/curvine/curvine-csi/examples
 
-# 2. 查看 PVC 状态
-kubectl get pvc shared-data-pvc
-
-# 3. 查看所有 Pod
-kubectl get pods -l app=web-app -o wide
-
-# 4. 验证所有 Pod 都挂载了同一 PVC
-kubectl get pods -l app=web-app -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.volumes[0].persistentVolumeClaim.claimName}{"\n"}{end}'
-
-# 5. 在一个 Pod 写入数据
-POD1=$(kubectl get pod -l app=web-app -o jsonpath='{.items[0].metadata.name}')
-kubectl exec $POD1 -- sh -c 'echo "Hello from Pod 1" > /usr/share/nginx/html/test.html'
-
-# 6. 在另一个 Pod 读取数据（验证共享）
-POD2=$(kubectl get pod -l app=web-app -o jsonpath='{.items[1].metadata.name}')
-kubectl exec $POD2 -- cat /usr/share/nginx/html/test.html
-# 应该输出: Hello from Pod 1
-
-# 7. 验证 Service 访问
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl http://web-app-service/test.html
+kubectl apply -f storage-class.yaml
+kubectl apply -f pvc-curvine.yaml
+kubectl apply -f deployment-curvine.yaml
 ```
+
+## 示例会创建什么
+
+### 共享 PVC
+
+`pvc-curvine.yaml` 会创建：
+
+- `PersistentVolumeClaim/curvine-shared-pvc`
+- 命名空间 `curvine-system`
+- 访问模式 `ReadWriteMany`
+- 申请容量 `5Gi`
+- `storageClassName: curvine-sc`
+
+### Deployment
+
+`deployment-curvine.yaml` 会创建：
+
+- `Deployment/curvine-test-deployment`
+- 命名空间 `curvine-system`
+- `3` 个 nginx 副本
+- 共享卷挂载到 `/usr/share/nginx/html`
+
+每个副本都会把自己的主机名和时间戳写入同一个 Curvine 目录。
+
+## 校验共享访问
+
+```bash
+kubectl get pvc -n curvine-system curvine-shared-pvc
+kubectl get pods -n curvine-system -l app=curvine-test -o wide
+kubectl get pv
+```
+
+在一个 Pod 写入，在另一个 Pod 读取：
+
+```bash
+POD1=$(kubectl get pod -n curvine-system -l app=curvine-test -o jsonpath='{.items[0].metadata.name}')
+POD2=$(kubectl get pod -n curvine-system -l app=curvine-test -o jsonpath='{.items[1].metadata.name}')
+
+kubectl exec -n curvine-system "$POD1" -- sh -c 'echo "hello from pod1" > /usr/share/nginx/html/shared.txt'
+kubectl exec -n curvine-system "$POD2" -- cat /usr/share/nginx/html/shared.txt
+```
+
+如果第二条命令能读到同样的内容，说明多个副本确实通过同一个 Curvine PVC 在共享数据。
+
+## 动态路径如何生成
+
+动态建卷时，Controller 会生成：
+
+- `volumeHandle = {cluster-id}@{fs-path}@{pv-name}`
+- `curvine-path = {fs-path}/{pv-name}`
+
+之后 node 插件会基于 `master-addrs + fs-path` 复用或创建 FUSE 挂载，再把最终的 `curvine-path` bind mount 到 Pod。完整生命周期见 [Framework](04-Framework.md)。

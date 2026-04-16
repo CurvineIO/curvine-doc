@@ -1,116 +1,82 @@
-# 并发性能测试
+# 并发读写基准测试
 
-本章节介绍了Curvine并发性能测试的方法和结果。
+本页以 `build/tests/curvine-bench.sh`、`build/tests/java-bench.sh` 以及 `curvine-tests/src` 下的 Rust 实现为准。
 
-## 测试环境
+## 支持的模式
 
-测试机器配置如下：
+两个脚本都支持以下四种动作：
 
-- CPU：80核
-- 内存：256GB
-- 磁盘：1SSD
+- `fs.write`
+- `fs.read`
+- `fuse.write`
+- `fuse.read`
 
-## 测试工具
+Rust 包装脚本调用 `${CURVINE_HOME}/lib/curvine-bench`，Java 包装脚本调用 `io.curvine.bench.CurvineBenchV2`。
 
-使用curvine自带的性能测试工具进行测试，测试工具位于bin目录下：
+当前脚本中的默认目标目录是：
 
-- curvine-bench：使用rust客户端测试
-- java-bench：使用java客户端测试
+- `fs.*` 默认写到 `/fs-bench`
+- `fuse.*` 默认写到 `/curvine-fuse/fs-bench`
 
-测试用例：使用40个线程并发读写1000个文件，每个文件大小为100MB；测试磁盘读，需要每次清理page cache。
+顶层 `README.md` 和 `README_zh.md` 都把 `/curvine-fuse` 说明为 Curvine FUSE 的默认挂载点。
 
-rust客户端测试，修改bin/curvine-bench.sh：
+## 当前脚本里的默认负载
 
-```
-${CURVINE_HOME}/lib/curvine-bench \
---action ${ACTION} \
---dir $DIR \
---conf $CURVINE_HOME/conf/curvine-cluster.toml \
---checksum true \
---client-threads 14 \
---buf-size 128KB \
---file-size 100MB \
---file-num 1000 \
-```
+两个脚本当前生效的默认参数都是：
 
-java 客户端测试，修改bin/java-bench.sh：
+- 客户端线程数：`10`
+- 文件数：`10`
+- 单文件大小：`100MB`
+- Buffer 大小：`128KB`
+- 校验和：`true`
 
-```
-java -Xms10g -Xmx10g \
--Dcurvine.conf.dir=${CURVINE_HOME}/conf \
-io.curvine.bench.CurvineBenchV2 \
--action $ACTION \
--dataDir $DIR \
--threads 40 \
--bufferSize 128kb \
--fileSize 100mb \
--fileNum 1000 \
--checksum true \
--clearDir false
+Rust 脚本：
+
+```bash
+${CURVINE_HOME}/lib/curvine-bench --action ${ACTION} --dir $DIR --conf $CURVINE_HOME/conf/curvine-cluster.toml --checksum true --client-threads 10 --buf-size 128KB --file-size 100MB --file-num 10
 ```
 
-## 客户端测试结果
+Java 脚本：
 
-运行脚本：
-
-```
-# rust 客户端读写数据
-bin/curvine-bench.sh fs.write
-bin/curvine-bench.sh fs.read
-
-# java 客户端读写数据
-bin/java-bench.sh fs.write
-bin/java-bench.sh fs.read
+```bash
+java -Xms256m -Xmx1g -Dcurvine.conf.dir=${CURVINE_HOME}/conf io.curvine.bench.CurvineBenchV2 -action $ACTION -dataDir $DIR -threads 10 -bufferSize 128kb -fileSize 100mb -fileNum 10 -checksum true -clearDir false
 ```
 
-rust客户端测试结果：
+两个脚本里确实还保留了更重的注释示例，但那些只是注释里的性能压测配置，不是当前脚本真正启用的默认值。
 
-| 操作类型 | 速度（Gib/s) |
-|------|-----------|
-| 写内存  | 11.7      |
-| 读内存  | 17.3      |
-| 写磁盘  | 4.3       |
-| 读磁盘  | 3.5       |
+## Rust 基准程序当前的执行方式
 
-java客户端测试结果：
+当前 Rust 实现只支持上面的四个动作，并且会：
 
-| 操作类型 | 速度（Gib/s) |
-|------|-----------|
-| 写内存  | 10.1      |
-| 读内存  | 10.6      |
-| 写磁盘  | 4.0       |
-| 读磁盘  | 3.5       |
+- 按需创建目标目录
+- 每个文件启动一个任务
+- 以 `128KB` 为块大小循环读写，直到单文件达到 `100MB`
+- 结束时输出总字节数、校验和以及解析后的参数
 
-## FUSE测试结果
+## 运行方式
 
-使用fuse3进行测试。
+在源码树中可直接执行：
 
-运行脚本：
+```bash
+# Rust 客户端走 Curvine RPC
+bash build/tests/curvine-bench.sh fs.write
+bash build/tests/curvine-bench.sh fs.read
 
+# Rust 客户端走 FUSE 挂载路径
+bash build/tests/curvine-bench.sh fuse.write /curvine-fuse/fs-bench
+bash build/tests/curvine-bench.sh fuse.read /curvine-fuse/fs-bench
+
+# Java 客户端走 Curvine RPC
+bash build/tests/java-bench.sh fs.write
+bash build/tests/java-bench.sh fs.read
+
+# Java 客户端走 FUSE 挂载路径
+bash build/tests/java-bench.sh fuse.write /curvine-fuse/fs-bench
+bash build/tests/java-bench.sh fuse.read /curvine-fuse/fs-bench
 ```
-# rust file api读写数据
-bin/curvine-bench.sh fuse.write
-bin/curvine-bench.sh fuse.read
 
-# java file api读写数据
-bin/java-bench.sh fuse.write
-bin/java-bench.sh fuse.read
-```
+执行 `fuse.*` 之前，请先确认 `/curvine-fuse` 已挂载完成。
 
-rust测试结果：
+## 结果说明
 
-| 类型  | 速度（Gib/s） |
-|-----|-----------|
-| 内存写 | 10.6      |
-| 内存读 | 11.1      |
-| 磁盘写 | 3.5       |
-| 磁盘读 | 2.6       |
-
-java测试结果：
-
-| 类型  | 速度（Gib/s） |
-|-----|-----------|
-| 内存写 | 9.0       |
-| 内存读 | 9.3       |
-| 磁盘写 | 3.2       |
-| 磁盘读 | 2.4       |
+当前参考代码树没有发布这两个脚本的官方吞吐结果表。吞吐数字应当来自实际测试环境，不能把旧文档中的结果表当作当前默认表现。

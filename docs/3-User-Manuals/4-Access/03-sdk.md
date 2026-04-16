@@ -20,7 +20,7 @@ For build and usage, see the [Development Guide](../../6-Contribute/01-developme
 
 ## Java SDK
 
-- **Hadoop FileSystem**: Configure `fs.cv.impl` and `fs.cv.master_addrs` in `core-site.xml` or `curvine-site.xml` so that `FileSystem.get(URI.create("curvine:///path"), conf)` uses Curvine. See [Deployment Preparation](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/03-deployment-setup.md#configuration-file-modification) for `fs.cv.master_addrs`.
+- **Hadoop FileSystem**: Configure `fs.cv.impl` and `fs.cv.master_addrs` in `core-site.xml` or `curvine-site.xml` so that `FileSystem.get(URI.create("curvine:///path"), conf)` uses Curvine. See [Deployment Preparation](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/03-deployment-setup.md#environment-script-and-main-config) for `fs.cv.master_addrs`.
 - **Java API**: Use the Curvine Java SDK from curvine-libsdk for direct RPC access when not using the Hadoop FileSystem interface.
 
 Compatible with Hadoop, Spark, Flink, and other JVM-based frameworks that support custom FileSystem implementations.

@@ -3,28 +3,23 @@ sidebar_position: 1
 ---
 
 # Curvine简介
-Curvine 是一款高性能、高并发分布式缓存系统，在 Apache 2.0 开源协议下发布；
-可以使用统一的路径访问各种存储系统，同时提供缓存加速；同时具备POSIX 兼容性， 
-接入本地作为海量本地磁盘使用，亦可同时在跨平台、跨地区的不同主机上挂载读写。
+Curvine 是一个使用 Rust 编写的高性能分布式缓存系统，采用 Apache 2.0 开源协议发布。它在外部存储系统之上提供统一的缓存文件系统视图，兼顾低延迟元数据访问、高吞吐数据访问以及 POSIX 兼容的 FUSE 集成。
 
-Curvine 采集经典Master、worker主从架构，从而实现文件系统的分布式设计，
-Master管理文件元数据，通过raft协议实现高可用和保证数据的一致性，Worker管理数据。
+Curvine 采用经典的 Master / Worker 架构。Master 负责元数据与集群协调，Worker 负责数据块存储与读写服务；元数据一致性与高可用通过 Raft 保证。
 
-Curvine 提供了丰富的 API，适用于各种形式数据的管理、分析、归档、备份，
-可以在不修改代码的前提下无缝对接大数据、机器学习、人工智能等应用平台，为其提供海量、弹性、低价的缓存加速。
+Curvine 面向 AI、分析型计算和数据基础设施场景，当前 `main` 分支提供的主要接入方式包括 Rust CLI、FUSE、Java / Python SDK 绑定以及 S3 兼容访问。
 
 
 ## 核心特性
-- **高性能**：毫秒级延迟，写入、顺序读、随机读都有极高的性能，单节点最高读可达到15GiB/s；
-- **高并发**：单节点可支持上万个文件并发读写；
-- **低资源使用**：在1000并发读写测试中，服务端、客服端只需要几十MB内存；cpu使用对比其他系统也下降50%；
-- **支持多种底层存储**：支持 S3、HDFS、OSS、MinIO等多种底层存储，提供统一的访问接口；
-- **POSIX 兼容**：像本地文件系统一样使用，无缝对接已有应用，无业务侵入性；
-- **分布式设计**：同一文件系统可在上千台服务器同时挂载，高性能并发读写，共享数据；
-- **多语言支持**：提供 Java、Python、Rust、Fuse等多种客户端；
-- **多操作系统支持**：支持 Linux、Windows、MacOS等多种操作系统；
-- **多硬件架构支持**：支持 x86、ARM等多种硬件架构；
-- 
+- **多云底层存储支持**：可对接 S3 兼容系统、HDFS、OSS、MinIO 等 UFS 后端，并提供统一访问层
+- **云原生集成**：支持 CSI 与 Kubernetes 部署场景
+- **多级缓存**：支持内存、SSD、HDD 多层缓存策略
+- **POSIX 兼容访问**：通过 FUSE 将缓存数据以本地文件系统方式暴露给现有应用
+- **兼容 S3 / HDFS 生态**：提供 S3 网关与 Hadoop / SDK 接入路径
+- **高性能**：基于异步 I/O 与零拷贝导向的数据路径，面向低延迟和高吞吐负载
+- **Raft 元数据高可用**：通过 Raft 保证 Master 元数据一致性
+- **内建可观测性**：暴露监控与指标，便于集群运维
+- **Web 管理界面**：在服务 Web 端口提供浏览器管理与状态查看能力
 ## 使用场景
 ![curvine-scene](./img/curvine-scene.png)
 Curvine 为高性能、高并发以及海量数据缓存设计，可以在很多场景中使用：
@@ -207,16 +202,17 @@ Curvine 为高性能、高并发以及海量数据缓存设计，可以在很多
 
 ## 🧩 模块化架构
 
-Curvine 采用模块化设计，主要由以下核心组件构成（完整目录见 [开发指南](../6-Contribute/01-development-guide.md)）：
+Curvine 采用模块化代码组织。当前 `main` 分支的主要组件包括：
 
-- **orpc**：支持异步 RPC 的高性能网络通信框架
-- **curvine-common**：协议定义、错误处理与通用工具共享库
-- **curvine-server**：服务端，包含 Master 与 Worker 实现
-- **curvine-client**：与服务器交互的客户端库
-- **curvine-fuse**：FUSE 文件系统接口，支持挂载为本地文件系统
-- **curvine-libsdk**：多语言 SDK（Java、Python、Rust）
-- **curvine-ufs**：UFS 后端（基于 OpenDAL：S3、HDFS、WebHDFS 等）
-- **curvine-cli**：命令行工具 `cv`（mount、fs、load、report、node 等）
-- **curvine-s3-gateway**：S3 兼容对象存储 HTTP API
-- **curvine-web**：Web 管理界面与 API
-- **curvine-tests**：集成测试与压测工具（如 curvine-bench）
+- **orpc**：高性能异步 RPC 与运行时基础设施
+- **curvine-common**：共享配置、协议、元数据与通用工具
+- **curvine-server**：Master / Worker 服务端实现
+- **curvine-client**：Rust 客户端库，负责元数据与块 I/O
+- **curvine-fuse**：提供 POSIX 访问的 FUSE 守护进程
+- **curvine-libsdk**：基于原生客户端封装的 Java / Python SDK 绑定
+- **curvine-ufs**：S3、HDFS、WebHDFS 等 UFS 后端实现
+- **curvine-cli**：原生命令行工具 `cv`
+- **curvine-s3-gateway**：S3 兼容 HTTP 网关
+- **curvine-web**：Web UI 静态资源与服务端 Web 支持
+- **curvine-csi**：面向 Kubernetes 的 CSI 驱动
+- **curvine-tests**：集成测试、回归工具与基准测试工具

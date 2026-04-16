@@ -4,155 +4,168 @@ sidebar_position: 1
 
 # Development Guide
 
-This guide describes how to set up the Curvine development environment, project layout, and how to build and run tests, based on the [Curvine source repository](https://github.com/CurvineIO/curvine).
+This guide summarizes the Curvine development workflow using the main-branch repository layout and scripts in the Curvine source tree.
 
-## Project Layout
+## Repository Layout
 
-The repository is a Cargo workspace. Main directories and crates:
+The repository contains a Cargo workspace plus several top-level directories used for packaging, deployment, and testing.
 
-```
-.
-├── build/                 # Build and test scripts
-│   ├── bin/               # Shell wrappers (curvine-master.sh, curvine-worker.sh, cv, etc.)
-│   ├── build.sh           # Main build script (-p package, -u ufs, etc.)
-│   ├── check-env.sh       # Dependency check
-│   ├── run-tests.sh       # Format, clippy, cargo test with test cluster
-│   └── tests/             # Benchmark/regression scripts (meta-bench.sh, curvine-bench.sh, fio-test.sh, ...)
-├── Cargo.toml             # Workspace definition
-├── rust-toolchain.toml    # Rust version (e.g. 1.92.0)
-├── orpc/                  # RPC and runtime library (used by server and client)
-├── curvine-common/        # Shared types, config, protocol, Raft, UFS traits
-├── curvine-server/        # Master and Worker (single binary: --service master|worker)
-├── curvine-client/        # Rust client and block I/O
-├── curvine-cli/           # cv CLI (mount, fs, load, report, node, etc.)
-├── curvine-fuse/          # FUSE filesystem daemon
-├── curvine-ufs/           # UFS implementations (OpenDAL-based: S3, HDFS, etc.)
-├── curvine-libsdk/        # Multi-language SDK (Java, Python, Rust)
-├── curvine-s3-gateway/    # S3-compatible object gateway
-├── curvine-web/           # Web UI and management API
-├── curvine-tests/         # Integration tests and test utilities
-├── curvine-csi/           # Kubernetes CSI driver (Go)
-├── curvine-docker/        # Dockerfiles (compile, deploy, fluid)
-└── etc/                   # Sample config (curvine-cluster.toml, curvine-env.sh)
-```
+### Cargo workspace crates
 
-**Crate roles (from workspace members):**
+`Cargo.toml` lists these workspace members:
 
 | Crate | Role |
 |-------|------|
-| **orpc** | Async RPC, runtime, logging, network; used by server and client. |
-| **curvine-common** | Config (`ClusterConf`, `MasterConf`, `WorkerConf`, etc.), protos, Raft storage, shared state types. |
-| **curvine-server** | Master (metadata, journal, WorkerManager) and Worker (block store, read/write handlers); one binary, `--service master` or `--service worker`. |
-| **curvine-client** | Client API, block reader/writer, unified filesystem (UFS + Curvine path resolution). |
-| **curvine-cli** | `cv` command: mount, umount, fs, load, load-status, report, node, version. |
-| **curvine-fuse** | FUSE daemon; translates POSIX calls into Curvine RPC. |
-| **curvine-ufs** | UFS backends (OpenDAL operators for S3, HDFS, WebHDFS, etc.). |
-| **curvine-libsdk** | Java (Hadoop), Python, Rust SDK bindings. |
-| **curvine-s3-gateway** | S3-compatible HTTP API (Axum). |
-| **curvine-web** | Web UI and HTTP API for cluster management. |
-| **curvine-tests** | Integration tests; `test_cluster` example for local cluster. |
+| `orpc` | Async RPC, runtime, logging, and network primitives shared across the project. |
+| `curvine-common` | Shared config, protocol types, metadata helpers, and cluster defaults. |
+| `curvine-server` | Master and Worker server binary (`--service master` or `--service worker`). |
+| `curvine-client` | Rust client, block I/O path, and UFS-facing client logic. |
+| `curvine-libsdk` | SDK bindings and Java packaging. |
+| `curvine-tests` | Integration tests, benchmark binary, and regression tooling. |
+| `curvine-fuse` | FUSE daemon. |
+| `curvine-web` | Web UI and management API. |
+| `curvine-ufs` | UFS backends and storage integrations. |
+| `curvine-cli` | `cv` command-line client. |
+| `curvine-s3-gateway` | S3-compatible object gateway. |
+
+### Other top-level directories
+
+| Path | Purpose |
+|------|---------|
+| `build/` | Build, packaging, launch, benchmark, and test scripts. |
+| `build/bin/` | Runtime wrappers such as `curvine-master.sh`, `curvine-worker.sh`, `curvine-fuse.sh`, `cv`, and `local-cluster.sh`. |
+| `build/tests/` | Benchmark and regression helpers such as `curvine-bench.sh`, `meta-bench.sh`, `java-bench.sh`, and `fio-test.sh`. |
+| `curvine-csi/` | Go-based CSI driver sources and image build assets. |
+| `curvine-docker/` | Docker build and deployment assets. |
+| `etc/` | Sample configuration, including `curvine-cluster.toml` and `curvine-env.sh`. |
+| `scripts/` | Miscellaneous helper scripts. |
 
 ## Development Setup
 
 ### Prerequisites
 
-Align with the repository’s [CONTRIBUTING.md](https://github.com/CurvineIO/curvine/blob/main/CONTRIBUTING.md) and [rust-toolchain.toml](https://github.com/CurvineIO/curvine/blob/main/rust-toolchain.toml):
+Align with `rust-toolchain.toml`, `README.md`, and `README_zh.md` in the reference repository:
 
-- **Rust**: Version specified in `rust-toolchain.toml` (e.g. 1.92.0); components: `rustfmt`, `clippy`, `rust-analyzer`.
-- **Protobuf**: 3.x (e.g. 27.2) for proto compilation.
-- **LLVM**: Required by some dependencies (e.g. bindgen).
-- **FUSE**: libfuse2 or libfuse3 dev packages for building `curvine-fuse`.
-- **Java / Maven**: For Java SDK and meta-bench (e.g. JDK 1.8+, Maven 3.8+).
-- **Node.js / npm**: For Web UI (e.g. npm 9+).
-- **Python**: 3.7+ for scripts and Python SDK.
+- Rust `1.92.0` with `rustfmt`, `clippy`, and `rust-analyzer`
+- Protobuf `3.x`
+- LLVM `12+`
+- libfuse2 or libfuse3 development packages
+- JDK `1.8+` and Maven `3.8+`
+- Node.js / npm `9+`
+- Python `3.7+`
 
-Detailed install steps per OS are in the doc [Environment Initialization](/docs/Deploy/Deploy-Curvine-Cluster/Preparation/prerequisites).
+See [Environment Initialization](/docs/Deploy/Deploy-Curvine-Cluster/Preparation/prerequisites) for OS-specific package installation.
 
-### Clone and check environment
+### Clone and check the environment
 
 ```bash
 git clone https://github.com/CurvineIO/curvine.git
 cd curvine
+make check-env
 ```
 
-Check that required tools are available:
+`make check-env` runs `build/check-env.sh`. If you intend to skip Java packaging during the build, pass the same flag here:
 
 ```bash
-make check-env
-# or: build/check-env.sh
+make check-env ARGS='--skip-java-sdk'
 ```
 
 ## Build
 
-- **Full build (release)**  
-  Output is under `build/dist/` (binaries in `lib/`, scripts in `bin/`, config in `conf/`):
+`make all` and `make build` both drive `build/build.sh`. A successful build creates `build/dist/` with:
 
-  ```bash
-  make all
-  # or: make build
-  # internally runs: build/build.sh
-  ```
+- `conf/` for copied config files
+- `bin/` for launch wrappers
+- `lib/` for compiled binaries and jars
+- `tests/` for copied benchmark and regression scripts
+- `build-version` for commit, OS, FUSE, version, and UFS metadata
 
-- **Partial build**  
-  Use `build/build.sh` options via `make build ARGS='...'`:
+### Common build commands
 
-  ```bash
-  make build ARGS='-p core'              # server, client, cli
-  make build ARGS='-p core -p fuse'      # + FUSE
-  make build ARGS='-p object'            # S3 gateway
-  make build ARGS='-d'                   # debug build
-  make build-hdfs                        # with HDFS support
-  make build ARGS='--skip-java-sdk'      # skip Java SDK
-  ```
+```bash
+make all
+make build ARGS='-p core'
+make build ARGS='-p server -p client'
+make build ARGS='-p core -p fuse'
+make build ARGS='-p object'
+make build ARGS='-p tests'
+make build ARGS='-d'
+make build ARGS='--skip-java-sdk'
+make build-hdfs
+```
 
-- **Format and lint**
+Useful `build/build.sh` options from the reference script:
 
-  ```bash
-  make format        # cargo fmt + pre-commit hooks
-  make cargo ARGS='clippy --release --all-targets -- --deny warnings'
-  ```
+- `-p, --package`: `core`, `server`, `client`, `cli`, `web`, `fuse`, `java`, `python`, `tests`, `object`, or `all`
+- `-u, --ufs`: `opendal-s3`, `opendal-oss`, `opendal-azblob`, `opendal-gcs`, `opendal-hdfs`, `opendal-webhdfs`, or `oss-hdfs`
+- `-d, --debug`: build debug artifacts instead of release
+- `--skip-java-sdk`: skip Java SDK packaging
 
-See [Download and Compile Curvine](/docs/Deploy/Deploy-Curvine-Cluster/Preparation/compile) for more build options and Docker-based builds.
+Show the script help for the full matrix:
+
+```bash
+build/build.sh --help
+```
+
+### Formatting and linting
+
+```bash
+make format
+make cargo ARGS='clippy --release --all-targets -- --deny warnings'
+```
+
+`make format` runs `build/pre-commit.sh`, not just `cargo fmt`.
 
 ## Test
 
-- **Rust unit tests**  
-  No cluster needed:
+### Rust tests
 
-  ```bash
-  cargo test --release
-  # or: make cargo ARGS='test --release'
-  ```
+```bash
+cargo test --release
+```
 
-- **Integration tests (with test cluster)**  
-  `run-tests.sh` checks format, optionally clippy, starts a test cluster (`cargo run --release --example test_cluster`), then runs `cargo test --release`:
+### Full test runner
 
-  ```bash
-  build/run-tests.sh              # fmt + cargo test (with test cluster)
-  build/run-tests.sh --clippy      # also run clippy (default: deny warnings)
-  build/run-tests.sh --level warn  # clippy with warn level
-  ```
+From the repository root:
 
-- **Run a local cluster manually**  
-  From `build/dist/` (after `make all`):
+```bash
+build/run-tests.sh
+build/run-tests.sh --clippy
+build/run-tests.sh --clippy --level warn
+```
 
-  ```bash
-  export CURVINE_MASTER_HOSTNAME=localhost
-  bin/curvine-master.sh start
-  bin/curvine-worker.sh start
-  # optional: bin/curvine-fuse.sh start
-  ```
+`build/run-tests.sh` performs these steps:
 
-  Or use the workspace helper (if available):
+1. `cargo fmt -- --check`
+2. Optional `cargo clippy --release --all-targets -- --<level> warnings`
+3. `cargo run --release --example test_cluster`
+4. `cargo test --release`
 
-  ```bash
-  bin/local-cluster.sh
-  ```
+### Start a local cluster from the built distribution
 
-## Code style and contribution
+```bash
+cd build/dist
+bin/local-cluster.sh start
+bin/local-cluster.sh status
+bin/cv report
+bin/local-cluster.sh stop
+```
 
-- **Rust**: `cargo fmt`; `cargo clippy` with project policy (e.g. deny warnings in CI).
-- **Commits**: Prefer conventional commits (`feat:`, `fix:`, `docs:`, etc.); see [CONTRIBUTING.md](https://github.com/CurvineIO/curvine/blob/main/CONTRIBUTING.md) and any `COMMIT_CONVENTION.md` in the repo.
-- **PRs**: Branch from `main`; include tests and doc updates; ensure CI passes.
+To launch components manually:
 
-For contribution workflow, labels, and community links, see the repository’s [CONTRIBUTING.md](https://github.com/CurvineIO/curvine/blob/main/CONTRIBUTING.md).
+```bash
+cd build/dist
+bin/curvine-master.sh start
+bin/curvine-worker.sh start
+bin/curvine-fuse.sh start
+bin/cv report
+```
+
+## Contribution Conventions
+
+Use the repository’s `CONTRIBUTING.md` and `COMMIT_CONVENTION.md` as the source of truth for workflow expectations. In practice:
+
+- format Rust code before sending changes
+- run targeted tests for the area you touched
+- use conventional commit prefixes such as `feat:`, `fix:`, and `docs:`
+- keep docs in sync with build or runtime behavior when commands or layout change
