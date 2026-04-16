@@ -1,331 +1,190 @@
-# Curvine CSI 架构详解
+# CSI 架构与挂载生命周期
 
-`curvine-csi` 基于fuse实现，在csi-node中通过fuse挂载的方式和curvine集群建立关联。 
+本页描述的是当前主分支里 `curvine-csi` 的真实实现行为，而不是早期 Helm 化设计里的说法。
 
+## 核心模型
 
-## 架构
-**如果仅需要使用csi，可以略过本章**， 直接参考[K8S CSI驱动](Setup) 这一章节。
+Curvine CSI 主要由三部分组成：
 
-curvine-csi的主要服务包含两个
-| 组件 | 职责 |
-|------|------|
-| CSI Node | 处理 CSI gRPC 调用，负责卷的挂载等|
-| CSI Controller | 创建/删除/监控 PV|
-| Standalone POD | 在 `standalone` 模式下独立负责fuse进程管理 | 
+| 组件 | 源码位置 | 职责 |
+| --- | --- | --- |
+| Controller Service | `pkg/csi/controller.go` | 校验建卷参数、创建和删除 Curvine 目录、返回最终 `VolumeContext` |
+| Node Service | `pkg/csi/node.go` | 启动或复用 FUSE、计算宿主机挂载路径、把正确的子目录 bind mount 到 Pod |
+| FUSE 进程管理器 | `pkg/csi/fuse_manager.go` | 用生成出的挂载路径和透传参数启动 `/opt/curvine/curvine-fuse` |
 
+## 挂载模式
 
-## 挂载方式
-大多csi的挂载管理是直接在`csi-node`中实现，通过将远程存储挂载到hosts上，并最终bind mount到pod容器中。  curvine-csi基于fuse实现，当csi组件重启之后，fuse进程会中断，为了避免csi drvier的升级或者重启等场景导致fuse终端，curvine-csi 支持standalone和 embedded 两种挂载模式。
+`pkg/csi/driver.go` 会读取 `MOUNT_MODE`：
 
-- StandAlone： 将 FUSE进程从 csi-node pod 中解耦，放入独立的Pod 运行
-- Embedded： FUSE进程在csi-node plugin的pod中进行挂历
+- `standalone`：node 侧默认值，也是推荐模式
+- `embedded`：FUSE 直接运行在 CSI Pod 内
 
-### Standalone
+从运维效果看：
 
-默认模式。Helm 安装时使用以下参数：
+- `standalone` 会把 FUSE 生命周期和 CSI Pod 重启解耦，FUSE 运行在独立 standalone Pod 中。
+- `embedded` 更直接，但 CSI node Pod 升级或重启时，FUSE 也会一起中断。
 
-```bash
-helm install curvine-csi ./curvine-csi \
-  --set mountMode=standalone
+官方清单就是这样配置的：
+
+- `deploy/daemonset.yaml`：`MOUNT_MODE=standalone`
+- `deploy/deployment.yaml`：`MOUNT_MODE=embedded`
+
+## 动态建卷流程
+
+### 1. StorageClass 参数校验
+
+`pkg/csi/validator.go` 中的 `ValidateStorageClassParams` 会约束：
+
+- `master-addrs` 必填，格式必须是 `host:port,host:port,...`
+- `fs-path` 缺失时默认回落为 `/`
+- `path-type` 默认值为 `Directory`
+- 用户手工传入的 `mnt-path` 仍兼容，但当前主线已经改为自动生成挂载路径，手工 `mnt-path` 只算兼容旧行为
+
+校验器还会接受一组可选的 FUSE 调优参数，并在 node 侧启动 FUSE 时透传过去。
+
+### 2. Controller 生成的字段
+
+对动态卷来说，`pkg/csi/controller.go` 中的 `CreateVolume` 会生成：
+
+```text
+cluster-id   = sha256(master-addrs)[:8]
+volumeHandle = {cluster-id}@{fs-path}@{pv-name}
+curvine-path = {fs-path}/{pv-name}
 ```
 
-#### 资源配置
+随后这些值会被放入 `VolumeContext`，供 node 侧继续使用。
 
-通过 Helm values 配置 Standalone Pod 的资源限制：
+`path-type` 会影响目录创建逻辑：
 
-```bash
-helm install curvine-csi ./curvine-csi \
-  --set node.mountMode=standalone \
-  --set node.standalone.resources.requests.cpu=500m \
-  --set node.standalone.resources.requests.memory=512Mi \
-  --set node.standalone.resources.limits.cpu=2 \
-  --set node.standalone.resources.limits.memory=2Gi
+- `Directory`：父目录和最终卷目录都必须已经存在
+- `DirectoryOrCreate`：缺失目录由 Controller 自动创建
+
+## Node 侧如何生成挂载点
+
+### Cluster ID
+
+`pkg/csi/volume_handle.go` 中定义：
+
+```text
+cluster-id = SHA256(master-addrs) 的前 8 个十六进制字符
 ```
 
-或使用 values 文件：
+这个值会出现在动态卷的 `volumeHandle` 里。
 
-```yaml
-node:
-  mountMode: standalone
-  standalone:
-    image: ""  # 留空使用CSI镜像
-    resources:
-      requests:
-        cpu: "500m"
-        memory: "512Mi"
-      limits:
-        cpu: "2"
-        memory: "2Gi"
+### Mount Key
+
+node 侧还会生成另一个独立的 `mount-key`，输入是：
+
+```text
+master-addrs + fs-path
 ```
 
-默认配置：
-- CPU: requests 500m, limits 2
-- Memory: requests 512Mi, limits 2Gi
+接着用它拼出宿主机上的 FUSE 挂载目录：
 
-架构示意图：
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%flowchart TB
-    subgraph K8sNode["🖥️ Kubernetes Node"]
-        subgraph CSIPod["CSI Node Pod"]
-            CSIDriver["CSI Driver<br/>gRPC Handler"]
-            StandalonePodCtrl["StandalonePod<br/>Controller"]
-        end
-        
-        subgraph StandalonePods["StandalonePod Layer"]
-            subgraph MP1["StandalonePod-1 (privileged)"]
-                FUSE1["curvine-fuse<br/>Process"]
-                MNT1["/mnt/curvine/<br/>cluster-A"]
-            end
-            
-            subgraph MP2["StandalonePod-2 (privileged)"]
-                FUSE2["curvine-fuse<br/>Process"]
-                MNT2["/mnt/curvine/<br/>cluster-B"]
-            end
-        end
-        
-        subgraph HostFS["Host Filesystem"]
-            PluginPath["/var/lib/kubelet/plugins/curvine/"]
-            ClusterA["cluster-A/fuse-mount/"]
-            ClusterB["cluster-B/fuse-mount/"]
-        end
-        
-        subgraph AppPods["Application Pods"]
-            App1["App Pod 1"]
-            App2["App Pod 2"]
-            VolPath1["/var/lib/kubelet/pods/xxx/<br/>volumes/.../mount"]
-            VolPath2["/var/lib/kubelet/pods/yyy/<br/>volumes/.../mount"]
-        end
-        
-        subgraph External["Curvine Cluster"]
-            CurvineClusterA[("Curvine<br/>Cluster A")]
-            CurvineClusterB[("Curvine<br/>Cluster B")]
-        end
-    end
-    
-    %% CSI Pod manages StandalonePods
-    CSIDriver --> StandalonePodCtrl
-    StandalonePodCtrl -->|"Create/Delete"| MP1
-    StandalonePodCtrl -->|"Create/Delete"| MP2
-    
-    %% FUSE processes connect to clusters
-    FUSE1 -.->|"gRPC"| CurvineClusterA
-    FUSE2 -.->|"gRPC"| CurvineClusterB
-    
-    %% FUSE mounts to host paths
-    FUSE1 --> MNT1
-    MNT1 -->|"Bidirectional<br/>Mount Propagation"| ClusterA
-    
-    FUSE2 --> MNT2
-    MNT2 -->|"Bidirectional<br/>Mount Propagation"| ClusterB
-    
-    %% Host paths organization
-    PluginPath --> ClusterA
-    PluginPath --> ClusterB
-    
-    %% App pods bind mount
-    ClusterA -->|"bind mount<br/>+ subpath"| VolPath1
-    ClusterB -->|"bind mount<br/>+ subpath"| VolPath2
-    
-    VolPath1 --> App1
-    VolPath2 --> App2
-
-    %% Styles - colors adjusted for light background
-    classDef csiStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
-    classDef StandalonePodStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
-    classDef fuseStyle fill:#ecc94b,stroke:#b7791f,color:#1a202c,stroke-width:2px
-    classDef hostStyle fill:#48bb78,stroke:#276749,color:#fff,stroke-width:2px
-    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
-    classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
-    classDef pathStyle fill:#cbd5e0,stroke:#718096,color:#1a202c,stroke-width:1px
-    
-    class CSIDriver,StandalonePodCtrl csiStyle
-    class MP1,MP2 StandalonePodStyle
-    class FUSE1,FUSE2 fuseStyle
-    class PluginPath,ClusterA,ClusterB hostStyle
-    class App1,App2 appStyle
-    class CurvineClusterA,CurvineClusterB storageStyle
-    class MNT1,MNT2,VolPath1,VolPath2 pathStyle
+```text
+/var/lib/kubelet/plugins/kubernetes.io/csi/curvine/{mount-key}/fuse-mount
 ```
 
+这也是 FUSE 复用的关键：共享 FUSE 进程的分组键是 `master-addrs + fs-path`，不是 PVC 名称。
 
-### Embedded
+## FUSE 复用规则
 
-Helm 安装时使用以下参数：
+### 动态卷
 
-```bash
-helm install curvine-csi ./curvine-csi \
-  --set mountMode=embedded \
-  --set node.resources.requests.memory=2Gi \
-  --set node.resources.requests.cpu=1000m \
-  --set node.resources.limits.memory=4Gi \
-  --set node.resources.limits.cpu=2000m
+对动态卷来说，只要这些条件相同：
+
+- `master-addrs`
+- `fs-path`
+
+同一 Kubernetes 节点上的多个卷就会复用同一个 FUSE 挂载。每个 PVC 仍然有自己独立的 `curvine-path` 子目录。
+
+### 静态 PV
+
+静态 PV 示例使用的是：
+
+- 任意唯一的 `volumeHandle`
+- 必填 `master-addrs`
+- 必填 `curvine-path`
+
+静态 PV 不需要动态卷那种结构化 `volumeHandle`。如果没有显式提供 `fs-path`，当前 `node.go` 会先把它补成 `/`，再去生成 `mount-key`。这意味着静态 PV 的复用实际会退化为按 `master-addrs + /` 分组，除非你自己额外补上 `fs-path`。
+
+这个判断来自当前实现推断：`node.go` 在生成 `mount-key` 之前，确实会把缺失的 `fs-path` 替换为 `/`。
+
+## NodePublishVolume 如何定位 Pod 子目录
+
+`pkg/csi/node.go` 中的 `NodePublishVolume` 会根据 FUSE 实际挂载的根路径来计算宿主机子路径：
+
+- 如果 `fs-path == /`，宿主机子路径就是 `mnt-path + curvine-path`
+- 如果 `fs-path != /`，宿主机子路径就是 `mnt-path + relative(curvine-path, fs-path)`
+
+源码注释中的例子：
+
+```text
+fs-path="/", curvine-path="/pvc-abc"
+=> host subpath = <mnt-path>/pvc-abc
+
+fs-path="/test-data", curvine-path="/test-data/pvc-abc"
+=> host subpath = <mnt-path>/pvc-abc
 ```
 
-架构示意图：
+这也是多个 PVC 能共享一个 FUSE 进程、同时又落在不同业务目录下的原因。
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%flowchart TB
-    subgraph K8sNode["🖥️ Kubernetes Node"]
-        subgraph CSIPod["CSI Node Pod (privileged)"]
-            CSIDriver["CSI Driver<br/>gRPC Handler"]
-            FUSE1["curvine-fuse<br/>Process"]
-            FUSE2["curvine-fuse<br/>Process"]
-            MNT1["/mnt/curvine/<br/>cluster-A"]
-            MNT2["/mnt/curvine/<br/>cluster-B"]
-        end
-        
-        subgraph HostFS["Host Filesystem"]
-            PluginPath["/var/lib/kubelet/plugins/curvine/"]
-            ClusterA["cluster-A/fuse-mount/"]
-            ClusterB["cluster-B/fuse-mount/"]
-        end
-        
-        subgraph AppPods["Application Pods"]
-            App1["App Pod 1"]
-            App2["App Pod 2"]
-            VolPath1["/var/lib/kubelet/pods/xxx/<br/>volumes/.../mount"]
-            VolPath2["/var/lib/kubelet/pods/yyy/<br/>volumes/.../mount"]
-        end
-        
-        subgraph External["Curvine Cluster"]
-            CurvineClusterA[("Curvine<br/>Cluster A")]
-            CurvineClusterB[("Curvine<br/>Cluster B")]
-        end
-    end
-    
-    %% FUSE processes connect to clusters
-    FUSE1 -.->|"gRPC"| CurvineClusterA
-    FUSE2 -.->|"gRPC"| CurvineClusterB
-    
-    %% FUSE mounts to host paths
-    FUSE1 --> MNT1
-    MNT1 -->|"Bidirectional<br/>Mount Propagation"| ClusterA
-    
-    FUSE2 --> MNT2
-    MNT2 -->|"Bidirectional<br/>Mount Propagation"| ClusterB
-    
-    %% Host paths organization
-    PluginPath --> ClusterA
-    PluginPath --> ClusterB
-    
-    %% App pods bind mount
-    ClusterA -->|"bind mount<br/>+ subpath"| VolPath1
-    ClusterB -->|"bind mount<br/>+ subpath"| VolPath2
-    
-    VolPath1 --> App1
-    VolPath2 --> App2
+## FUSE 启动命令是怎么拼的
 
-    %% Styles
-    classDef csiStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
-    classDef fuseStyle fill:#ecc94b,stroke:#b7791f,color:#1a202c,stroke-width:2px
-    classDef hostStyle fill:#48bb78,stroke:#276749,color:#fff,stroke-width:2px
-    classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
-    classDef storageStyle fill:#fc8181,stroke:#c53030,color:#1a202c,stroke-width:2px
-    classDef pathStyle fill:#cbd5e0,stroke:#718096,color:#1a202c,stroke-width:1px
-    
-    class CSIDriver,FUSE1,FUSE2 csiStyle
-    class PluginPath,ClusterA,ClusterB hostStyle
-    class App1,App2 appStyle
-    class CurvineClusterA,CurvineClusterB storageStyle
-    class MNT1,MNT2,VolPath1,VolPath2 pathStyle
-```
-:::warning
-Embedded模式下，如果curvine-csi重启或者升级等，fuse进程会中断，会导致POD无法正常使用Curvine，请谨慎根据您的场景选择使用。
-:::
+`pkg/csi/fuse_manager.go` 启动 FUSE 的基本形式是：
 
-## FUSE生命周期管理
-
-### 概述
-
-Curvine CSI 采用FUSE进程复用机制，通过 **ClusterID** 作为唯一标识，实现多个 PV 共享同一个 FUSE 进程（Standalone Pod）。这种设计显著提升了资源利用率和系统性能。
-
-### 核心概念
-
-#### ClusterID 生成规则
-
-ClusterID 是 FUSE 进程复用的核心标识，由 `master-addrs` 的 SHA256 哈希前 8 位生成：
-
-```go
-// 示例：master-addrs 生成 ClusterID
-masterAddrs := "10.0.0.1:8995,10.0.0.2:8995,10.0.0.3:8995"
-clusterID := SHA256(masterAddrs)[:8]  // 例如：0893a5f6
+```text
+/opt/curvine/curvine-fuse --master-addrs ... --fs-path ... --mnt-path ...
 ```
 
-**关键特性**：
-- 相同的 `master-addrs` → 相同的 ClusterID → 共享 Standalone Pod
-- 不同的 `master-addrs` → 不同的 ClusterID → 独立 Standalone Pod
-- 支持多集群：同一节点可运行多个 Standalone Pod，访问不同 Curvine 集群
+固定会注入：
 
-#### Standalone Pod 命名
+- `--master-addrs`
+- `--fs-path`
+- `--mnt-path`
 
-```bash
-curvine-standalone-{clusterID}-{randomSuffix}
-# 示例：curvine-standalone-0893a5f6-aefd8804
-```
+然后再拼上 CSI 侧传入的 FUSE 调优参数。
 
-### FUSE 进程复用机制
+当前主线 `curvine-fuse` CLI 明确暴露的常用参数包括：
 
-#### 复用场景示例
+- `--io-threads`
+- `--worker-threads`
+- `--mnt-per-task`
+- `--clone-fd`
+- `--fuse-channel-size`
+- `--stream-channel-size`
+- `--direct-io`
+- `--cache-readdir`
+- `--entry-timeout`
+- `--attr-timeout`
+- `--negative-timeout`
+- `--max-background`
+- `--congestion-threshold`
+- `--node-cache-size`
+- `--node-cache-timeout`
+- `--mnt-number`
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
-flowchart LR
-    subgraph PVs["PersistentVolumes"]
-        PV1["PV-1<br/>volumeHandle: vol-app1<br/>master-addrs: 10.0.0.1:8995,..."]
-        PV2["PV-2<br/>volumeHandle: vol-app2<br/>master-addrs: 10.0.0.1:8995,..."]
-        PV3["PV-3<br/>volumeHandle: vol-db<br/>master-addrs: 10.0.0.1:8995,..."]
-        PV4["PV-4<br/>volumeHandle: vol-logs<br/>master-addrs: 192.168.1.1:8995,..."]
-    end
-    
-    subgraph ClusterID["ClusterID 计算"]
-        Hash1["SHA256(10.0.0.1:8995,...)<br/>→ 0893a5f6"]
-        Hash2["SHA256(192.168.1.1:8995,...)<br/>→ 1a2b3c4d"]
-    end
-    
-    subgraph Standalone["Standalone Pods"]
-        SP1["Standalone-0893a5f6<br/>RefCount: 3<br/>Volumes: [vol-app1, vol-app2, vol-db]"]
-        SP2["Standalone-1a2b3c4d<br/>RefCount: 1<br/>Volumes: [vol-logs]"]
-    end
-    
-    PV1 --> Hash1
-    PV2 --> Hash1
-    PV3 --> Hash1
-    PV4 --> Hash2
-    
-    Hash1 --> SP1
-    Hash2 --> SP2
-    
-    classDef pvStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
-    classDef hashStyle fill:#ecc94b,stroke:#b7791f,color:#1a202c,stroke-width:2px
-    classDef standaloneLightStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:3px
-    classDef standaloneHeavyStyle fill:#e53e3e,stroke:#c53030,color:#fff,stroke-width:3px
-    
-    class PV1,PV2,PV3,PV4 pvStyle
-    class Hash1,Hash2 hashStyle
-    class SP1 standaloneHeavyStyle
-    class SP2 standaloneLightStyle
-```
+同时，校验器还兼容接受 `auto-cache`、`kernel-cache`、`master-hostname`、`master-rpc-port`、`master-web-port` 这类更旧的键。但这些键并没有在当前 `curvine-fuse` CLI 页面上单独作为稳定接口文档化，因此更适合视为兼容行为，而不是建议新配置依赖的公开契约。
 
-**说明**：
-- PV-1、PV-2、PV-3 使用相同的 `master-addrs`，共享 **Standalone-0893a5f6**
-- PV-4 使用不同的 `master-addrs`，使用独立的 **Standalone-1a2b3c4d**
-- Standalone-0893a5f6 的引用计数为 3（三个 PV 共享）
-- Standalone-1a2b3c4d 的引用计数为 1
+## 生命周期总结
 
-**自动清理机制**：
-- **触发条件**：RefCount 降至 0（无任何 PV 引用）
-- **优雅关闭**：30 秒优雅期，确保 FUSE 正确卸载
-- **preStop Hook**：5 秒等待，让进行中的 I/O 完成
-- **状态持久化**：引用计数保存在 ConfigMap，节点重启后恢复
+1. Controller 校验 StorageClass 参数，并创建 `curvine-path`。
+2. Controller 返回包含 `master-addrs`、`fs-path`、`curvine-path` 的 `VolumeContext`。
+3. Node 插件计算 `cluster-id`、`mount-key` 和 `mnt-path`。
+4. 如果同一组 `master-addrs + fs-path` 对应的 FUSE 已存在，则直接复用。
+5. 否则 node 侧启动新的 `curvine-fuse` 进程。
+6. Node 再把正确的子目录 bind mount 到 Pod。
+7. 当引用计数归零时，`NodeUnstageVolume` 会关闭不再使用的 FUSE 挂载。
 
-### RBAC 权限要求
+## 静态卷与动态卷对比
 
-Standalone 模式需要以下权限：
+| 模式 | 必填属性 | Controller 行为 | Node 行为 |
+| --- | --- | --- | --- |
+| 通过 StorageClass 的动态 PVC | `master-addrs`，可选 `fs-path`、`path-type` | 自动生成 `volumeHandle` 和 `curvine-path` | 挂载 `fs-path`，再把生成出的子目录 bind mount 给 Pod |
+| 静态 PV | `master-addrs`、`curvine-path` | 不会替你生成目录命名规则 | 如果未提供 `fs-path`，默认挂载根目录，再 bind mount `curvine-path` |
 
-| 资源 | 权限 | 用途 |
-|------|------|------|
-| `pods` | `create`, `delete`, `get`, `list`, `watch` | 管理 Standalone Pod |
-| `configmaps` | `create`, `delete`, `get`, `list`, `update`, `watch` | 状态持久化 |
-| `persistentvolumes` | `get`, `list`, `watch` | PV Watch 兜底清理 |
-| `events` | `create`, `patch` | 事件记录和调试 |
+## 运维建议
+
+- 生产环境优先使用 `standalone`，因为 CSI 重启不会直接中断业务侧 FUSE。
+- 即使代码允许 `fs-path` 默认回落到 `/`，StorageClass 里也建议显式写出来，目录布局和复用规则更容易预测。
+- 新部署不要再依赖手工指定 `mnt-path`；当前主线实现已经默认自动生成它。

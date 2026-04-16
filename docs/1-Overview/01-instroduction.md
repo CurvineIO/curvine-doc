@@ -4,23 +4,23 @@ sidebar_position: 1
 
 # Curvine Overview
 
-Curvine is a high-performance, high-concurrency distributed caching system released under the Apache 2.0 open-source license. It provides unified path access to various storage systems with caching acceleration, featuring POSIX compatibility for seamless integration as massive local storage, while supporting concurrent mount and read/write operations across cross-platform and cross-region hosts.
+Curvine is a high-performance distributed cache system written in Rust and released under the Apache 2.0 license. It provides a unified cached file-system view over external storage systems, with low-latency metadata access, high-throughput data access, and POSIX-compatible FUSE integration.
 
-Curvine adopts the classic master-worker architecture to implement distributed file system design. The Master manages file metadata and ensures high availability and data consistency through the Raft protocol, while Workers handle data management.
+Curvine uses a classic Master/Worker architecture. Master nodes manage metadata and cluster coordination, while Worker nodes store and serve data blocks. Metadata consistency and high availability are provided through Raft.
 
-Curvine provides rich APIs suitable for various forms of data management, analysis, archiving, and backup. It can seamlessly integrate with big data, machine learning, and artificial intelligence platforms without code modifications, providing massive, elastic, and cost-effective caching acceleration.
+Curvine exposes multiple access paths for analytics, AI, and data infrastructure workloads, including the Rust CLI, FUSE, Java/Python SDK bindings, and S3-compatible access.
 
 ## Core Features
 
-- **High Performance**: Millisecond-level latency with exceptional performance for writes, sequential reads, and random reads. Single node can achieve up to 15GiB/s read throughput
-- **High Concurrency**: Single node supports tens of thousands of concurrent file read/write operations
-- **Low Resource Consumption**: In 1000 concurrent read/write tests, both server and client require only tens of MB of memory; CPU usage is reduced by 50% compared to other systems
-- **Multi-Backend Storage Support**: Supports S3, HDFS, OSS, MinIO, and other backend storage systems with unified access interface
-- **POSIX Compatibility**: Functions like a local file system with seamless integration to existing applications without business intrusion
-- **Distributed Design**: Same file system can be mounted simultaneously on thousands of servers for high-performance concurrent read/write and data sharing
-- **Multi-Language Support**: Provides Java, Python, Rust, FUSE, and other client implementations
-- **Multi-OS Support**: Supports Linux, Windows, macOS, and other operating systems
-- **Multi-Architecture Support**: Supports x86, ARM, and other hardware architectures
+- **Multi-cloud storage support**: Works with S3-compatible systems, HDFS, OSS, MinIO, and other UFS backends through a unified access layer
+- **Cloud-native integration**: Supports CSI-based deployment and Kubernetes-oriented packaging workflows
+- **Multi-tier cache**: Supports memory, SSD, and HDD cache strategies
+- **POSIX-compatible access**: Provides a FUSE layer so existing applications can access cached data as a local file system
+- **S3 and HDFS ecosystem compatibility**: Offers S3-compatible gateway access and Hadoop/SDK integration paths
+- **High performance**: Uses asynchronous I/O and zero-copy-oriented data paths for low-latency, high-throughput workloads
+- **Raft-based metadata HA**: Uses Raft to keep metadata consistent across Master nodes
+- **Built-in observability**: Exposes monitoring and metrics for cluster components
+- **Web management interface**: Provides browser-based status and management pages on service web ports
 
 ## Use Cases
 
@@ -207,16 +207,17 @@ Curvine is designed for high-performance, high-concurrency, and massive data cac
 
 ## 🧩 Modular Architecture
 
-Curvine adopts a modular design and is mainly composed of the following core components (see [Development Guide](../6-Contribute/01-development-guide.md) for the full layout):
+Curvine adopts a modular codebase. The main components in the current `main` branch are:
 
-- **orpc**: A high-performance network communication framework that supports asynchronous RPC calls.
-- **curvine-common**: A shared library containing protocol definitions, error handling, and common utilities.
-- **curvine-server**: A server component that includes Master and Worker implementations.
-- **curvine-client**: A client library that provides APIs for interacting with the server.
-- **curvine-fuse**: A FUSE file system interface that allows Curvine to be mounted as a local file system.
-- **curvine-libsdk**: An SDK library that supports multi-language access (Java, Python, Rust).
-- **curvine-ufs**: UFS backends (OpenDAL-based) for S3, HDFS, WebHDFS, and other storage.
-- **curvine-cli**: Command-line tool (`cv`) for mount, fs, load, report, node, and cluster management.
-- **curvine-s3-gateway**: S3-compatible object storage HTTP API.
-- **curvine-web**: A web management interface and API.
-- **curvine-tests**: Integration tests and performance benchmarking utilities (e.g. curvine-bench).
+- **orpc**: High-performance async RPC and runtime infrastructure
+- **curvine-common**: Shared configuration, protocol, metadata, and utility types
+- **curvine-server**: Master and Worker server implementations
+- **curvine-client**: Rust client library for metadata and block I/O
+- **curvine-fuse**: FUSE daemon for POSIX-style access
+- **curvine-libsdk**: Java and Python SDK bindings built on top of the native client
+- **curvine-ufs**: UFS backend implementations for S3, HDFS, WebHDFS, and related providers
+- **curvine-cli**: Native CLI (`cv`) for cluster, mount, fs, and load operations
+- **curvine-s3-gateway**: S3-compatible HTTP gateway
+- **curvine-web**: Web UI assets and server-side web support
+- **curvine-csi**: CSI driver for Kubernetes storage integration
+- **curvine-tests**: Integration tests, regression tooling, and benchmark utilities

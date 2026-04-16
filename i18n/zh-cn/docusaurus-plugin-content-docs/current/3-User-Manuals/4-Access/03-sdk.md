@@ -20,7 +20,7 @@ Curvine 提供多语言 SDK，使应用可通过 RPC 访问 Curvine 文件系统
 
 ## Java SDK
 
-- **Hadoop FileSystem**：在 `core-site.xml` 或 `curvine-site.xml` 中配置 `fs.cv.impl` 与 `fs.cv.master_addrs`，使 `FileSystem.get(URI.create("curvine:///path"), conf)` 使用 Curvine。`fs.cv.master_addrs` 配置见 [部署准备](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/03-deployment-setup.md#配置文件修改)。
+- **Hadoop FileSystem**：在 `core-site.xml` 或 `curvine-site.xml` 中配置 `fs.cv.impl` 与 `fs.cv.master_addrs`，使 `FileSystem.get(URI.create("curvine:///path"), conf)` 使用 Curvine。`fs.cv.master_addrs` 配置见 [部署准备](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/03-deployment-setup.md#环境脚本与主配置)。
 - **Java API**：在不使用 Hadoop FileSystem 时，可使用 curvine-libsdk 的 Java SDK 直接通过 RPC 访问。
 
 兼容 Hadoop、Spark、Flink 等支持自定义 FileSystem 的 JVM 框架。

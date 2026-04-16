@@ -1,130 +1,93 @@
-# Using Dynamic PV in Deployment
+# Dynamic PVC In Deployment
 
-Deployment is suitable for stateless applications where multiple replicas share the same storage.
+The current workflow uses the example manifests under `curvine-csi/examples` in the Curvine source tree:
 
-## Architecture Pattern
+- `storage-class.yaml`
+- `pvc-curvine.yaml`
+- `deployment-curvine.yaml`
 
-```
-           Deployment (3 replicas)
-               /      |      \
-            Pod-1  Pod-2  Pod-3
-               \      |      /
-                Single PVC (RWX)
-                      |
-              Curvine Volume (Shared)
-```
+This path is for stateless workloads that want multiple replicas to share one Curvine-backed PVC.
 
-## Complete Example
+## Example Topology
 
-```yaml
-# deployment-with-pvc.yaml
----
-# 1. Create shared PVC
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: shared-data-pvc
-  namespace: default
-spec:
-  storageClassName: curvine-sc
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 10Gi
+- `StorageClass`: `curvine-sc`
+- `PVC`: `curvine-shared-pvc`
+- `Namespace`: `curvine-system`
+- `Deployment`: `curvine-test-deployment`
+- `Replicas`: `3`
+- `Mount path inside the container`: `/usr/share/nginx/html`
 
----
-# 2. Create Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-app
-  namespace: default
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: web-app
-  template:
-    metadata:
-      labels:
-        app: web-app
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: shared-storage
-          mountPath: /usr/share/nginx/html
-        command:
-        - /bin/sh
-        - -c
-        - |
-          if [ ! -f /usr/share/nginx/html/index.html ]; then
-            echo "<h1>App initialized by command</h1>" > /usr/share/nginx/html/index.html
-          fi
-          exec nginx -g 'daemon off;'
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 5
-      volumes:
-      - name: shared-storage
-        persistentVolumeClaim:
-          claimName: shared-data-pvc  # Share the same PVC
+## StorageClass Parameters
 
----
-# 3. Create Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-app-service
-  namespace: default
-spec:
-  selector:
-    app: web-app
-  ports:
-  - port: 80
-    targetPort: 80
-  type: ClusterIP
-```
+`examples/storage-class.yaml` defines the parameters that matter for dynamic provisioning:
 
-:::tip
-For Deployment applications, Kubernetes is natively positioned for stateless services, meaning all replica Pods by default read and write to the same PV path. If your application requires different path isolation on Curvine, you can try using OpenKruise's `CloneSets` as an alternative, which supports VolumeClaimTemplates. Reference: https://openkruise.io/zh/docs/user-manuals/cloneset
-:::
+| Parameter | In example | Meaning |
+| --- | --- | --- |
+| `master-addrs` | `m0:8995,m1:8995,m2:8995` | Required Curvine master endpoints |
+| `fs-path` | `/test-data` | Path prefix used when the controller creates dynamic volume directories |
+| `path-type` | `DirectoryOrCreate` | Create missing parent directories, or require them to exist with `Directory` |
+| `io-threads`, `worker-threads` | commented out | Optional FUSE tuning overrides |
 
-## Deploy and Verify
+Implementation note: the controller code defaults `fs-path` to `/` if it is omitted, but the official example sets it explicitly and that is the safer pattern to document and operate.
+
+## Apply The Example
 
 ```bash
-# 1. Deploy application
-kubectl apply -f deployment-with-pvc.yaml
+cd /path/to/curvine/curvine-csi/examples
 
-# 2. Check PVC status
-kubectl get pvc shared-data-pvc
-
-# 3. Check all Pods
-kubectl get pods -l app=web-app -o wide
-
-# 4. Verify all Pods mounted the same PVC
-kubectl get pods -l app=web-app -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.volumes[0].persistentVolumeClaim.claimName}{"\n"}{end}'
-
-# 5. Write data in one Pod
-POD1=$(kubectl get pod -l app=web-app -o jsonpath='{.items[0].metadata.name}')
-kubectl exec $POD1 -- sh -c 'echo "Hello from Pod 1" > /usr/share/nginx/html/test.html'
-
-# 6. Read data in another Pod (verify sharing)
-POD2=$(kubectl get pod -l app=web-app -o jsonpath='{.items[1].metadata.name}')
-kubectl exec $POD2 -- cat /usr/share/nginx/html/test.html
-# Should output: Hello from Pod 1
-
-# 7. Verify Service access
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl http://web-app-service/test.html
+kubectl apply -f storage-class.yaml
+kubectl apply -f pvc-curvine.yaml
+kubectl apply -f deployment-curvine.yaml
 ```
+
+## What The Example Creates
+
+### Shared PVC
+
+`pvc-curvine.yaml` creates:
+
+- `PersistentVolumeClaim/curvine-shared-pvc`
+- namespace `curvine-system`
+- access mode `ReadWriteMany`
+- requested capacity `5Gi`
+- `storageClassName: curvine-sc`
+
+### Deployment
+
+`deployment-curvine.yaml` creates:
+
+- `Deployment/curvine-test-deployment`
+- namespace `curvine-system`
+- `3` nginx replicas
+- shared volume mounted at `/usr/share/nginx/html`
+
+Each replica writes the pod hostname and timestamp into the same shared Curvine-backed directory.
+
+## Verify Shared Access
+
+```bash
+kubectl get pvc -n curvine-system curvine-shared-pvc
+kubectl get pods -n curvine-system -l app=curvine-test -o wide
+kubectl get pv
+```
+
+Write from one pod and read from another:
+
+```bash
+POD1=$(kubectl get pod -n curvine-system -l app=curvine-test -o jsonpath='{.items[0].metadata.name}')
+POD2=$(kubectl get pod -n curvine-system -l app=curvine-test -o jsonpath='{.items[1].metadata.name}')
+
+kubectl exec -n curvine-system "$POD1" -- sh -c 'echo "hello from pod1" > /usr/share/nginx/html/shared.txt'
+kubectl exec -n curvine-system "$POD2" -- cat /usr/share/nginx/html/shared.txt
+```
+
+If the second command prints the same content, the deployment is reading and writing through the same Curvine PVC as intended.
+
+## How Dynamic Paths Are Built
+
+For dynamic provisioning, the controller generates:
+
+- `volumeHandle = {cluster-id}@{fs-path}@{pv-name}`
+- `curvine-path = {fs-path}/{pv-name}`
+
+The node plugin then reuses or creates a FUSE mount based on `master-addrs + fs-path`, and bind-mounts the generated `curvine-path` into the pod. The exact lifecycle is described in [Framework](04-Framework.md).

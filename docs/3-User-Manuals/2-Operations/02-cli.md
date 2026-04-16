@@ -1,149 +1,158 @@
 # Command Line Tools
 
-This section describes the command-line tools supported by Curvine and how to use them. Curvine provides:
+This section is based on the current repository source in `curvine-cli`, `build/bin/cv`, and `build/bin/dfs`. Curvine currently exposes three CLI entry styles:
 
-- **Native CLI `cv`**: The main Rust-based CLI (recommended). The binary is typically invoked as `bin/cv` from the distribution directory (e.g. `build/dist/bin/cv`).
-- **HDFS-compatible CLI `curvine`**: Deprecated; prefer `cv` for new usage.
-- **POSIX / FUSE**: After mounting Curvine via FUSE, you can use standard Linux commands (`ls`, `cp`, `mv`, etc.) on the mount point.
-
-All `cv` commands accept optional global options:
-
-| Global option | Description |
-|---------------|-------------|
-| `-c, --conf <PATH>` | Configuration file path (optional). Default can be set via `CURVINE_CONF_FILE`. |
-| `--master-addrs <ADDRS>` | Master address list, e.g. `m1:8995,m2:8995`. |
+- **Native Rust CLI `cv`**: the recommended entry point, with the full command tree from `curvine-cli`.
+- **Compatibility wrapper `dfs`**: bundled in the distribution; `fs` / `report` go through Java `CurvineShell` and keep Hadoop `FsShell` style.
+- **POSIX / FUSE**: after mounting with FUSE, use standard Linux commands directly on the mount point.
 
 ---
 
-## Rust native CLI: `cv`
+## Native CLI: `cv`
 
-Get a quick overview with:
+Get a quick overview:
 
 ```bash
 cv --help
 ```
 
-Example output:
+The current top-level commands in source are:
 
-```
+```text
 Usage: cv [OPTIONS] <COMMAND>
 
 Commands:
-  fs           File system operations
-  report       Cluster status and capacity
-  load         Load data from UFS into Curvine
-  load-status  Query load job status
-  cancel-load  Cancel a load job
-  mount        Mount UFS path to Curvine
-  umount       Unmount UFS from Curvine
-  node         Manage worker nodes (list, decommission)
-  version      Show CLI version
-  help         Print help
+  fs
+  report
+  load
+  load-status
+  cancel-load
+  mount
+  umount
+  node
+  version
 ```
 
-Use `cv <command> --help` for subcommand-specific options.
+All `cv` commands accept these global options:
 
-**Conventions:** In this doc the CLI is referred to as `cv` (the name of the binary in the distribution, e.g. `build/dist/bin/cv`). When run via `cargo run -p curvine-cli`, the program name in help may appear as `curvine-cli`. Arguments in angle brackets (e.g. `<PATH>`, `<JOB_ID>`) are positional; optional parts are in square brackets.
+| Global option | Description |
+|---------------|-------------|
+| `-c, --conf <PATH>` | Cluster config file path. If omitted, the CLI also checks `CURVINE_CONF_FILE`. |
+| `--master-addrs <ADDRS>` | Override the client-side master address list directly, for example `m1:8995,m2:8995`. |
+
+:::tip
+To avoid ambiguity, this doc always uses `--conf` for the CLI config file and `--config key=value` for UFS mount properties. Do not rely on short `-c` inside `mount`.
+:::
+
+**Conventions:**
+
+- In the distribution, the CLI is usually invoked as `build/dist/bin/cv`.
+- When run via `cargo run -p curvine-cli -- ...`, the help output shows the binary name as `curvine-cli`.
+- Items such as `<PATH>` and `<JOB_ID>` are positional arguments; `[OPTION]` means optional.
 
 ---
 
-### 1. `report` — Cluster status
+### 1. `report`: cluster status
 
-**Usage:** `cv report [json|all|capacity|used|available] [OPTIONS]`
-
-View cluster summary and capacity. Run `cv report --help` for full options.
+**Usage:** `cv report [json|all|capacity|used|available]`
 
 | Command | Description |
 |---------|-------------|
-| `cv report` | Cluster summary (default; includes worker list). |
-| `cv report json` | Full cluster info in JSON. |
-| `cv report all [--show-workers true\|false]` | Same as default; control whether to list workers. |
-| `cv report capacity [WORKER_ADDRESS]` | Capacity summary: cluster-wide, or for one worker (by address). |
-| `cv report used` | Used capacity per worker. |
-| `cv report available` | Available capacity per worker. |
+| `cv report` | Default summary, including active master, capacity, inode/block counts, and worker lists. |
+| `cv report json` | Emit the full `MasterInfo` as JSON. |
+| `cv report all --show-workers false` | Text summary, with optional worker detail suppression. |
+| `cv report capacity [WORKER_ADDRESS]` | Show cluster-wide capacity, or detailed capacity for one worker. |
+| `cv report used` | Show used capacity for each live worker. |
+| `cv report available` | Show available capacity for each live worker. |
 
 Examples:
 
 ```bash
 bin/cv report
 bin/cv report json
+bin/cv report all --show-workers false
 bin/cv report capacity
 bin/cv report capacity 192.168.1.10
 bin/cv report used
 bin/cv report available
 ```
 
+:::note
+In the current implementation, `cv report capacity <WORKER_ADDRESS>` matches by worker IP address, not by `hostname:port`.
+:::
+
 ---
 
-### 2. `node` — Worker management
+### 2. `node`: worker management
 
 **Usage:** `cv node [OPTIONS] [-- <NODES>...]`
 
-Manage workers (list, add/remove decommission list). Run `cv node --help` for details.
-
 | Option | Description |
 |--------|-------------|
-| `-l, --list` | List all worker nodes (live and lost). |
-| `--add-decommission` | Add workers to decommission list (requires one or more NODES). |
-| `--remove-decommission` | Remove workers from decommission list (requires one or more NODES). |
+| `-l, --list` | List live and lost workers. |
+| `--add-decommission <NODES>...` | Add one or more workers to the decommission list. |
+| `--remove-decommission <NODES>...` | Remove one or more workers from the decommission list. |
 
-`<NODES>`: one or more `hostname:port`. You can pass multiple nodes as space-separated arguments or as a single comma-separated list (e.g. `host1:9000,host2:9000`).
+`<NODES>` supports two forms:
+
+- Space-separated arguments: `host1:8997 host2:8997`
+- A single comma-separated argument: `host1:8997,host2:8997`
 
 Examples:
 
 ```bash
 bin/cv node -l
-bin/cv node --add-decommission host1:9000 host2:9000
-bin/cv node --add-decommission host1:9000,host2:9000
-bin/cv node --remove-decommission host1:9000
+bin/cv node --add-decommission host1:8997 host2:8997
+bin/cv node --add-decommission host1:8997,host2:8997
+bin/cv node --remove-decommission host1:8997
 ```
+
+:::note
+The current implementation strips `hostname:port` down to `hostname` before calling the decommission API. The port is mainly for readability and consistent input format.
+:::
 
 ---
 
-### 3. `fs` — File system operations
+### 3. `fs`: file system operations
 
 **Usage:** `cv fs [OPTIONS] <COMMAND> [ARGS]`
 
-Run HDFS-style file operations against Curvine. Use `cv fs --help` and `cv fs <subcommand> --help` for full options.
+`fs` adds one command-level global switch:
 
-Global flag for `fs`:
+| Option | Description |
+|--------|-------------|
+| `--cache-only` | Query / operate only on data already cached in Curvine, disabling the unified UFS view. |
 
-| Flag | Description |
-|------|-------------|
-| `--cache-only` | Only show/operate on data cached in Curvine (disable unified UFS view). Applies to the current command only. |
-
-**Commands:**
+The current source exposes these `fs` subcommands:
 
 | Command | Description |
 |---------|-------------|
-| `cv fs ls [path]` | List directory (default path `/`). |
-| `cv fs mkdir <path> [-p\|--parents]` | Create directory; `-p` creates parents as needed. |
-| `cv fs put <local_path> <remote_path>` | Upload local file to Curvine. |
-| `cv fs get <path> <local_path>` | Download file from Curvine to local. |
-| `cv fs cat <path>` | Print file contents. |
-| `cv fs touch <path>` | Create empty file or update timestamp. |
-| `cv fs rm <path> [-r\|--recursive]` | Remove file or directory; `-r` for recursive. |
-| `cv fs stat <path>` | Show file or directory status. |
-| `cv fs count <path>` | Count files/directories under path. |
-| `cv fs mv <src_path> <dst_path>` | Move or rename. |
-| `cv fs du <path> [-h\|--human-readable] [-v\|--verbose]` | Directory space usage. |
-| `cv fs df [-h\|--human-readable]` | File system space (capacity/used/available). |
-| `cv fs chmod <mode> <path> [--recursive]` | Set permissions (e.g. `755`). |
-| `cv fs chown <owner:group> <path> [--recursive]` | Set owner and group. |
-| `cv fs blocks <path> [--format table\|json]` | Show block locations for a file (default: table). |
+| `cv fs ls [PATH]` | List a directory, default path `/`. |
+| `cv fs mkdir <PATH> [-p\|--parents]` | Create a directory. |
+| `cv fs put <LOCAL_PATH> <REMOTE_PATH>` | Upload a local file into Curvine. |
+| `cv fs get <PATH> <LOCAL_PATH>` | Download a Curvine file to local disk. |
+| `cv fs cat <PATH>` | Print file contents. |
+| `cv fs touch <PATH>` | Create an empty file or update timestamps. |
+| `cv fs rm <PATH> [-r\|--recursive]` | Remove a file or directory. |
+| `cv fs stat <PATH>` | Show file or directory status. |
+| `cv fs count <PATH>` | Count files / directories under a path. |
+| `cv fs mv <SRC_PATH> <DST_PATH>` | Move or rename. |
+| `cv fs du <PATH> [-h] [-v]` | Show directory space usage. |
+| `cv fs df [-h]` | Show capacity / used / available space. |
+| `cv fs chmod <MODE> <PATH> [RECURSIVE]` | Change permissions. |
+| `cv fs chown <OWNER:GROUP> <PATH> [RECURSIVE]` | Change owner / group. |
+| `cv fs blocks <PATH> [--format table\|json]` | Show file block location details. |
+| `cv fs free <PATH> [-r\|--recursive]` | Release Curvine cache space for UFS-synced data. |
 
-Examples:
+Common examples:
 
 ```bash
 bin/cv fs ls /
 bin/cv fs ls / --cache-only
-bin/cv fs mkdir /data
 bin/cv fs mkdir -p /data/a/b
 bin/cv fs put ./local.txt /data/remote.txt
 bin/cv fs get /data/remote.txt ./local.txt
 bin/cv fs cat /data/remote.txt
-bin/cv fs rm /data/old.txt
-bin/cv fs rm -r /data/dir
 bin/cv fs stat /data
 bin/cv fs count /data
 bin/cv fs mv /data/a /data/b
@@ -152,177 +161,177 @@ bin/cv fs df -h
 bin/cv fs chmod 755 /data/script.sh
 bin/cv fs chown user:group /data
 bin/cv fs blocks /data/file.txt --format json
+bin/cv fs free /data --recursive
 ```
 
-**`cv fs ls` options (HDFS-style):**
+`cv fs ls` also supports HDFS-style listing flags:
 
 | Option | Description |
 |--------|-------------|
 | `-C, --path-only` | Print paths only. |
 | `-d, --directory` | List directories as plain files. |
-| `-H, --human-readable` | Human-readable sizes. |
-| `-q, --hide-non-printable` | Replace non-printable chars with `?`. |
+| `-H, --human-readable` | Print human-readable sizes. |
+| `-q, --hide-non-printable` | Replace non-printable characters with `?`. |
 | `-R, --recursive` | List recursively. |
 | `-r, --reverse` | Reverse sort order. |
-| `-t, --mtime` | Sort by modification time (newest first). |
+| `-t, --mtime` | Sort by modification time. |
 | `-S, --size` | Sort by size. |
-| `-u, --atime` | Use last access time for display/sort. |
+| `-u, --atime` | Use access time for display and sorting. |
 | `-l, --long-format` | Long listing format. |
+
+:::note
+In the current source, recursive mode for `chmod` / `chown` is exposed as the third positional argument `[RECURSIVE]`, not as a `--recursive` flag. Permission strings support octal values such as `755` / `0o755` and symbolic forms such as `u=rwx,g=rx,o=rx`. `chown` supports `user:group`, `user:`, and `:group`.
+:::
 
 ---
 
-### 4. `mount` — Mount UFS to Curvine
+### 4. `mount`: mount UFS into Curvine
 
-**Usage:** `cv mount [UFS_PATH CV_PATH] [OPTIONS]` — with no arguments, lists all mount points.
+The current implementation uses `mount` for three related workflows:
 
-Mount an underlying storage path (UFS) to a Curvine path. Supported protocols include **S3** and **HDFS**. Run `cv mount --help` for full options. Global options (e.g. `-c, --conf` for config file) also apply; in the mount context, `-c` is short for `--config` (UFS key=value), not the config file.
+- `cv mount`: list all mount points
+- `cv mount --check`: list mount points and validate UFS reachability
+- `cv mount <UFS_PATH> <CV_PATH> [OPTIONS]`: create or update a mount
+- `cv mount resync <CV_PATH> [OPTIONS]`: run metadata resync for an `fs_mode` mount
 
-**List mount points (no arguments):**
-
-```bash
-bin/cv mount
-```
-
-**List mount points with validity check:**
-
-```bash
-bin/cv mount --check
-```
-
-**Mount options (when providing UFS path and Curvine path):**
+Common options:
 
 | Option | Description |
 |--------|-------------|
-| `-c, --config <key=value>` | UFS config key=value (can be repeated). |
-| `--update` | Update existing mount config. |
-| `--mnt-type <TYPE>` | Mount type (default: `cst`). |
-| `--consistency-strategy <STRATEGY>` | Consistency strategy (default: `none`). |
-| `--ttl-ms <DURATION>` | TTL in duration form, e.g. `7d` (default: `7d`). |
-| `--ttl-action <ACTION>` | Action when TTL expires: `none`, `delete`, `persist`, `evict`, `flush` (default: `delete`). |
-| `--replicas <N>` | Replica count. |
-| `--block-size <SIZE>` | Block size (e.g. `128MB`). |
-| `-s, --storage-type <TYPE>` | Storage type. |
-| `--write-type <TYPE>` | Write type: `cache`, `through`, `async_through`, `cache_through` (default: `async_through`). |
-| `--provider <PROVIDER>` | UFS provider: `auto`, `oss-hdfs`, `opendal`. See details below. |
-| `--check` | When listing, check each mount and show Valid/Invalid. |
+| `--config <key=value>` | UFS configuration entry. Can be repeated. |
+| `--update` | Update an existing mount configuration. |
+| `--check-path-consist <true\|false>` | Whether to enforce path consistency between `UFS_PATH` and `CV_PATH`. Default `true`. |
+| `--read-verify-ufs` | Validate cached reads against UFS using `mtime` / `len`. |
+| `--ttl-ms <DURATION>` | TTL, default `7d`. Supports durations such as `1h` and `7d`. |
+| `--replicas <N>` | Override replica count. |
+| `--block-size <SIZE>` | Override block size, for example `128MB`. |
+| `-s, --storage-type <TYPE>` | Override storage type. |
+| `--write-type <cache_mode\|fs_mode>` | The current source only distinguishes these two modes. Default `fs_mode`. |
+| `--provider <auto\|oss-hdfs\|opendal>` | Select the UFS provider implementation. |
+| `--check` | Only meaningful when listing mounts; also validates each entry. |
+| `--dry-run` | During `resync`, scan and print differences without delete / create changes. |
+| `--verbose` | During `resync`, print detailed per-file logs. |
 
+**About `--provider`**: some URI schemes can map to multiple implementations. For example, `oss://...` may be handled either by OSS-HDFS / JindoSDK or by OpenDAL, so `--provider` lets you force the implementation.
 
-**About `--provider` parameter**: For example, with OSS, `oss://test-bucket` could be either a standard object storage bucket or an OSS-HDFS accelerated bucket.
-`--provider` specifies the implementation to use (see [Appendix: UFS Mount Parameters](#appendix-ufs-mount-parameters)).
+| Value | Description | Typical protocols |
+|-------|-------------|-------------------|
+| `auto` | Auto-select implementation based on the URI scheme. | All supported schemes |
+| `oss-hdfs` | Use JindoSDK / OSS-HDFS path handling. | `oss://` |
+| `opendal` | Use OpenDAL-based backends. | `s3://`, `oss://`, `hdfs://`, `webhdfs://`, `cos://`, `gcs://`, `azblob://`, etc. |
 
-| Value | Description | Supported Protocols |
-|-------|-------------|---------------------|
-| `auto` | System auto-selects based on URI protocol (default). OSS defaults to JindoSDK (oss-hdfs) if available; S3, HDFS, WebHDFS, COS, GCS, Azure use OpenDAL. | All |
-| `oss-hdfs` | Use JindoSDK for OSS access, suitable for Alibaba Cloud OSS / OSS-HDFS lakehouse scenarios. | `oss://` only |
-| `opendal` | Use OpenDAL for object storage or HDFS, no JVM dependency, supports S3/OSS/COS/GCS/Azure/HDFS/WebHDFS. | `s3://`, `oss://`, `hdfs://`, `webhdfs://`, `cos://`, `gcs://`, `azblob://`, etc. |
+There are also a few implementation details worth calling out:
 
-Examples
+- For `s3://...` paths, if `s3.bucket_name` is not provided explicitly, the CLI auto-fills it from the URI.
+- For `hdfs://...` paths, if `hdfs.namenode` / `hdfs.root` are not provided explicitly, the CLI derives them from the URI.
+- If the config contains `hdfs.kerberos.*` keys but neither `hdfs.kerberos.ccache` nor the `KRB5CCNAME` environment variable is present, the CLI prints a Kerberos ticket-cache warning.
+- `validate_path_and_configs` currently applies extra path validation only to S3 paths; other schemes mostly rely on later provider initialization and connectivity checks.
 
-OSS (JindoSDK, for lakehouse):
+Examples:
+
 ```bash
+# List mount points
+bin/cv mount
+
+# List mount points and validate UFS availability
+bin/cv mount --check
+
+# Create an S3 mount
+bin/cv mount s3://bucket/datasets /bucket/datasets \
+  --config s3.endpoint_url=http://hostname.com \
+  --config s3.region_name=cn \
+  --config s3.credentials.access=access_key \
+  --config s3.credentials.secret=secret_key \
+  --config s3.path_style=true \
+  --provider opendal
+
+# Create an OSS mount through JindoSDK / OSS-HDFS
 bin/cv mount oss://my-bucket/prefix /oss-data --provider oss-hdfs \
-  -c oss.endpoint=oss-cn-hangzhou.aliyuncs.com \
-  -c oss.accessKeyId=xxx \
-  -c oss.accessKeySecret=yyy
-```
+  --config oss.endpoint=oss-cn-hangzhou.aliyuncs.com \
+  --config oss.accessKeyId=xxx \
+  --config oss.accessKeySecret=yyy
 
-Mount S3 bucket to `/s3-testing` (when provider not specified, S3 uses auto → opendal):
-
-```bash
-bin/cv mount s3://bucket/prefix /s3-testing \
-  -c s3.endpoint_url=http://hostname.com \
-  -c s3.region_name=cn \
-  -c s3.credentials.access=access_key \
-  -c s3.credentials.secret=secret_key \
-  -c s3.force.path.style=true
+# Run a metadata resync manually
+bin/cv mount resync /bucket/datasets --dry-run --verbose
 ```
 
 For detailed parameter lists of each UFS type (S3, OSS, HDFS, WebHDFS), see [Appendix: UFS Mount Parameters](#appendix-ufs-mount-parameters) at the end.
 
 :::warning
-Mount performs basic availability and config checks on the UFS. If the UFS is unreachable or misconfigured, mount can fail with a `service error`. Ensure the UFS is reachable and credentials are correct.
+`--check-path-consist=true` is enabled by default. That means a path such as `s3://bucket/datasets` is normally expected to mount to `/bucket/datasets`. If you really need a different mapping, pass `--check-path-consist=false` explicitly.
 :::
 
-:::warning
-A UFS path can be mounted to only one Curvine path. Mounting at the Curvine root is not supported; nested mounts are not supported. If `curvine://a/b` is already mounted, you cannot mount another UFS at `curvine://a` or `curvine://a/b/c`.
+:::tip
+In the current source, the first creation of an `fs_mode` mount automatically triggers a `resync`. Manual `cv mount resync ...` only works for `fs_mode` mount points.
 :::
 
 ---
 
-### 5. `umount` — Unmount UFS
+### 5. `umount`: remove a mount
 
 **Usage:** `cv umount <CURVINE_PATH>`
-
-Unmount a previously mounted Curvine path:
-
-```bash
-bin/cv umount /s3-testing
-```
-
----
-
-### 6. `load` — Load UFS data into Curvine
-
-**Usage:** `cv load [OPTIONS] <PATH>`
-
-Submit a job to load data from UFS into Curvine. The UFS path must already be mounted (see `mount`).
-
-| Argument / Option | Description |
-|-------------------|-------------|
-| `<PATH>` | UFS path to load (positional, required). |
-| `-w, --watch` | After submit, watch load job status until completion/failure. |
-| `-c, --conf <path>` | Config file (default from `CURVINE_CONF_FILE`). |
 
 Example:
 
 ```bash
-bin/cv load s3://my-bucket/path/to/data
-bin/cv load s3://my-bucket/path/to/data --watch
+bin/cv umount /bucket/datasets
 ```
-
-On success, the command prints a **job ID**. Use it with `load-status` or `cancel-load`.
-
-:::warning
-The underlying storage must be mounted to Curvine before loading (see `cv mount`).
-:::
 
 ---
 
-### 7. `load-status` — Query load job status
+### 6. `load`: submit a load job
+
+**Usage:** `cv load [OPTIONS] <PATH>`
+
+| Option / Argument | Description |
+|-------------------|-------------|
+| `<PATH>` | Source path to load. In practice this is usually a UFS path that already belongs to a mount. |
+| `-w, --watch` | Watch job status immediately after submission. |
+| `--conf <PATH>` | CLI config file. |
+
+Examples:
+
+```bash
+bin/cv load s3://bucket/datasets/train/part-0001.parquet
+bin/cv load s3://bucket/datasets/train/part-0001.parquet --watch
+```
+
+On success, the command prints `job_id` and `target_path`, which can then be used with `load-status` or `cancel-load`.
+
+---
+
+### 7. `load-status`: query job status
 
 **Usage:** `cv load-status [OPTIONS] <JOB_ID>`
 
-Query (and optionally watch) a load job by job ID.
-
-| Argument / Option | Description |
+| Option / Argument | Description |
 |-------------------|-------------|
-| `<JOB_ID>` | Load job ID (positional, required). |
+| `<JOB_ID>` | Load job identifier. |
 | `-v, --verbose` | Verbose output. |
-| `-w, --watch <INTERVAL>` | Poll status periodically; default `5s`. Supports e.g. `5s`, `1m`. |
-| `-c, --conf <path>` | Config file (default from `CURVINE_CONF_FILE`). |
+| `-w, --watch <INTERVAL>` | Poll interval, default `5s`. Supports formats such as `1s`, `1m`, and `1h`. |
+| `--conf <PATH>` | CLI config file. |
 
 Examples:
 
 ```bash
 bin/cv load-status <job_id>
-bin/cv load-status <job_id> --watch
 bin/cv load-status <job_id> -w 1s
 ```
 
-Use Ctrl+C to stop watching.
+:::note
+In the current implementation, `load-status` enters watch mode by default with a `5s` refresh interval. The source does not currently expose a dedicated one-shot status-only switch.
+:::
 
 ---
 
-### 8. `cancel-load` — Cancel load job
+### 8. `cancel-load`: cancel a load job
 
 **Usage:** `cv cancel-load [OPTIONS] <JOB_ID>`
 
-Cancel a load job by job ID.
-
-| Argument / Option | Description |
+| Option / Argument | Description |
 |-------------------|-------------|
-| `<JOB_ID>` | Load job ID (positional, required). |
-| `-c, --conf <path>` | Config file (default from `CURVINE_CONF_FILE`). |
+| `<JOB_ID>` | Job identifier to cancel. |
+| `--conf <PATH>` | CLI config file. |
 
 Example:
 
@@ -332,56 +341,73 @@ bin/cv cancel-load <job_id>
 
 ---
 
-### 9. `version` — CLI version
+### 9. `version`: show version
 
 **Usage:** `cv version`
 
-Print the CLI version:
+Example:
 
 ```bash
 bin/cv version
 ```
 
+The current implementation prints `curvine-cli <version>` together with commit / branch information.
+
 ---
 
-## POSIX commands (FUSE mount)
+## Compatibility CLI: `dfs`
 
-Curvine provides a POSIX-compliant FUSE interface. After mounting the Curvine FUSE filesystem (e.g. via `bin/curvine-fuse.sh start`), you can use standard Linux commands on the mount point.
+`bin/dfs` in the distribution is a compatibility wrapper:
 
-**Characteristics:**
+- When the first subcommand is `fs` or `report`, it calls Java `io.curvine.CurvineShell`.
+- `dfs fs` keeps Hadoop `FsShell` syntax, so subcommands look like `-ls`, `-mkdir`, `-rm -r` with single-dash command names.
+- Other subcommands are eventually forwarded to the Rust `curvine-cli`, but for normal operations `cv` is still the recommended entry point.
 
-- FUSE 3.0–compatible (and compatible with FUSE 2.0).
-- Semantics aligned with common filesystems (e.g. ext4, xfs).
-- Supports Linux kernel 3.10+.
-- POSIX file operations and atomic behavior where applicable.
-
-**Typical commands:**
+Examples:
 
 ```bash
-# Basic file operations
-ls, cp, mv, rm, mkdir
-
-# Content operations
-cat, grep, sed, awk
-
-# Filesystem info
-df -h, du -sh, stat
-
-# Permissions
-chmod, chown, getfacl
-
-# Symbolic links
-ln -s, readlink
-
-# Extended attributes
-getfattr, setfattr, listxattr
+bin/dfs fs -ls /
+bin/dfs fs -mkdir -p /data
+bin/dfs fs -rm -r /data/tmp
+bin/dfs report
+bin/dfs report info
+bin/dfs report json
+bin/dfs report capacity
+bin/dfs report used
+bin/dfs report available
 ```
+
+`dfs report info` is the Java-compat text-summary variant; conceptually it is close to `cv report all`, but the command name is different.
+
+Use `dfs` when you need Hadoop shell compatibility or rely on Hadoop configuration files such as `core-site.xml` / `hdfs-site.xml`. Use `cv` when you want the full Curvine-native command set from current source.
+
+---
+
+## POSIX / FUSE
+
+Curvine also exposes a FUSE file system interface. After mounting it, for example via `bin/curvine-fuse.sh start`, you can operate on the mount point with normal Linux tools:
+
+```bash
+ls /curvine-fuse
+cp data.txt /curvine-fuse/data.txt
+du -sh /curvine-fuse
+stat /curvine-fuse/data.txt
+```
+
+Typical categories:
+
+- Basic file operations: `ls`, `cp`, `mv`, `rm`, `mkdir`
+- Content inspection: `cat`, `grep`, `sed`
+- File system information: `df -h`, `du -sh`, `stat`
+- Permissions: `chmod`, `chown`
+
+If your goal is POSIX compatibility with existing tools, prefer FUSE. If you need Curvine-native mount, load, or node-management features, use `cv`.
 
 ---
 
 ## Appendix: UFS Mount Parameters
 
-The following are the parameters for each UFS type passed via `-c key=value` when using `cv mount`. **Required** means it must be provided; **Optional** means it can be omitted (has a default or can be inferred from the mount URI).
+The following are common parameters passed through `--config key=value` when using `cv mount`. `Required` means it normally must be provided; `Optional` means it can be omitted if a default exists or if the CLI can infer it from the mount URI.
 
 ### S3 (`s3://`, `s3a://`)
 
@@ -392,44 +418,36 @@ Used with `--provider opendal` or auto-selection.
 | `s3.endpoint_url` | Required | S3 service endpoint URL; must start with `http://` or `https://`. |
 | `s3.credentials.access` | Required | Access Key ID. |
 | `s3.credentials.secret` | Required | Secret Access Key. |
-| `s3.region_name` | Optional | Region name; recommended for AWS endpoints, optional for others (default: `undefined`). |
-| `s3.force.path.style` | Optional | Whether to use path-style access (e.g. for MinIO), `true`/`false`, default `false`. |
-| `s3.retry_times` | Optional | Request retry count, default `3`. |
-| `s3.connect_timeout` | Optional | Connection timeout, e.g. `30s`, default `30s`. |
-| `s3.read_timeout` | Optional | Read timeout, e.g. `120s`, default `120s`. |
+| `s3.region_name` | Optional | Region name. |
+| `s3.path_style` | Optional | Whether to use path-style access, commonly needed for MinIO-compatible endpoints. |
 
 ### OSS (`oss://`)
 
-For Alibaba Cloud OSS / OSS-HDFS (JindoSDK or OpenDAL OSS).
+For Alibaba Cloud OSS / OSS-HDFS style access.
 
 | Parameter | Required/Optional | Description |
 |-----------|-------------------|-------------|
-| `oss.endpoint` | Required | OSS endpoint address (e.g. `oss-cn-hangzhou.aliyuncs.com` or full URL). |
+| `oss.endpoint` | Required | OSS endpoint address. |
 | `oss.accessKeyId` | Required | Alibaba Cloud AccessKey ID. |
 | `oss.accessKeySecret` | Required | Alibaba Cloud AccessKey Secret. |
 | `oss.region` | Optional | Region. |
-| `oss.data.endpoint` | Optional | Data access endpoint. |
-| `oss.second.level.domain.enable` | Optional | Enable second-level domain, `true`/`false`, default `true`. |
-| `oss.data.lake.storage.enable` | Optional | Enable lakehouse storage, `true`/`false`, default `true`. |
 
 ### HDFS (`hdfs://`)
 
 | Parameter | Required/Optional | Description |
 |-----------|-------------------|-------------|
-| `hdfs.namenode` | Optional | NameNode address, e.g. `hdfs://namenode:9000/`. If not provided, inferred from mount URI authority. |
-| `hdfs.root` | Optional | Root path, default `/`. If not provided, inferred from mount path. |
-| `hdfs.user` | Optional | HDFS username; if not set, uses environment variable `HADOOP_USER_NAME` or `USER`. |
-| `hdfs.atomic_write_dir` | Optional | Set to `true` to use `atomic_write_dir` directory under root for atomic writes. |
-| `hdfs.kerberos.ccache` | Optional | Kerberos credential cache path; can also be specified via environment variable `KRB5CCNAME`. |
-| `hdfs.kerberos.krb5_conf` | Optional | `krb5.conf` file path; sets environment variable `KRB5_CONFIG`. |
-| `hdfs.kerberos.keytab` | Optional | Keytab file path; sets environment variable `KRB5_KTNAME`. |
+| `hdfs.namenode` | Optional | NameNode address; if omitted, inferred from the mount URI authority. |
+| `hdfs.root` | Optional | Root path; if omitted, inferred from the mount URI path. |
+| `hdfs.user` | Optional | HDFS username. |
+| `hdfs.atomic_write_dir` | Optional | Enable atomic write directory behavior. |
+| `hdfs.kerberos.ccache` | Optional | Kerberos credential cache path; can also come from `KRB5CCNAME`. |
+| `hdfs.kerberos.krb5_conf` | Optional | `krb5.conf` path. |
+| `hdfs.kerberos.keytab` | Optional | Keytab path. |
 
 ### WebHDFS (`webhdfs://`)
 
-HTTP-based HDFS interface.
-
 | Parameter | Required/Optional | Description |
 |-----------|-------------------|-------------|
-| `webhdfs.endpoint` | Optional | WebHDFS service address, e.g. `http://namenode:9870`. If not provided, inferred from URI authority. |
-| `webhdfs.root` | Optional | Root path, default `/`. |
-| `webhdfs.delegation` | Optional | Delegation token for authentication. |
+| `webhdfs.endpoint` | Optional | WebHDFS HTTP endpoint; if omitted, inferred from the URI authority. |
+| `webhdfs.root` | Optional | Root path. |
+| `webhdfs.delegation` | Optional | Delegation token. |
