@@ -15,19 +15,19 @@ Curvine is a distributed file cache layer. The **Master** manages metadata and b
 flowchart LR
     subgraph Client_Layer["Client layer"]
         FUSE[FUSE]
-        SDK[SDK / CLI]
-        S3[S3 Gateway]
+        SDK["SDK / CLI"]
+        S3["S3 Gateway"]
     end
 
     subgraph Master_Layer["Master (Raft group)"]
-        Leader[Leader<br/>Metadata · Journal]
-        Follower[Follower(s)<br/>Replay journal]
+        Leader["Leader<br/>Metadata · Journal"]
+        Follower["Follower(s)<br/>Replay journal"]
         Leader -. Raft .-> Follower
     end
 
     subgraph Worker_Layer["Workers"]
-        W1[Worker 1<br/>Block storage]
-        W2[Worker 2<br/>Block storage]
+        W1["Worker 1<br/>Block storage"]
+        W2["Worker 2<br/>Block storage"]
     end
 
     FUSE --> Leader
