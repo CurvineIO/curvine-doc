@@ -15,19 +15,19 @@ Curvine 是分布式文件缓存层。**Master** 负责元数据与块调度；*
 flowchart LR
     subgraph Client_Layer["客户端层"]
         FUSE[FUSE]
-        SDK[SDK / CLI]
-        S3[S3 网关]
+        SDK["SDK / CLI"]
+        S3["S3 网关"]
     end
 
     subgraph Master_Layer["Master (Raft 组)"]
-        Leader[Leader<br/>元数据 · 日志]
-        Follower[Follower(s)<br/>回放日志]
+        Leader["Leader<br/>元数据 · 日志"]
+        Follower["Follower(s)<br/>回放日志"]
         Leader -. Raft .-> Follower
     end
 
     subgraph Worker_Layer["Workers"]
-        W1[Worker 1<br/>块存储]
-        W2[Worker 2<br/>块存储]
+        W1["Worker 1<br/>块存储"]
+        W2["Worker 2<br/>块存储"]
     end
 
     FUSE --> Leader
