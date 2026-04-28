@@ -6,22 +6,69 @@
 
 Curvine 采用分层设计的分布式架构，各组件职责明确，具备良好的可扩展性和高可用性。整个架构主要分为三层：**控制层**（Master）、**存储层**（Worker）、**接入层**（客户端：FUSE、SDK、CLI、S3 网关），共同完成数据的存储、处理和管理。
 
-Curvine 由三个核心服务角色、客户端与 UFS 组成：
-![mount-arch](./img/curvine.png)
+Curvine 由三个主要服务器端角色加上客户端和 UFS 组成：
 
-**Curvine 客户端**：数据读写由客户端通过 RPC 完成（元数据访问 Master，块数据访问 Worker）。支持的接入方式包括：
+![mount-arch](./img/curvine_new.png)
 
-- **FUSE**：POSIX 兼容挂载，作为本地存储使用
-- **Hadoop Java SDK**：面向 Hadoop 生态的 Java 客户端
-- **Rust / Python SDK**：Rust、Python 原生 SDK
-- **S3 网关**：S3 兼容对象 API
-- **CLI（cv）**：命令行管理、mount、fs 操作、load、report、node
+**Curvine 客户端**：数据读写操作由客户端实现，通过 RPC 调用 Curvine 服务器端接口（从 Master 获取元数据，从 Worker 获取块数据）。客户端支持多种访问方式：
 
-**Master**：核心控制节点，负责元数据（目录树、文件 inode、块位置）、Worker 注册、块分配与 UFS 挂载表。可多节点组成 Raft 组实现高可用，仅 Raft Leader 处理元数据写入。
+- **FUSE 挂载**：通过 libfuse/3 的 POSIX 兼容挂载 (curvine-fuse)
+- **HDFS & SDK**：Java / Python / libsdk 接口
+- **S3 网关**：S3 兼容 API (curvine-s3-gateway)
+- **CSI 驱动**：Kubernetes 卷驱动 (curvine-csi)
+- **CLI (`cv`)**：文件系统操作、报告和集群管理的管理工具
 
-**Worker**：存储块数据并响应块读写 RPC，通过心跳向 Master 上报；不保存文件系统元数据。
+内部，客户端层由以下组成：
 
-**UFS**：底层存储（S3、HDFS 等）通过 Curvine 数据编排访问；Curvine 在已挂载的 UFS 路径与原生路径上提供统一文件系统视图。
+- **UnifiedFileSystem**：提供 CurvineFS + UFS 回退的统一命名空间
+- **FsReader / FsWriter**：并行、缓冲的 I/O，具有零拷贝优化
+- **BlockClient Pool**：管理本地和远程访问的 block_reader / block_writer
+- **Mount & Meta Cache**：缓存挂载信息和 inode 元数据
+
+**Master**：核心控制节点；负责元数据（目录树、文件 inode、块位置）、Worker 注册、块分配和 UFS 挂载表。Master 可以作为多个节点运行，形成 Raft 组以实现高可用性；只有 Raft Leader 处理元数据写入。
+
+Master 集群主要包括：
+
+- **MasterServer**：RPC 处理和路由
+- **MasterFilesystem**：文件系统操作（mkdir、create、rename、delete、list）
+- **FsDir + InodeStore**：内存中的 inode 树和元数据管理
+- **JournalSystem**：编辑日志和快照以进行恢复
+- **Worker / Mount Manager**：Worker 心跳和 UFS 挂载管理
+- **Quota / Job / Replication**：配额控制、TTL、驱逐、复制调度
+- **RocksDB Metadata Store**：持久元数据存储
+- **Raft Consensus**：Leader 选举和日志复制
+
+**Worker**：存储块数据并服务块读写 RPC；通过心跳向 Master 上报。不保存文件系统元数据。
+
+每个 Worker 节点包括：
+
+- **WorkerServer**：处理块 I/O RPC 和心跳
+- **BlockStore**：管理块生命周期和本地存储
+- **IO Handlers**：读/写管道，具有零拷贝
+- **Replication / Tasks**：后台复制和任务调度
+
+Worker 支持**多层存储**：
+
+- **MEM**：内存层（< 100 ns）
+- **SSD**：NVMe / SATA（< 100 µs）
+- **HDD**：容量层（< 10 ms）
+- **SPDK**：用户空间 NVMe 加速
+
+**UFS**：底层存储（S3、HDFS 等）通过 Curvine 的数据编排访问；Curvine 在挂载的 UFS 路径和原生路径上提供统一文件系统视图。
+
+支持的 UFS 类型包括：
+
+- **S3 / MinIO**
+- **OSS**
+- **HDFS**
+- **Local FS**
+- **OpenDAL (Azure, GCS, etc.)**
+
+此外，Curvine 提供基础组件：
+
+- **orpc**：高性能 RPC 框架（基于 Tokio，零拷贝）
+- **curvine-web**：管理 UI 和集群管理
+- **Metrics**：基于 Prometheus 的监控（master/worker/client、job、cache）
 
 部署拓扑与组件角色见 [部署架构](../2-Deploy/2-Deploy-Curvine-Cluster/0-Deployment-Architecture.md)；内部数据流（journal、回放、客户端读写）见 [基本架构](../5-Architecture/01-introduction.md)。
 
