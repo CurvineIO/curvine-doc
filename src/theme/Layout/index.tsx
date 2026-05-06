@@ -5,7 +5,7 @@ import type { WrapperProps } from '@docusaurus/types';
 
 type Props = WrapperProps<typeof LayoutType>;
 
-export default function LayoutWrapper(props: Props): JSX.Element {
+export default function LayoutWrapper(props: Props): React.ReactElement {
   const [zoomedSvg, setZoomedSvg] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
