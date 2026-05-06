@@ -323,15 +323,15 @@
     "description": "The title of the tag list page"
   },
   "homepage.title": {
-    "message": "Curvine - 高性能分布式缓存系统",
+    "message": "Curvine - 高性能分布式缓存文件系统",
     "description": "The homepage title"
   },
   "homepage.hero.title": {
-    "message": "高性能分布式缓存系统",
+    "message": "高性能分布式缓存文件系统",
     "description": "The hero title on the homepage"
   },
   "homepage.hero.subtitle": {
-    "message": "Curvine 是一个用 Rust 实现的高性能分布式缓存系统，专为低延迟和高吞吐量工作负载设计，具有强大的数据治理能力。",
+    "message": "Curvine 是一个用 Rust 实现的高性能分布式缓存文件系统，专为低延迟和高吞吐量工作负载设计，具有强大的数据治理能力。",
     "description": "The hero subtitle on the homepage"
   },
   "homepage.hero.getStarted": {
@@ -379,7 +379,7 @@
     "description": "CTA section title"
   },
   "homepage.cta.subtitle": {
-    "message": "立即下载并体验 Curvine 带来的高性能分布式缓存系统。",
+    "message": "立即下载并体验 Curvine 带来的高性能分布式缓存文件系统。",
     "description": "CTA section subtitle"
   },
   "homepage.cta.downloadNow": {
@@ -451,7 +451,7 @@
     "description": "Performance section title"
   },
   "homepage.performance.subtitle": {
-    "message": "Curvine 在各项性能指标上都表现卓越。",
+    "message": "Curvine 可支撑 10 万客户端并发稳定连接，元数据操作保持低延迟，连接内存开销仅约 1G，适合大规模缓存文件系统场景。",
     "description": "Performance section subtitle"
   },
   "homepage.performance.latency": {
@@ -459,7 +459,7 @@
     "description": "Latency performance metric"
   },
   "homepage.performance.ops": {
-    "message": "QPS",
+    "message": "稳定 QPS",
     "description": "Operations per second metric"
   },
   "homepage.performance.uptime": {
@@ -471,7 +471,7 @@
     "description": "Getting started section title"
   },
   "homepage.gettingstarted.subtitle": {
-    "message": "三步即可开始使用 Curvine 分布式缓存系统。",
+    "message": "复制一条命令即可启动本地 Curvine Docker 体验集群，验证通过后再进入生产部署。",
     "description": "Getting started section subtitle"
   },
   "homepage.gettingstarted.step1.title": {
@@ -505,5 +505,49 @@
   "homepage.cta.github": {
     "message": "查看 GitHub",
     "description": "GitHub button text"
+  },
+  "homepage.hero.kicker": {
+    "message": "面向数据加速的 Rust 系统软件",
+    "description": "Hero eyebrow text"
+  },
+  "homepage.visual.chip.label": {
+    "message": "分布式缓存",
+    "description": "Hero chip label"
+  },
+  "homepage.visual.modules.agentic": {
+    "message": "智能体文件系统",
+    "description": "Agentic filesystem module label"
+  },
+  "homepage.visual.modules.nodes": {
+    "message": "AI/ML 流水线加速",
+    "description": "AI and ML pipelines acceleration module label"
+  },
+  "homepage.visual.modules.inference": {
+    "message": "大模型推理加速",
+    "description": "LLM inference acceleration module label"
+  },
+  "homepage.visual.modules.aiNative": {
+    "message": "AI 原生文件系统",
+    "description": "AI-native filesystem module label"
+  },
+  "homepage.visual.modules.pipeline": {
+    "message": "云原生存储",
+    "description": "Cloud-native storage module label"
+  },
+  "homepage.gettingstarted.command.eyebrow": {
+    "message": "在终端中运行以下命令",
+    "description": "homepage.gettingstarted.command.eyebrow"
+  },
+  "homepage.gettingstarted.command.copied": {
+    "message": "已复制",
+    "description": "Copied install command button feedback"
+  },
+  "homepage.gettingstarted.command.copy": {
+    "message": "复制",
+    "description": "homepage.gettingstarted.command.copy"
+  },
+  "homepage.gettingstarted.command.note": {
+    "message": "如果你的机器已经安装并可访问 Docker，请在终端运行以下命令，然后根据屏幕提示启动本地 Curvine 体验集群。",
+    "description": "homepage.gettingstarted.command.note"
   }
 }
