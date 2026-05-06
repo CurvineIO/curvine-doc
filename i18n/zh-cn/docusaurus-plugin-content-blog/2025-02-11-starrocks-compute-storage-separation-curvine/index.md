@@ -1,4 +1,5 @@
 ---
+title: "实测！StarRocks存算分离性能大揭秘：Curvine缓存竟有这波神操作"
 authors: [david]
 tags: [benchmark, starrocks, storage]
 ---
