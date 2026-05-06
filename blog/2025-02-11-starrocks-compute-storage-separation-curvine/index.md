@@ -1,4 +1,5 @@
 ---
+title: "StarRocks Compute-Storage Separation: A Real-World Benchmark ? How Curvine Cache Closes the Performance Gap"
 authors: [david]
 tags: [benchmark, starrocks, storage]
 ---
