@@ -1,14 +1,14 @@
 {
   "homepage.title": {
-    "message": "Curvine - High-Performance Distributed Caching System",
+    "message": "Curvine - High-Performance Distributed Caching FileSystem",
     "description": "The homepage title"
   },
   "homepage.hero.title": {
-    "message": "High-Performance Distributed Caching System",
+    "message": "High-Performance Distributed Caching FileSystem",
     "description": "The hero title on the homepage"
   },
   "homepage.hero.subtitle": {
-    "message": "Curvine is a high-performance distributed caching system implemented in Rust, designed for low-latency and high-throughput workloads with powerful data governance capabilities.",
+    "message": "Curvine is a high-performance distributed caching filesystem implemented in Rust, designed for low-latency and high-throughput workloads with powerful data governance capabilities.",
     "description": "The hero subtitle on the homepage"
   },
   "homepage.hero.getStarted": {
@@ -96,7 +96,7 @@
     "description": "Performance section title"
   },
   "homepage.performance.subtitle": {
-    "message": "Curvine delivers industry-leading performance metrics that set new standards for distributed caching systems.",
+    "message": "Curvine keeps 100K concurrent clients stably connected with low-latency metadata operations and around 1 GB of connection memory overhead.",
     "description": "Performance section subtitle"
   },
   "homepage.performance.latency": {
@@ -104,7 +104,7 @@
     "description": "Latency performance metric"
   },
   "homepage.performance.ops": {
-    "message": "Operations/sec",
+    "message": "Stable QPS",
     "description": "Operations per second metric"
   },
   "homepage.performance.uptime": {
@@ -116,7 +116,7 @@
     "description": "Getting started section title"
   },
   "homepage.gettingstarted.subtitle": {
-    "message": "Deploy Curvine quickly with our comprehensive documentation and tools.",
+    "message": "Start a local Curvine Docker demo with one command, then move to production deployment when you are ready.",
     "description": "Getting started section subtitle"
   },
   "homepage.gettingstarted.step1.title": {
@@ -148,7 +148,7 @@
     "description": "CTA section title"
   },
   "homepage.cta.subtitle": {
-    "message": "Download now and experience the high-performance distributed caching system that Curvine brings.",
+    "message": "Download now and experience the high-performance distributed caching filesystem that Curvine brings.",
     "description": "CTA section subtitle"
   },
   "homepage.cta.download": {
@@ -481,5 +481,49 @@
   "theme.tags.tagsPageTitle": {
     "message": "Tags",
     "description": "The title of the tag list page"
+  },
+  "homepage.hero.kicker": {
+    "message": "Rust systems software for data acceleration",
+    "description": "Hero eyebrow text"
+  },
+  "homepage.visual.chip.label": {
+    "message": "DISTRIBUTED CACHE",
+    "description": "Hero chip label"
+  },
+  "homepage.visual.modules.agentic": {
+    "message": "Agentic FileSystem",
+    "description": "Agentic filesystem module label"
+  },
+  "homepage.visual.modules.nodes": {
+    "message": "AI/ML Pipelines Accelerate",
+    "description": "AI and ML pipelines acceleration module label"
+  },
+  "homepage.visual.modules.inference": {
+    "message": "LLM Inference Accelerate",
+    "description": "LLM inference acceleration module label"
+  },
+  "homepage.visual.modules.aiNative": {
+    "message": "AI-Native FileSystem",
+    "description": "AI-native filesystem module label"
+  },
+  "homepage.visual.modules.pipeline": {
+    "message": "Cloud-Native Storage",
+    "description": "Cloud-native storage module label"
+  },
+  "homepage.gettingstarted.command.eyebrow": {
+    "message": "Run this in your terminal",
+    "description": "homepage.gettingstarted.command.eyebrow"
+  },
+  "homepage.gettingstarted.command.copied": {
+    "message": "Copied",
+    "description": "Copied install command button feedback"
+  },
+  "homepage.gettingstarted.command.copy": {
+    "message": "Copy",
+    "description": "homepage.gettingstarted.command.copy"
+  },
+  "homepage.gettingstarted.command.note": {
+    "message": "If Docker is available on your machine, run the following command in your terminal, then follow the on-screen instructions to start a local Curvine demo cluster.",
+    "description": "homepage.gettingstarted.command.note"
   }
 }
