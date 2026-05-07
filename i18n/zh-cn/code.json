@@ -431,12 +431,12 @@
     "description": "Large model inference use case description"
   },
   "homepage.usecases.olap.title": {
-    "message": "OLAP 分析",
-    "description": "OLAP engine use case title"
+    "message": "云上 Agent 原生存储",
+    "description": "Agent native storage use case title"
   },
   "homepage.usecases.olap.description": {
-    "message": "加速在线分析处理，支持复杂查询的结果缓存和聚合数据的快速访问。",
-    "description": "OLAP engine use case description"
+    "message": "为 AI Agent 提供可像本地磁盘一样访问的高性能云对象存储，加速数据集、模型产物和上下文数据访问，同时提升可扩展性并降低云存储访问延迟。",
+    "description": "Agent native storage use case description"
   },
   "homepage.usecases.bigdata.title": {
     "message": "大数据计算",
@@ -451,11 +451,11 @@
     "description": "Performance section title"
   },
   "homepage.performance.subtitle": {
-    "message": "Curvine 可支撑 10 万客户端并发稳定连接，元数据操作保持低延迟，连接内存开销仅约 1G，适合大规模缓存文件系统场景。",
+    "message": "Curvine 单集群支持 50 亿小文件，稳定 QPS 10w+，访问时延低至 100us，并以仅 1GB 内存占用实现高效运行。",
     "description": "Performance section subtitle"
   },
   "homepage.performance.latency": {
-    "message": "延迟",
+    "message": "时延",
     "description": "Latency performance metric"
   },
   "homepage.performance.ops": {
@@ -463,8 +463,8 @@
     "description": "Operations per second metric"
   },
   "homepage.performance.uptime": {
-    "message": "可用性",
-    "description": "Uptime performance metric"
+    "message": "单集群小文件规模",
+    "description": "Single-cluster small files scale performance metric"
   },
   "homepage.gettingstarted.title": {
     "message": "快速上手",

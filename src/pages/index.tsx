@@ -217,8 +217,8 @@ function HomePage() {
             </article>
             <article className="feature-card">
               <div className="feature-icon icon-olap" />
-              <h3><Translate id="homepage.usecases.olap.title" description="OLAP engine use case title">OLAP Engine Query Acceleration</Translate></h3>
-              <p><Translate id="homepage.usecases.olap.description" description="OLAP engine use case description">Provides high-speed caching for analytical databases and OLAP engines, significantly improving complex query performance and reducing data analysis time.</Translate></p>
+              <h3><Translate id="homepage.usecases.olap.title" description="Agent native storage use case title">Agent Native Storage on Cloud</Translate></h3>
+              <p><Translate id="homepage.usecases.olap.description" description="Agent native storage use case description">Provides high-performance cloud object storage accessed like a local disk for AI agents, enabling fast access to datasets, model artifacts, and contextual data while improving scalability and reducing cloud storage latency.</Translate></p>
             </article>
             <article className="feature-card">
               <div className="feature-icon icon-bigdata" />
@@ -239,15 +239,15 @@ function HomePage() {
             </h2>
             <p>
               <Translate id="homepage.performance.subtitle" description="Exceptional Performance section subtitle">
-                Curvine keeps 100K concurrent clients stably connected with low-latency metadata operations and around 1 GB of connection memory overhead.
+                Curvine supports 5 billion small files in a single cluster, delivers 100K+ QPS, keeps latency at 100us, and uses only 1 GB of memory.
               </Translate>
             </p>
           </div>
           <div className="performance-stats">
             <article className="stat-card">
               <div className="stat-icon stat-latency" />
-              <div className="stat-number">&lt; 1ms</div>
-              <div className="stat-label"><Translate id="homepage.performance.latency" description="Latency performance metric">Average Latency</Translate></div>
+              <div className="stat-number">100us</div>
+              <div className="stat-label"><Translate id="homepage.performance.latency" description="Latency performance metric">Latency</Translate></div>
             </article>
             <article className="stat-card">
               <div className="stat-icon stat-throughput" />
@@ -256,8 +256,8 @@ function HomePage() {
             </article>
             <article className="stat-card">
               <div className="stat-icon stat-uptime" />
-              <div className="stat-number">99.99%</div>
-              <div className="stat-label"><Translate id="homepage.performance.uptime" description="Uptime performance metric">Uptime SLA</Translate></div>
+              <div className="stat-number">{i18n.currentLocale === "zh-cn" ? "50亿" : "5B"}</div>
+              <div className="stat-label"><Translate id="homepage.performance.uptime" description="Single-cluster small files scale performance metric">Single-Cluster Small Files</Translate></div>
             </article>
           </div>
         </div>

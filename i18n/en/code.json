@@ -76,12 +76,12 @@
     "description": "Large model inference use case description"
   },
   "homepage.usecases.olap.title": {
-    "message": "OLAP Engine Query Acceleration",
-    "description": "OLAP engine use case title"
+    "message": "Agent Native Storage on Cloud",
+    "description": "Agent native storage use case title"
   },
   "homepage.usecases.olap.description": {
-    "message": "Provides high-speed caching for analytical databases and OLAP engines, significantly improving complex query performance and reducing data analysis time.",
-    "description": "OLAP engine use case description"
+    "message": "Provides high-performance cloud object storage accessed like a local disk for AI agents, enabling fast access to datasets, model artifacts, and contextual data while improving scalability and reducing cloud storage latency.",
+    "description": "Agent native storage use case description"
   },
   "homepage.usecases.bigdata.title": {
     "message": "Big Data Computing",
@@ -96,11 +96,11 @@
     "description": "Performance section title"
   },
   "homepage.performance.subtitle": {
-    "message": "Curvine keeps 100K concurrent clients stably connected with low-latency metadata operations and around 1 GB of connection memory overhead.",
+    "message": "Curvine supports 5 billion small files in a single cluster, delivers 100K+ QPS, keeps latency at 100us, and uses only 1 GB of memory.",
     "description": "Performance section subtitle"
   },
   "homepage.performance.latency": {
-    "message": "Average Latency",
+    "message": "Latency",
     "description": "Latency performance metric"
   },
   "homepage.performance.ops": {
@@ -108,8 +108,8 @@
     "description": "Operations per second metric"
   },
   "homepage.performance.uptime": {
-    "message": "Uptime SLA",
-    "description": "Uptime performance metric"
+    "message": "Single-Cluster Small Files",
+    "description": "Single-cluster small files scale performance metric"
   },
   "homepage.gettingstarted.title": {
     "message": "Get Started in Minutes",
