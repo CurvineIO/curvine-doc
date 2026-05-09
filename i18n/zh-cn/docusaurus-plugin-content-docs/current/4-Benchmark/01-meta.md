@@ -1,58 +1,86 @@
-# 元数据基准测试
+# 元数据性能测试
 
-本页以 Curvine 当前仓库中的 `build/tests/meta-bench.sh` 为准。
+## 一、测试环境配置
 
-## 脚本实际执行的内容
+本次测试基于阿里云 ECS 服务器搭建 Curvine 存储环境，所有配置均经过验证，确保测试环境的稳定性、一致性及测试结果的可复现性，详细配置如下：
 
-该脚本会加载 `../conf/curvine-env.sh`，把 `CLASSPATH` 指向 `lib/curvine-hadoop-*shade.jar`，然后执行：
+### 1.1 服务器配置
 
-```bash
-java -Xms256m -Xmx256m io.curvine.bench.NNBenchWithoutMR -operation $ACTION -bytesToWrite 0 -confDir ${CURVINE_HOME}/conf -threads 10 -baseDir cv://default/fs-meta -numFiles 1000
-```
+- 测试机型：阿里云 ECS i5.8xlarge，配置为 32 核 CPU + 256GB 内存，满足高并发测试算力需求
+- 网络带宽：80Gbps 高速网络，彻底规避网络传输瓶颈，确保测试结果反映存储本身性能
 
-由于 `-bytesToWrite` 固定为 `0`，这个脚本压测的是元数据路径，不是数据吞吐路径。
+### 1.2 部署架构
 
-## 支持的操作
+- 服务节点：1 台 ECS 服务器，单独部署 `curvine-master`、`curvine-worker` 核心服务，保障服务运行独立性
+- 客户端节点：1 台 ECS 服务器，部署 FUSE 客户端，用于模拟真实业务场景下的存储访问请求
 
-脚本注释中列出的操作有：
+## 二、NNBench 测试配置及操作
 
-- `createWrite`
-- `openRead`
-- `rename`
-- `delete`
-- `rmdir`
+### 2.1 测试工具及参数
 
-每次执行只跑一个操作。
+采用 hdfs `NNBenchWithoutMR` 工具进行元数据性能测试，测试参数固定如下，确保测试压力统一：
 
-## 当前脚本里的默认负载
+- 测试线程数：40 个
+- 单线程处理文件数：10000 个
+- 测试路径：`cv://default/fs-meta`
+- 写入字节数：0（仅测试元数据操作，不涉及实际数据写入）
 
-当前生效的默认参数是：
+### 2.2 测试脚本修改
 
-- Java 堆大小：`256m`
-- 线程数：`10`
-- 基准目录：`cv://default/fs-meta`
-- 文件数：`1000`
-
-旧文档里更大的堆大小、更高线程数，以及固定 QPS 结果表，都不是当前脚本的已检入默认值。
-
-## 运行方式
-
-在源码树中可直接执行：
+修改 `tests/meta-bench.sh` 脚本，具体内容如下（可直接复制替换原有脚本，确保脚本可正常执行）：
 
 ```bash
-bash build/tests/meta-bench.sh createWrite
-bash build/tests/meta-bench.sh openRead
-bash build/tests/meta-bench.sh rename
-bash build/tests/meta-bench.sh delete
-bash build/tests/meta-bench.sh rmdir
+# 加载Curvine环境配置
+. "$(cd "`dirname "$0"`"; pwd)"/../conf/curvine-env.sh
+
+# 配置类路径，指定Curvine Hadoop相关依赖包
+export CLASSPATH=$(echo $CURVINE_HOME/lib/curvine-hadoop-*shade.jar | tr ' ' ':')
+
+# 测试操作类型（需传入参数，可选值如下）
+# createWrite：创建写入测试
+# openRead：打开读取测试
+# rename：重命名测试
+# delete：删除测试
+# rmdir：删除目录测试
+ACTION=$1
+
+# 执行NNBenchWithoutMR测试
+java -Xms256m -Xmx256m \
+io.curvine.bench.NNBenchWithoutMR \
+-operation $ACTION \
+-bytesToWrite 0 \
+-confDir ${CURVINE_HOME}/conf \
+-threads 40 \
+-baseDir cv://default/fs-meta \
+-numFiles 10000
 ```
 
-运行前请确认：
+### 2.3 配置参数修改
 
-- Curvine 已完成构建，且 `${CURVINE_HOME}/lib/curvine-hadoop-*shade.jar` 存在。
-- `${CURVINE_HOME}/conf` 中已经准备好集群配置。
-- 配置里指向的 `cv://default` 集群可达。
+修改 `curvine-site.xml`，将 master 连接数修改为 3，以达到最佳性能：
 
-## 结果说明
+```xml
+<property>
+  <name>fs.cv.master_conn_pool_size</name>
+  <value>3</value>
+</property>
+```
 
-参考代码树里没有随仓库发布这一负载的官方结果表。请以实际运行环境采集到的 QPS 为准，并同时记录集群规模、存储层级和配置参数。
+### 2.4 补充说明
+
+- 脚本执行方式：在 `tests` 目录下执行 `sh meta-bench.sh [测试操作类型]`，例如 `sh meta-bench.sh createWrite` 执行创建写入测试
+- JVM 参数说明：`-Xms256m -Xmx256m` 固定 JVM 堆内存，避免内存波动影响测试结果
+- 依赖说明：确保 `CURVINE_HOME` 环境变量配置正确，且 `lib` 目录下存在对应的 `curvine-hadoop-*shade.jar` 依赖包
+
+## 三、NNBench 测试结果
+
+本次测试基于上述环境及参数，分别执行 `createWrite`（创建写入）、`openRead`（打开读取）、`rename`（重命名）、`delete`（删除）4 种元数据操作，每个操作重复执行 3 次，取平均值作为最终结果，确保测试数据的准确性。
+
+### 3.1 测试结果汇总表
+
+| 测试操作类型 | 平均每秒操作数（QPS） |
+| --- | ---: |
+| `createWrite`（创建写入） | 21192 |
+| `openRead`（打开读取） | 60181 |
+| `rename`（重命名） | 27776 |
+| `delete`（删除） | 30511 |
