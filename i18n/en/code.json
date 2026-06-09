@@ -1,14 +1,14 @@
 {
   "homepage.title": {
-    "message": "Curvine - High-Performance Distributed Caching FileSystem",
+    "message": "Curvine - AI-Native & Cloud-Native FileSystem",
     "description": "The homepage title"
   },
   "homepage.hero.title": {
-    "message": "High-Performance Distributed Caching FileSystem",
+    "message": "AI-Native & Cloud-Native FileSystem",
     "description": "The hero title on the homepage"
   },
   "homepage.hero.subtitle": {
-    "message": "Curvine is a high-performance distributed caching filesystem implemented in Rust, designed for low-latency and high-throughput workloads with powerful data governance capabilities.",
+    "message": "Curvine is a high-performance file semantic layer for cloud object storage, integrated with high-speed cache.",
     "description": "The hero subtitle on the homepage"
   },
   "homepage.hero.getStarted": {
@@ -148,7 +148,7 @@
     "description": "CTA section title"
   },
   "homepage.cta.subtitle": {
-    "message": "Download now and experience the high-performance distributed caching filesystem that Curvine brings.",
+    "message": "Download now and experience Curvine's high-performance file semantic layer for cloud object storage.",
     "description": "CTA section subtitle"
   },
   "homepage.cta.download": {
