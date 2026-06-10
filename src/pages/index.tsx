@@ -42,7 +42,7 @@ function HomePage() {
     <Layout
       title={translate({
         id: "homepage.title",
-        message: "Curvine - High-Performance Distributed Caching FileSystem",
+        message: "Curvine - AI-Native & Cloud-Native FileSystem",
         description: "The homepage title",
       })}
       description={siteConfig.tagline}
@@ -56,17 +56,18 @@ function HomePage() {
               <h1>
                 {i18n.currentLocale === "zh-cn" ? (
                   <>
-                    高性能分布式<br />缓存文件系统
+                    AI 原生与云原生<br />文件系统
                   </>
                 ) : (
                   <>
-                    High-Performance Distributed <span className="title-keep">Caching FileSystem</span>
+                    <span className="title-line title-keep">AI-Native <span className="title-amp">&amp;</span> Cloud-Native</span><br />
+                    <span className="title-line title-keep">FileSystem</span>
                   </>
                 )}
               </h1>
               <p>
                 <Translate id="homepage.hero.subtitle" description="The hero subtitle on the homepage">
-                  Curvine is a high-performance distributed caching filesystem implemented in Rust, designed for low-latency and high-throughput workloads with powerful data governance capabilities.
+                  Curvine is a high-performance file semantic layer for cloud object storage, integrated with high-speed cache.
                 </Translate>
               </p>
             </div>
@@ -345,7 +346,7 @@ function HomePage() {
             </h2>
             <p>
               <Translate id="homepage.cta.subtitle" description="CTA section subtitle">
-                Download now and experience the high-performance distributed caching filesystem that Curvine brings.
+                Download now and experience Curvine's high-performance file semantic layer for cloud object storage.
               </Translate>
             </p>
             <div className="btn-container">

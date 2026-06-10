@@ -323,15 +323,15 @@
     "description": "The title of the tag list page"
   },
   "homepage.title": {
-    "message": "Curvine - 高性能分布式缓存文件系统",
+    "message": "Curvine - AI 原生与云原生文件系统",
     "description": "The homepage title"
   },
   "homepage.hero.title": {
-    "message": "高性能分布式缓存文件系统",
+    "message": "AI 原生与云原生文件系统",
     "description": "The hero title on the homepage"
   },
   "homepage.hero.subtitle": {
-    "message": "Curvine 是一个用 Rust 实现的高性能分布式缓存文件系统，专为低延迟和高吞吐量工作负载设计，具有强大的数据治理能力。",
+    "message": "Curvine 是面向云对象存储的高性能文件语义层，集成高速缓存能力。",
     "description": "The hero subtitle on the homepage"
   },
   "homepage.hero.getStarted": {
@@ -379,7 +379,7 @@
     "description": "CTA section title"
   },
   "homepage.cta.subtitle": {
-    "message": "立即下载并体验 Curvine 带来的高性能分布式缓存文件系统。",
+    "message": "立即下载并体验 Curvine 面向云对象存储的高性能文件语义层。",
     "description": "CTA section subtitle"
   },
   "homepage.cta.downloadNow": {
