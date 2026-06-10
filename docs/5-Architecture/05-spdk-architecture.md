@@ -12,9 +12,7 @@ Curvine uses SPDK as a **remote block device** — the NVMe-oF target can be a p
 
 ## When to Use SPDK
 
-SPDK natively reaches over 10 million IOPS on a single core[[1]](#ref-spdk-iops). Curvine's SPDK integration targets
-latency-sensitive workloads where kernel VFS overhead becomes the bottleneck — use it when your
-workload needs consistent sub-millisecond latency or exceeds what LocalFile can sustain. 
+SPDK natively reaches over 10 million IOPS on a single core[[1]](#ref-spdk-iops). Curvine's SPDK path targets workloads where kernel VFS overhead dominates — use it when you need lower latency or higher throughput than LocalFile can provide.
 
 ## System Architecture
 
@@ -25,6 +23,7 @@ flowchart LR
     end
 
     subgraph Worker_Container["Worker Container"]
+        ENV[SpdkEnv]
         BS[BlockStore]
         BD[BlockDevice<br/>enum]
         LF[LocalFile]
@@ -42,6 +41,8 @@ flowchart LR
         SB --> HP
         BS -.-> MT
         BS -.-> BA
+        ENV -.->|initializes| PL
+        ENV -.->|manages| HP
     end
 
     subgraph Target_Container["SPDK Target Container"]
@@ -178,7 +179,7 @@ flowchart LR
         REL[QpairPool.release]
     end
     REL --> CACHE
-    REL -->|pool full &gt; 16| FREE[curvine_spdk_free_io_qpair]
+    REL -->|pool full &gt; max_per_ctrlr = 16 by default| FREE[curvine_spdk_free_io_qpair]
 ```
 
 - **Acquire**: Pop a cached qpair (zero FFI). If pool is empty, call `curvine_spdk_alloc_io_qpair` to allocate a new one.
@@ -207,7 +208,7 @@ A pre-allocated, fixed-size buffer backed by hugepages for NVMe DMA.
 - **Hugepage backing**: Allocated via `curvine_spdk_dma_malloc` which returns physically contiguous, pinned memory. This satisfies the NVMe controller's DMA requirements and avoids TLB misses for large I/Os.
 - **Pre-allocated and reused**: Each `SpdkBdev` allocates two buffers (read + write) at open time via `curvine_spdk_dma_malloc` and reuses them for every I/O. This avoids a malloc/free cycle per I/O — the buffer is zero-cost after the first allocation.
 - **Cleanup on close**: Buffers are freed via `curvine_spdk_dma_free` in `SpdkBdev::drop`. If inflight I/Os do not drain before the drop deadline, the buffer pointers are nulled to prevent use-after-free (safe leak).
-- **Reuse through chunking**: Large I/Os are split into `dma_buf_size`-aligned chunks and processed serially through the same fixed buffer, avoiding the need for dynamically-sized DMA memory.
+- **Reuse through chunking**: Large I/Os are split into `dma_buf_size` chunks and processed serially through the same fixed buffer, avoiding the need for dynamically-sized DMA memory.
 - **Block alignment**: All offsets are aligned down to the device block size. This is required by the NVMe specification — unaligned DMA addresses cause controller errors.
 
 ### BdevOffsetAllocator
@@ -299,6 +300,7 @@ TBP
 - **Target-side hybrid mode**: Apply active/idle state transitions to the SPDK NVMe-oF target to reduce CPU usage when idle.
 - **Allocator improvements**: Enhance performance, reduce fragmentation, contention, and time complexity under high workload.
 - **I/O submission and polling**: Experiment with batch submission and multi-poller approaches to scale throughput.
+
 ## Code References
 
 | File | Purpose |
