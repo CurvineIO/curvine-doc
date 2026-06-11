@@ -120,6 +120,7 @@ Required parameters for beginners:
 - `s3.endpoint_url`: access address of the S3/MinIO service.
 - `s3.credentials.access` / `s3.credentials.secret`: access key and secret of the storage service.
 - `s3.region_name`: region of the storage service. Use `cn` if there is no special requirement.
+- `s3.force.path.style`: addressing mode passed to the S3 client. `true` (default) uses path-style (`http://endpoint/bucket/key`), which is what AWS S3, MinIO, Ceph RGW, localstack and most on-prem gateways expect. Set to `false` for buckets that only accept virtual-host-style addressing (e.g. Volcengine TOS, Alibaba Cloud OSS over the S3 API), where the bucket is encoded as a hostname prefix (`http://bucket.endpoint/key`).
 
 :::note
 For `s3://...` mounts, the CLI can auto-fill `s3.bucket_name` from the URI. For `hdfs://...` mounts, it can infer `hdfs.namenode` and `hdfs.root` from the URI. When Kerberos keys are present without `hdfs.kerberos.ccache` or `KRB5CCNAME`, the CLI prints a warning.
