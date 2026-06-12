@@ -147,7 +147,23 @@ controller:
       cpu: 500m
       memory: 512Mi
 
-# Node configuration - Standalone mode (default)
+# Node configuration - Embedded mode (default)
+node:
+  mountMode: embedded
+  container:
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 2
+        memory: 2Gi
+```
+
+Or use Standalone mode for FUSE lifecycle isolation:
+
+```yaml
+# Node configuration - Standalone mode (optional)
 node:
   mountMode: standalone
   standalone:
@@ -159,21 +175,6 @@ node:
       limits:
         cpu: 2
         memory: 2Gi
-```
-
-Or use Embedded mode:
-
-```yaml
-# Node configuration - Embedded mode
-node:
-  mountMode: embedded
-  resources:
-    requests:
-      cpu: 1000m
-      memory: 2Gi
-    limits:
-      cpu: 2000m
-      memory: 4Gi
 ```
 
 Install with custom parameters using Helm:
@@ -188,7 +189,7 @@ helm status curvine-csi -n curvine
 ```
 
 :::tip
-By default, curvine-csi uses `standalone` mode, where FUSE mounts run in independent pods unaffected by curvine-csi restarts (recommended). It also supports `embedded` mode. For architecture details and Helm configuration parameters, refer to [Curvine CSI Architecture](Framework).
+By default, the Helm chart uses `embedded` mode, where FUSE runs inside the CSI node container for simpler deployment. Use `standalone` mode when FUSE must survive CSI node pod restarts or upgrades. For architecture details and Helm configuration parameters, refer to [Curvine CSI Architecture](Framework).
 :::
 
 ### 1.4 Upgrade and Uninstall
@@ -712,7 +713,7 @@ kubectl exec dynamic-pv-test -- cat /usr/share/nginx/html/index.html
 | `node.priorityClassName` | string | `system-node-critical` | Node priority class name (node critical level) |
 | `node.dnsPolicy` | string | `ClusterFirstWithHostNet` | DNS policy (cluster first + host network) |
 | `node.fuseDebugEnabled` | boolean | `false` | Enable FUSE debug mode (sets FUSE_DEBUG_ENABLED env) |
-| `node.mountMode` | string | `standalone` | Mount mode: `standalone` (independent pod) or `embedded` (embedded in CSI container) |
+| `node.mountMode` | string | `embedded` | Mount mode: `embedded` (FUSE in CSI container, default) or `standalone` (independent FUSE pod) |
 | `node.container.name` | string | `csi-plugin` | Main container name |
 | `node.container.command` | array | `["/opt/curvine/csi"]` | Container start command |
 | `node.container.args` | array | See values.yaml | Container start arguments |
@@ -727,6 +728,32 @@ kubectl exec dynamic-pv-test -- cat /usr/share/nginx/html/index.html
 | `node.container.securityContext.privileged` | boolean | `true` | Whether to run in privileged mode |
 | `node.container.lifecycle.preStop` | object | See values.yaml | Container pre-stop hook (cleanup socket files) |
 | `node.tolerations` | array | `[{operator: Exists}]` | Pod toleration configuration (tolerates all taints) |
+
+#### Embedded Mode Settings
+
+When `node.mountMode` is `embedded` (default), resource limits apply to the CSI node container:
+
+| Parameter Path | Type | Default | Description |
+|---------|------|--------|------|
+| `node.container.resources.requests.cpu` | string | `"500m"` | CPU request |
+| `node.container.resources.requests.memory` | string | `"512Mi"` | Memory request |
+| `node.container.resources.limits.cpu` | string | `"2"` | CPU limit |
+| `node.container.resources.limits.memory` | string | `"2Gi"` | Memory limit |
+
+Example configuration:
+
+```yaml
+node:
+  mountMode: embedded
+  container:
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "2"
+        memory: "2Gi"
+```
 
 #### Standalone Pod Settings
 

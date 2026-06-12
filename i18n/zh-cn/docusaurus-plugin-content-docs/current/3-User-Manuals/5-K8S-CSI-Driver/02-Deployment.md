@@ -12,7 +12,7 @@
 
 - `StorageClass`：`curvine-sc`
 - `PVC`：`curvine-shared-pvc`
-- `Namespace`：`curvine-system`
+- `Namespace`：`curvine`
 - `Deployment`：`curvine-test-deployment`
 - `副本数`：`3`
 - `容器内挂载路径`：`/usr/share/nginx/html`
@@ -47,7 +47,7 @@ kubectl apply -f deployment-curvine.yaml
 `pvc-curvine.yaml` 会创建：
 
 - `PersistentVolumeClaim/curvine-shared-pvc`
-- 命名空间 `curvine-system`
+- 命名空间 `curvine`
 - 访问模式 `ReadWriteMany`
 - 申请容量 `5Gi`
 - `storageClassName: curvine-sc`
@@ -57,7 +57,7 @@ kubectl apply -f deployment-curvine.yaml
 `deployment-curvine.yaml` 会创建：
 
 - `Deployment/curvine-test-deployment`
-- 命名空间 `curvine-system`
+- 命名空间 `curvine`
 - `3` 个 nginx 副本
 - 共享卷挂载到 `/usr/share/nginx/html`
 
@@ -66,19 +66,19 @@ kubectl apply -f deployment-curvine.yaml
 ## 校验共享访问
 
 ```bash
-kubectl get pvc -n curvine-system curvine-shared-pvc
-kubectl get pods -n curvine-system -l app=curvine-test -o wide
+kubectl get pvc -n curvine curvine-shared-pvc
+kubectl get pods -n curvine -l app=curvine-test -o wide
 kubectl get pv
 ```
 
 在一个 Pod 写入，在另一个 Pod 读取：
 
 ```bash
-POD1=$(kubectl get pod -n curvine-system -l app=curvine-test -o jsonpath='{.items[0].metadata.name}')
-POD2=$(kubectl get pod -n curvine-system -l app=curvine-test -o jsonpath='{.items[1].metadata.name}')
+POD1=$(kubectl get pod -n curvine -l app=curvine-test -o jsonpath='{.items[0].metadata.name}')
+POD2=$(kubectl get pod -n curvine -l app=curvine-test -o jsonpath='{.items[1].metadata.name}')
 
-kubectl exec -n curvine-system "$POD1" -- sh -c 'echo "hello from pod1" > /usr/share/nginx/html/shared.txt'
-kubectl exec -n curvine-system "$POD2" -- cat /usr/share/nginx/html/shared.txt
+kubectl exec -n curvine "$POD1" -- sh -c 'echo "hello from pod1" > /usr/share/nginx/html/shared.txt'
+kubectl exec -n curvine "$POD2" -- cat /usr/share/nginx/html/shared.txt
 ```
 
 如果第二条命令能读到同样的内容，说明多个副本确实通过同一个 Curvine PVC 在共享数据。
