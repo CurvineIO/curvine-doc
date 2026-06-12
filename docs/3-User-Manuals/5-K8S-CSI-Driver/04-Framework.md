@@ -16,18 +16,20 @@ Curvine CSI has three moving parts:
 
 `pkg/csi/driver.go` reads `MOUNT_MODE`:
 
-- `standalone`: default for node pods and the recommended mode
-- `embedded`: FUSE runs inside the CSI pod
+- `embedded`: default in the Helm chart; FUSE runs inside the CSI node pod
+- `standalone`: optional mode; FUSE runs in dedicated standalone pods
 
 Operationally:
 
+- `embedded` is simpler to deploy and operate, but restarting or upgrading the CSI node pod also interrupts the FUSE process.
 - `standalone` isolates FUSE lifecycle from CSI pod restarts by running FUSE in dedicated standalone pods.
-- `embedded` is simpler, but restarting or upgrading the CSI node pod also interrupts the FUSE process.
 
-The shipped manifests reflect that split:
+Helm chart defaults:
 
-- `deploy/daemonset.yaml`: `MOUNT_MODE=standalone`
-- `deploy/deployment.yaml`: `MOUNT_MODE=embedded`
+- `node.mountMode`: `embedded`
+- Controller pods keep `MOUNT_MODE=embedded`
+
+Raw `deploy/` manifests in the `curvine-csi` repository may still default node plugins to `standalone` until aligned with the Helm chart.
 
 ## Dynamic Provisioning Flow
 
@@ -185,6 +187,6 @@ The validator also still accepts several older keys such as `auto-cache`, `kerne
 
 ## Operational Guidance
 
-- Prefer `standalone` for production because CSI restarts do not kill the business FUSE process.
+- Use `standalone` when CSI node pod restarts or upgrades must not interrupt the business FUSE process; `embedded` is the Helm default for simpler deployments.
 - Set `fs-path` explicitly in StorageClasses even though the code defaults it to `/`. That makes reuse behavior and directory layout predictable.
 - Do not depend on manual `mnt-path` assignment in new deployments; the main branch implementation already auto-generates it.

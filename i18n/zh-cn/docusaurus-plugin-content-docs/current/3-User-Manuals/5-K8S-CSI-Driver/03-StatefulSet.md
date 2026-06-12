@@ -10,7 +10,7 @@
 
 - `Service/curvine-service`
 - `StatefulSet/curvine-statefulset`
-- 命名空间 `curvine-system`
+- 命名空间 `curvine`
 - `3` 个副本
 - 名为 `data` 的 `volumeClaimTemplates`
 - `storageClassName: curvine-sc`
@@ -34,9 +34,9 @@ kubectl apply -f curvine-csi/examples/statefulset-curvine.yaml
 ## 校验 PVC 隔离
 
 ```bash
-kubectl get statefulset -n curvine-system curvine-statefulset
-kubectl get pods -n curvine-system -l app=curvine-stateful
-kubectl get pvc -n curvine-system
+kubectl get statefulset -n curvine curvine-statefulset
+kubectl get pods -n curvine -l app=curvine-stateful
+kubectl get pvc -n curvine
 ```
 
 查看每个副本写出的内容：
@@ -44,7 +44,7 @@ kubectl get pvc -n curvine-system
 ```bash
 for pod in curvine-statefulset-0 curvine-statefulset-1 curvine-statefulset-2; do
   echo "=== $pod ==="
-  kubectl exec -n curvine-system "$pod" -- cat /usr/share/nginx/html/index.html
+  kubectl exec -n curvine "$pod" -- cat /usr/share/nginx/html/index.html
 done
 ```
 
@@ -53,10 +53,10 @@ done
 ## 校验持久性
 
 ```bash
-kubectl exec -n curvine-system curvine-statefulset-0 -- sh -c 'echo retained >> /usr/share/nginx/html/index.html'
-kubectl delete pod -n curvine-system curvine-statefulset-0
-kubectl wait -n curvine-system --for=condition=Ready pod/curvine-statefulset-0 --timeout=120s
-kubectl exec -n curvine-system curvine-statefulset-0 -- grep retained /usr/share/nginx/html/index.html
+kubectl exec -n curvine curvine-statefulset-0 -- sh -c 'echo retained >> /usr/share/nginx/html/index.html'
+kubectl delete pod -n curvine curvine-statefulset-0
+kubectl wait -n curvine --for=condition=Ready pod/curvine-statefulset-0 --timeout=120s
+kubectl exec -n curvine curvine-statefulset-0 -- grep retained /usr/share/nginx/html/index.html
 ```
 
 如果 Pod 重建后仍能看到 `retained`，说明 StatefulSet 已正确复用原来的 PVC。
