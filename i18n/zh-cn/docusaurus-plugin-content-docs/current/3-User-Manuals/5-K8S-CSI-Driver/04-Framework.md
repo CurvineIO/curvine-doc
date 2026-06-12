@@ -16,18 +16,20 @@ Curvine CSI 主要由三部分组成：
 
 `pkg/csi/driver.go` 会读取 `MOUNT_MODE`：
 
-- `standalone`：node 侧默认值，也是推荐模式
-- `embedded`：FUSE 直接运行在 CSI Pod 内
+- `embedded`：Helm Chart 默认值，FUSE 直接运行在 CSI node Pod 内
+- `standalone`：可选模式，FUSE 运行在独立 standalone Pod 中
 
 从运维效果看：
 
+- `embedded` 部署更简单，但 CSI node Pod 升级或重启时，FUSE 也会一起中断。
 - `standalone` 会把 FUSE 生命周期和 CSI Pod 重启解耦，FUSE 运行在独立 standalone Pod 中。
-- `embedded` 更直接，但 CSI node Pod 升级或重启时，FUSE 也会一起中断。
 
-官方清单就是这样配置的：
+Helm Chart 默认值：
 
-- `deploy/daemonset.yaml`：`MOUNT_MODE=standalone`
-- `deploy/deployment.yaml`：`MOUNT_MODE=embedded`
+- `node.mountMode`：`embedded`
+- Controller Pod 保持 `MOUNT_MODE=embedded`
+
+`curvine-csi` 仓库中的原生 `deploy/` 清单在完全对齐前，node 侧仍可能默认使用 `standalone`。
 
 ## 动态建卷流程
 
@@ -185,6 +187,6 @@ fs-path="/test-data", curvine-path="/test-data/pvc-abc"
 
 ## 运维建议
 
-- 生产环境优先使用 `standalone`，因为 CSI 重启不会直接中断业务侧 FUSE。
+- 若 CSI node Pod 重启或升级时不能中断业务侧 FUSE，请使用 `standalone`；`embedded` 是 Helm 默认模式，适合更简单的部署场景。
 - 即使代码允许 `fs-path` 默认回落到 `/`，StorageClass 里也建议显式写出来，目录布局和复用规则更容易预测。
 - 新部署不要再依赖手工指定 `mnt-path`；当前主线实现已经默认自动生成它。
