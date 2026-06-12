@@ -12,7 +12,7 @@ This path is for stateless workloads that want multiple replicas to share one Cu
 
 - `StorageClass`: `curvine-sc`
 - `PVC`: `curvine-shared-pvc`
-- `Namespace`: `curvine-system`
+- `Namespace`: `curvine`
 - `Deployment`: `curvine-test-deployment`
 - `Replicas`: `3`
 - `Mount path inside the container`: `/usr/share/nginx/html`
@@ -47,7 +47,7 @@ kubectl apply -f deployment-curvine.yaml
 `pvc-curvine.yaml` creates:
 
 - `PersistentVolumeClaim/curvine-shared-pvc`
-- namespace `curvine-system`
+- namespace `curvine`
 - access mode `ReadWriteMany`
 - requested capacity `5Gi`
 - `storageClassName: curvine-sc`
@@ -57,7 +57,7 @@ kubectl apply -f deployment-curvine.yaml
 `deployment-curvine.yaml` creates:
 
 - `Deployment/curvine-test-deployment`
-- namespace `curvine-system`
+- namespace `curvine`
 - `3` nginx replicas
 - shared volume mounted at `/usr/share/nginx/html`
 
@@ -66,19 +66,19 @@ Each replica writes the pod hostname and timestamp into the same shared Curvine-
 ## Verify Shared Access
 
 ```bash
-kubectl get pvc -n curvine-system curvine-shared-pvc
-kubectl get pods -n curvine-system -l app=curvine-test -o wide
+kubectl get pvc -n curvine curvine-shared-pvc
+kubectl get pods -n curvine -l app=curvine-test -o wide
 kubectl get pv
 ```
 
 Write from one pod and read from another:
 
 ```bash
-POD1=$(kubectl get pod -n curvine-system -l app=curvine-test -o jsonpath='{.items[0].metadata.name}')
-POD2=$(kubectl get pod -n curvine-system -l app=curvine-test -o jsonpath='{.items[1].metadata.name}')
+POD1=$(kubectl get pod -n curvine -l app=curvine-test -o jsonpath='{.items[0].metadata.name}')
+POD2=$(kubectl get pod -n curvine -l app=curvine-test -o jsonpath='{.items[1].metadata.name}')
 
-kubectl exec -n curvine-system "$POD1" -- sh -c 'echo "hello from pod1" > /usr/share/nginx/html/shared.txt'
-kubectl exec -n curvine-system "$POD2" -- cat /usr/share/nginx/html/shared.txt
+kubectl exec -n curvine "$POD1" -- sh -c 'echo "hello from pod1" > /usr/share/nginx/html/shared.txt'
+kubectl exec -n curvine "$POD2" -- cat /usr/share/nginx/html/shared.txt
 ```
 
 If the second command prints the same content, the deployment is reading and writing through the same Curvine PVC as intended.

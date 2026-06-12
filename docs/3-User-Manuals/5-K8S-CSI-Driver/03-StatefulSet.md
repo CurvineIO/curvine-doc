@@ -10,7 +10,7 @@ The example creates:
 
 - `Service/curvine-service`
 - `StatefulSet/curvine-statefulset`
-- namespace `curvine-system`
+- namespace `curvine`
 - `3` replicas
 - `volumeClaimTemplates` entry named `data`
 - `storageClassName: curvine-sc`
@@ -34,9 +34,9 @@ Because each PVC is distinct, each pod gets independent application data even th
 ## Verify PVC Separation
 
 ```bash
-kubectl get statefulset -n curvine-system curvine-statefulset
-kubectl get pods -n curvine-system -l app=curvine-stateful
-kubectl get pvc -n curvine-system
+kubectl get statefulset -n curvine curvine-statefulset
+kubectl get pods -n curvine -l app=curvine-stateful
+kubectl get pvc -n curvine
 ```
 
 Check the rendered content inside each replica:
@@ -44,7 +44,7 @@ Check the rendered content inside each replica:
 ```bash
 for pod in curvine-statefulset-0 curvine-statefulset-1 curvine-statefulset-2; do
   echo "=== $pod ==="
-  kubectl exec -n curvine-system "$pod" -- cat /usr/share/nginx/html/index.html
+  kubectl exec -n curvine "$pod" -- cat /usr/share/nginx/html/index.html
 done
 ```
 
@@ -53,10 +53,10 @@ The output should differ by pod hostname and PVC name.
 ## Check Persistence
 
 ```bash
-kubectl exec -n curvine-system curvine-statefulset-0 -- sh -c 'echo retained >> /usr/share/nginx/html/index.html'
-kubectl delete pod -n curvine-system curvine-statefulset-0
-kubectl wait -n curvine-system --for=condition=Ready pod/curvine-statefulset-0 --timeout=120s
-kubectl exec -n curvine-system curvine-statefulset-0 -- grep retained /usr/share/nginx/html/index.html
+kubectl exec -n curvine curvine-statefulset-0 -- sh -c 'echo retained >> /usr/share/nginx/html/index.html'
+kubectl delete pod -n curvine curvine-statefulset-0
+kubectl wait -n curvine --for=condition=Ready pod/curvine-statefulset-0 --timeout=120s
+kubectl exec -n curvine curvine-statefulset-0 -- grep retained /usr/share/nginx/html/index.html
 ```
 
 If `retained` is still present after the pod is recreated, the StatefulSet is correctly reusing the original PVC.
