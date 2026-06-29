@@ -3,34 +3,6 @@ entries:
   curvine:
   - apiVersion: v2
     appVersion: latest
-    created: "2026-06-29T09:39:59.08372629Z"
-    dependencies:
-    - condition: openKruise.enabled
-      name: kruise
-      repository: https://openkruise.github.io/charts/
-      version: 1.9.0
-    description: A Helm chart for deploying Curvine distributed multi-level cache
-      system cluster on Kubernetes
-    digest: fc53165b3bf5262fa02762bda38f1fd5d4f57bbd3f2553a945a3ba64988e82ab
-    home: https://github.com/CurvineIO/curvine
-    icon: https://curvineio.github.io/img/curvine_logo.png
-    keywords:
-    - curvine
-    - multi-level cache system
-    - master-worker
-    - raft
-    maintainers:
-    - email: curvine@example.com
-      name: Curvine Team
-    name: curvine
-    sources:
-    - https://github.com/CurvineIO/curvine
-    type: application
-    urls:
-    - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-0.2.0-dev.tgz
-    version: 0.2.0-dev
-  - apiVersion: v2
-    appVersion: latest
     created: "2026-06-29T09:39:59.080143488Z"
     dependencies:
     - condition: openKruise.enabled
@@ -58,27 +30,6 @@ entries:
     - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-0.0.0-dev.tgz
     version: 0.0.0-dev
   curvine-csi:
-  - apiVersion: v2
-    appVersion: latest
-    created: "2026-06-29T09:39:59.085621696Z"
-    description: A Helm chart for Curvine CSI Driver
-    digest: 3fd7063c80023dcafa77cdd761f064314179be81d1cd54cd156cdf8e120ce720
-    home: https://github.com/CurvineIO/curvine
-    keywords:
-    - storage
-    - csi
-    - curvine
-    maintainers:
-    - email: lzjqsdd@gmail.com
-      name: Barry Liu
-      url: https://github.com/lzjqsdd
-    name: curvine-csi
-    sources:
-    - https://github.com/CurvineIO/curvine
-    type: application
-    urls:
-    - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-csi-0.2.0-dev.tgz
-    version: 0.2.0-dev
   - apiVersion: v2
     appVersion: latest
     created: "2026-06-29T09:39:59.08492461Z"
