@@ -2,11 +2,16 @@ apiVersion: v1
 entries:
   curvine:
   - apiVersion: v2
-    appVersion: 0.2.0
-    created: "2025-12-24T02:26:55.861936736Z"
+    appVersion: latest
+    created: "2026-06-29T08:39:11.099562329Z"
+    dependencies:
+    - condition: openKruise.enabled
+      name: kruise
+      repository: https://openkruise.github.io/charts/
+      version: 1.9.0
     description: A Helm chart for deploying Curvine distributed multi-level cache
       system cluster on Kubernetes
-    digest: 79183e10598a5142273a683ae8fd3b618d3a72eae75229d71d5e5de87f5718df
+    digest: fc53165b3bf5262fa02762bda38f1fd5d4f57bbd3f2553a945a3ba64988e82ab
     home: https://github.com/CurvineIO/curvine
     icon: https://curvineio.github.io/img/curvine_logo.png
     keywords:
@@ -27,7 +32,28 @@ entries:
   curvine-csi:
   - apiVersion: v2
     appVersion: latest
-    created: "2025-12-24T02:26:55.862612508Z"
+    created: "2026-06-29T08:39:11.101968202Z"
+    description: A Helm chart for Curvine CSI Driver
+    digest: 3fd7063c80023dcafa77cdd761f064314179be81d1cd54cd156cdf8e120ce720
+    home: https://github.com/CurvineIO/curvine
+    keywords:
+    - storage
+    - csi
+    - curvine
+    maintainers:
+    - email: lzjqsdd@gmail.com
+      name: Barry Liu
+      url: https://github.com/lzjqsdd
+    name: curvine-csi
+    sources:
+    - https://github.com/CurvineIO/curvine
+    type: application
+    urls:
+    - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-csi-0.2.0-dev.tgz
+    version: 0.2.0-dev
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-06-29T08:39:11.100496963Z"
     description: A Helm chart for Curvine CSI Driver
     digest: 844299aa546cdd1cbd81a0f1fdb25afff1e350a5f1ce228db5718ee1b9ce9178
     home: https://github.com/CurvineIO/curvine
@@ -46,4 +72,4 @@ entries:
     urls:
     - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-csi-0.0.0-dev.tgz
     version: 0.0.0-dev
-generated: "2025-12-24T02:26:55.860909137Z"
+generated: "2026-06-29T08:39:11.096256909Z"
