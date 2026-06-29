@@ -29,6 +29,34 @@ entries:
     urls:
     - https://github.com/CurvineIO/curvine-helm/releases/download/v0.3.1-alpha/curvine-0.3.1-alpha.tgz
     version: 0.3.1-alpha
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-06-29T10:53:28.277185549Z"
+    dependencies:
+    - condition: openKruise.enabled
+      name: kruise
+      repository: https://openkruise.github.io/charts/
+      version: 1.9.0
+    description: A Helm chart for deploying Curvine distributed multi-level cache
+      system cluster on Kubernetes
+    digest: 40c3d49161464408d5979e89d30028c41a50d05f6063e2e88e3615e0033fe6e9
+    home: https://github.com/CurvineIO/curvine
+    icon: https://curvineio.github.io/img/curvine_logo.png
+    keywords:
+    - curvine
+    - multi-level cache system
+    - master-worker
+    - raft
+    maintainers:
+    - email: curvine@example.com
+      name: Curvine Team
+    name: curvine
+    sources:
+    - https://github.com/CurvineIO/curvine
+    type: application
+    urls:
+    - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-0.0.0-dev.tgz
+    version: 0.0.0-dev
   curvine-csi:
   - apiVersion: v2
     appVersion: 0.3.1-alpha
@@ -51,4 +79,25 @@ entries:
     urls:
     - https://github.com/CurvineIO/curvine-helm/releases/download/v0.3.1-alpha/curvine-csi-0.3.1-alpha.tgz
     version: 0.3.1-alpha
-generated: "2026-06-29T10:29:29.554587416Z"
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-06-29T10:53:28.277890055Z"
+    description: A Helm chart for Curvine CSI Driver
+    digest: 2c4ea87af3678a81c673a7a83aa336c646e1e03be481ead53cbec26a16a371a5
+    home: https://github.com/CurvineIO/curvine
+    keywords:
+    - storage
+    - csi
+    - curvine
+    maintainers:
+    - email: lzjqsdd@gmail.com
+      name: Barry Liu
+      url: https://github.com/lzjqsdd
+    name: curvine-csi
+    sources:
+    - https://github.com/CurvineIO/curvine
+    type: application
+    urls:
+    - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-csi-0.0.0-dev.tgz
+    version: 0.0.0-dev
+generated: "2026-06-29T10:53:28.272944454Z"
