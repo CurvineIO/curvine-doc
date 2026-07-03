@@ -1,4 +1,4 @@
-# K8S CSI Driver
+# K8S CSI 驱动
 
 前提：已通过 Helm 部署 curvine cluster（namespace `curvine`）。
 
@@ -7,7 +7,7 @@ Chart：`curvine/curvine-csi`，版本 `0.3.2-alpha`。Release namespace：`curv
 ## 架构说明
 
 | 组件 | 类型 | 说明 |
-|------|------|------|
+|-----------|------|-------------|
 | CSI Controller | Deployment | 卷创建、删除 |
 | CSI Node | DaemonSet | 节点挂载 |
 
@@ -64,7 +64,7 @@ reclaimPolicy: Delete
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 parameters:
-  master-addrs: "curvine-master-0.curvine-master.curvine.svc.cluster.local:8995"
+  master-addrs: "curvine-master.curvine.svc.cluster.local:8995"
   fs-path: "/k8s-volumes"
   path-type: "DirectoryOrCreate"
 ```
@@ -146,7 +146,7 @@ spec:
     driver: curvine
     volumeHandle: "existing-data-001"
     volumeAttributes:
-      master-addrs: "curvine-master-0.curvine-master.curvine.svc.cluster.local:8995"
+      master-addrs: "curvine-master.curvine.svc.cluster.local:8995"
       curvine-path: "/existing-data"
       path-type: "Directory"
 ---
@@ -204,7 +204,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### 镜像
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `image.repository` | `ghcr.io/curvineio/curvine-csi` | CSI 镜像仓库 |
 | `image.tag` | `""` | 空值使用 `v{Chart.AppVersion}` |
 | `image.pullPolicy` | `Always` | 镜像拉取策略 |
@@ -212,7 +212,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### CSI 驱动
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `csiDriver.name` | `curvine` | CSI 驱动名称 |
 | `csiDriver.attachRequired` | `false` | 不需要 attach 操作 |
 | `csiDriver.podInfoOnMount` | `false` | 挂载时不需要 Pod 信息 |
@@ -220,7 +220,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### Controller
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `controller.name` | `curvine-csi-controller` | Deployment 名称 |
 | `controller.replicas` | `1` | Controller 副本数 |
 | `controller.priorityClassName` | `system-cluster-critical` | 优先级类 |
@@ -242,14 +242,14 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### Node
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `node.name` | `curvine-csi-node` | DaemonSet 名称 |
 | `node.priorityClassName` | `system-node-critical` | 优先级类 |
 | `node.dnsPolicy` | `ClusterFirstWithHostNet` | DNS 策略 |
 | `node.fuseDebugEnabled` | `false` | FUSE 调试日志 |
 | `node.mountMode` | `embedded` | `embedded` 或 `standalone` |
-| `node.container.name` | `csi-plugin` | 主容器名称 |
-| `node.container.env.CSI_ENDPOINT` | `unix:///csi/csi.sock` | CSI 套接字 |
+| `node.container.name` | `csi-plugin` | Main container name |
+| `node.container.env.CSI_ENDPOINT` | `unix:///csi/csi.sock` | CSI socket |
 | `node.container.ports.healthz` | `9909` | 健康检查端口 |
 | `node.container.ports.metrics` | `9002` | 指标端口 |
 | `node.container.securityContext.privileged` | `true` | 特权模式 |
@@ -268,7 +268,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 FUSE 运行在独立 Pod 中。适用于 CSI node Pod 重启后仍需保持 FUSE 挂载的场景。
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `node.standalone.image` | `""` | Standalone Pod 镜像，空值使用 CSI 镜像 |
 | `node.standalone.resources.requests.cpu` | `500m` | CPU request |
 | `node.standalone.resources.requests.memory` | `512Mi` | 内存 request |
@@ -278,7 +278,7 @@ FUSE 运行在独立 Pod 中。适用于 CSI node Pod 重启后仍需保持 FUSE
 ### ServiceAccount 与 RBAC
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `serviceAccount.controller.name` | `""` | 空值由 release 名称派生 |
 | `serviceAccount.node.name` | `""` | 空值由 release 名称派生 |
 | `rbac.create` | `true` | 创建 RBAC 资源 |
@@ -288,7 +288,7 @@ FUSE 运行在独立 Pod 中。适用于 CSI node Pod 重启后仍需保持 FUSE
 用于 StorageClass `parameters`（动态 PV）或 PV `csi.volumeAttributes`（静态 PV）。
 
 | 参数 | 必填 | 默认值 | 说明 |
-|------|------|--------|------|
+|-----------|----------|---------|-------------|
 | `master-addrs` | 是 | — | Curvine master 地址，`host:port` 逗号分隔 |
 | `fs-path` | 动态 PV | `/` | 路径前缀；实际路径为 `fs-path` + `/` + pv-name |
 | `curvine-path` | 静态 PV | — | Curvine 文件系统中的完整路径 |
@@ -315,7 +315,7 @@ helm show values curvine/curvine-csi --version 0.3.2-alpha
 ## 故障排查
 
 | 现象 | 处理 |
-|------|------|
+|---------|--------|
 | CSI Pod 异常 | `kubectl logs -n curvine-system -l app=curvine-csi-node -c csi-plugin` |
 | Sidecar ImagePullBackOff | 覆盖 sidecar 镜像，见「配置参考」 |
 | `master-addrs` 不可达 | `kubectl get pods -n curvine` |
