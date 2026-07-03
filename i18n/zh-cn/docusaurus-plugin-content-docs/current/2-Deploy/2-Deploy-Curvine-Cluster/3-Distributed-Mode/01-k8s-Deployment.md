@@ -17,7 +17,7 @@ Chart：`curvine/curvine`，版本 `0.3.2-alpha`。
 Helm release `curvine` 部署于 namespace `curvine`：
 
 | 资源 | 说明 |
-|------|------|
+|----------|-------------|
 | StatefulSet `curvine-master` | 元数据、Raft journal |
 | StatefulSet `curvine-worker` | 数据节点 |
 | Service `curvine-master` | Headless，RPC 8995 |
@@ -93,7 +93,7 @@ kubectl delete namespace curvine
 ## 故障排查
 
 | 现象 | 命令 | 原因 |
-|------|------|------|
+|---------|---------|-------|
 | Pod Pending | `kubectl describe pod -n curvine <name>` | 资源不足；无 StorageClass |
 | master 启动慢 | `kubectl logs curvine-master-0 -n curvine` | Raft 回放中 |
 | PVC Pending | `kubectl get sc` | 无可用 StorageClass |
@@ -105,13 +105,13 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### 全局
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `global.clusterDomain` | `cluster.local` | Kubernetes 集群域名 |
 
 ### 集群
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `cluster.id` | `curvine` | 集群 ID |
 | `cluster.formatMaster` | `false` | 启动时格式化 master 数据 |
 | `cluster.formatWorker` | `false` | 启动时格式化 worker 数据 |
@@ -120,7 +120,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### 镜像
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `image.repository` | `ghcr.io/curvineio/curvine` | 镜像仓库 |
 | `image.tag` | `""` | 空值使用 `v{Chart.AppVersion}` |
 | `image.pullPolicy` | `IfNotPresent` | 镜像拉取策略 |
@@ -133,7 +133,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 设 `openKruise.enabled=true` 时安装 kruise 子 chart，并将 master/worker 切换为 Advanced StatefulSet（`apps.kruise.io/v1beta1`）。
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `openKruise.enabled` | `false` | 启用 Advanced StatefulSet |
 | `openKruise.podUpdatePolicy` | `InPlaceOnly` | `InPlaceOnly` \| `InPlaceIfPossible` \| `ReCreate` |
 | `openKruise.persistentPodState.autoGenerate` | `true` | 自动生成 PersistentPodState |
@@ -145,7 +145,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### Master
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `master.replicas` | `1` | 须为奇数（1、3、5…） |
 | `master.rpcPort` | `8995` | RPC 端口 |
 | `master.journalPort` | `8996` | Journal/Raft 端口 |
@@ -178,7 +178,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### Worker
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `worker.replicas` | `1` | Worker 副本数 |
 | `worker.rpcPort` | `8997` | RPC 端口 |
 | `worker.webPort` | `9001` | Web UI 端口 |
@@ -210,7 +210,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### Service
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `service.master.type` | `ClusterIP` | Headless（`ClusterIP: None`） |
 | `service.worker.type` | `ClusterIP` | Headless（`ClusterIP: None`） |
 | `service.masterExternal.enabled` | `false` | 外部访问 master |
@@ -220,7 +220,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### ServiceAccount 与 RBAC
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `serviceAccount.create` | `true` | 创建 ServiceAccount |
 | `serviceAccount.name` | `""` | 空值自动生成 |
 | `rbac.create` | `true` | 创建 RBAC 资源 |
@@ -228,7 +228,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### Curvine 配置（`config.*`）
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `config.master.metaDir` | `/opt/curvine/data/meta` | Master 元数据目录 |
 | `config.journal.enable` | `true` | 启用 journal |
 | `config.journal.journalDir` | `/opt/curvine/data/journal` | Journal 目录 |
@@ -244,7 +244,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 按 TOML 分段覆盖，无需替换完整配置：
 
 | 参数 | 默认值 | 说明 |
-|------|--------|------|
+|-----------|---------|-------------|
 | `configOverrides.master` | `{}` | Master 段覆盖 |
 | `configOverrides.journal` | `{}` | Journal 段覆盖 |
 | `configOverrides.worker` | `{}` | Worker 段覆盖 |
@@ -254,7 +254,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 ### 存储方式
 
 | 方式 | 配置 |
-|------|------|
+|------|---------------|
 | PVC（默认） | `storageClass: ""` 使用集群 default StorageClass |
 | 指定 StorageClass | `master.storage.*.storageClass`、`worker.storage.dataDirs[].storageClass` |
 | hostPath | `storageClass: ""` 并设置 `hostPath` |

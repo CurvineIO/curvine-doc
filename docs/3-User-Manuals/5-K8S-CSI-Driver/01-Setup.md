@@ -64,7 +64,7 @@ reclaimPolicy: Delete
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 parameters:
-  master-addrs: "curvine-master-0.curvine-master.curvine.svc.cluster.local:8995"
+  master-addrs: "curvine-master.curvine.svc.cluster.local:8995"
   fs-path: "/k8s-volumes"
   path-type: "DirectoryOrCreate"
 ```
@@ -146,7 +146,7 @@ spec:
     driver: curvine
     volumeHandle: "existing-data-001"
     volumeAttributes:
-      master-addrs: "curvine-master-0.curvine-master.curvine.svc.cluster.local:8995"
+      master-addrs: "curvine-master.curvine.svc.cluster.local:8995"
       curvine-path: "/existing-data"
       path-type: "Directory"
 ---
