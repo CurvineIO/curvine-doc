@@ -1,7 +1,5 @@
 # Performance Leap: How Curvine Uses SPDK to Unlock the Full Potential of NVMe Drives
 
-*Translated from the original Chinese article published on WeChat.*
-
 ## Introduction
 
 As data volumes continue to grow explosively, storage performance has become a key factor in application responsiveness and user experience. Traditional storage I/O paths are often constrained by operating-system kernel overhead, making it difficult to fully utilize modern high-speed storage devices such as NVMe SSDs. To break through this bottleneck, many high-performance storage systems have started to adopt kernel-bypass technologies. This article takes a closer look at how the Curvine storage platform integrates SPDK (Storage Performance Development Kit) to deliver extreme NVMe storage performance, bringing users lower latency and higher throughput.

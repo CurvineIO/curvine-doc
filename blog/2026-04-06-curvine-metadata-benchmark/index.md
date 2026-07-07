@@ -1,6 +1,5 @@
 # Curvine Benchmark: 300 Million Files in Just 38 GB of Memory
 
-*Translated from the original Chinese article published on April 6, 2026.*
 
 In distributed file systems, metadata memory efficiency, concurrent request handling, and small-file throughput are core indicators of overall system capability. Curvine recently completed a high-intensity metadata benchmark, and the results were clear: Curvine reached a new high-water mark for open-source metadata efficiency while delivering core capabilities comparable to commercial distributed storage products.
 
