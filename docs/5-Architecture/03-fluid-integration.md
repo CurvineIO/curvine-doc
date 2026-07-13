@@ -5,123 +5,80 @@ sidebar_position: 3
 
 # Curvine and Fluid Integration
 
-This document describes the **current** Curvine Fluid integration based on the code under `curvine-docker/fluid` in the Curvine main branch. It replaces the older thin-runtime-only narrative and reflects the unified `curvine-fluid` image and entrypoint now used by the main branch.
+Fluid exposes a Kubernetes `Dataset` to application pods. Curvine can be used as the cache runtime behind that Dataset, or as an existing storage cluster that Fluid only mounts.
 
-## Overview
+For new Fluid deployments, start with **CacheRuntime**. It lets Fluid create Curvine master, worker, and FUSE client pods, and it is the path that supports CacheRuntime data operations such as `DataLoad`.
 
-Curvine currently supports **two Fluid integration modes**:
+## Choose an integration mode
 
-- **CacheRuntime mode**: Fluid launches Curvine **master**, **worker**, and **client/FUSE** components from the unified `curvine-fluid` image. This mode is driven by `CacheRuntimeClass` and `Dataset`.
-- **ThinRuntime mode**: Fluid launches only a Curvine FUSE-based runtime for a Dataset through `ThinRuntimeProfile`, `Dataset`, and `ThinRuntime`.
+| Mode | Use it when | What Fluid starts | Main resources |
+| --- | --- | --- | --- |
+| CacheRuntime | You want Fluid to manage a Curvine cache cluster in Kubernetes. | Curvine master, worker, and client/FUSE pods. | `CacheRuntimeClass`, `Dataset`, `CacheRuntime` |
+| ThinRuntime | You already have a Curvine cluster and only need Fluid to mount it into workloads. | Curvine FUSE runtime only. | `ThinRuntimeProfile`, `Dataset`, `ThinRuntime` |
 
-Both modes use the same image entrypoint, which auto-detects runtime mode from:
+CacheRuntime is the recommended mode for most users. ThinRuntime is useful when Curvine is operated outside Fluid.
 
-- `FLUID_RUNTIME_TYPE`
-- `FLUID_RUNTIME_COMPONENT_TYPE`
-- `FLUID_RUNTIME_CONFIG_PATH`
-- the explicit `fluid-thin-runtime` command argument
+## Files and references
 
-## Source of Truth
+The Curvine Fluid materials live in the Curvine source tree:
 
-The current implementation lives in:
+| File | Purpose |
+| --- | --- |
+| `curvine-docker/fluid/Dockerfile` | Builds the `curvine-fluid` image. |
+| `curvine-docker/fluid/entrypoint.sh` | Selects CacheRuntime or ThinRuntime mode and starts the right Curvine component. |
+| `curvine-docker/fluid/generate_config.py` | Parses Fluid runtime JSON and writes the Curvine TOML config for CacheRuntime pods. |
+| `curvine-docker/fluid/config-parse.py` | Parses Fluid runtime JSON and writes the Curvine TOML config plus mount script for ThinRuntime. |
+| `curvine-docker/fluid/mountUfs.sh` | Mounts the Dataset UFS paths into Curvine and reports mounted Curvine paths back to Fluid. |
+| `curvine-docker/fluid/cache-runtime/` | CacheRuntime examples. |
+| `curvine-docker/fluid/thin-runtime/` | ThinRuntime examples. |
 
-- `curvine-docker/fluid/Dockerfile`
-- `curvine-docker/fluid/entrypoint.sh`
-- `curvine-docker/fluid/generate_config.py`
-- `curvine-docker/fluid/config-parse.py`
-- `curvine-docker/fluid/cache-runtime/curvine-cache-runtime-class.yaml`
-- `curvine-docker/fluid/cache-runtime/curvine-dataset.yaml`
-- `curvine-docker/fluid/cache-runtime/test-pod.yaml`
-- `curvine-docker/fluid/thin-runtime/curvine-thinruntime.yaml`
+Useful Fluid references:
 
-If this page conflicts with those files, trust the code.
+- [Generic CacheRuntime integration](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/dev/generic_cache_runtime_integration.md)
+- [CacheRuntime data operations](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/samples/cacheruntime_data_operations.md)
+- [Fluid Curvine e2e sample](https://github.com/fluid-cloudnative/fluid/blob/master/test/gha-e2e/curvine/cacheruntimeclass.yaml)
 
-## Runtime Modes
+## Build the Fluid image
 
-### 1. CacheRuntime mode
-
-CacheRuntime mode is selected when either:
-
-- `FLUID_RUNTIME_COMPONENT_TYPE` is set, or
-- a Fluid runtime config file exists at `FLUID_RUNTIME_CONFIG_PATH`
-
-In this mode, `entrypoint.sh`:
-
-1. generates a base Curvine config under `$CURVINE_HOME/conf/curvine-cluster.toml`
-2. merges Fluid topology and component options through `generate_config.py`
-3. starts one of the Curvine roles: `master`, `worker`, or `client`
-
-The sample `curvine-cache-runtime-class.yaml` defines:
-
-- **master** as a `StatefulSet`
-- **worker** as a `StatefulSet`
-- **client** as a `DaemonSet`
-
-The `client` pod runs the FUSE side and mounts into the Fluid target path.
-
-### 2. ThinRuntime mode
-
-ThinRuntime mode is selected when either:
-
-- `FLUID_RUNTIME_TYPE=thin`, or
-- the container is started with the `fluid-thin-runtime` argument
-
-In this mode, `entrypoint.sh` calls `config-parse.py`, which:
-
-1. parses the Fluid runtime config JSON
-2. extracts `mountPoint`, `targetPath`, and Dataset options
-3. generates a minimal Curvine TOML file
-4. writes a `mount-curvine.sh` wrapper
-5. launches `curvine-fuse` directly
-
-ThinRuntime mode is therefore the lighter integration path: it does not create Curvine master/worker pods from Fluid, and instead expects a reachable Curvine cluster already running elsewhere.
-
-## Prerequisites
-
-Before integrating Curvine with Fluid, make sure you have:
-
-1. A working Kubernetes cluster
-2. Fluid installed in the cluster
-3. A Curvine image or locally built `curvine-fluid` image available to the cluster
-4. For ThinRuntime: a reachable external Curvine cluster (`master-endpoints`)
-5. For CacheRuntime: permission to create `CacheRuntimeClass`, `Dataset`, and test workloads
-
-This page assumes you already know how to build or deploy Curvine itself.
-
-## Build the Unified Fluid Image
-
-The current main branch exposes a unified Fluid image build target:
+Build the Curvine image used by Fluid:
 
 ```bash
 cd /path/to/curvine
 make docker-build-fluid
 ```
 
-That target builds:
+This builds:
 
 ```text
 curvine-fluid:latest
 ```
 
-The resulting image uses `curvine-docker/fluid/Dockerfile`, whose base image is:
+For a local cluster, load the image into the cluster runtime:
 
-```text
-ghcr.io/curvineio/curvine:${BASE_IMAGE_TAG}
+```bash
+kind load docker-image curvine-fluid:latest
 ```
 
-The image entrypoint is:
+or:
 
-```text
-/entrypoint.sh
+```bash
+minikube image load curvine-fluid:latest
 ```
 
-If you publish your own image, update the example manifests accordingly.
+For a shared cluster, tag and push it to a registry, then update the image in the Fluid manifests:
 
-## CacheRuntime Integration
+```bash
+docker tag curvine-fluid:latest <registry>/curvine-fluid:<tag>
+docker push <registry>/curvine-fluid:<tag>
+```
 
-CacheRuntime mode is the right choice when you want Fluid to manage Curvine services inside the cluster.
+Use a Fluid chart or controller version that includes CacheRuntime data operation support if you plan to run `DataLoad`.
 
-### Step 1: Create the CacheRuntimeClass
+## CacheRuntime quick start
+
+Use CacheRuntime when Fluid should create and manage the Curvine cache pods.
+
+### 1. Create the CacheRuntimeClass
 
 Start from:
 
@@ -129,20 +86,33 @@ Start from:
 curvine-docker/fluid/cache-runtime/curvine-cache-runtime-class.yaml
 ```
 
-The shipped sample defines:
-
-- `master` workload type: `StatefulSet`
-- `worker` workload type: `StatefulSet`
-- `client` workload type: `DaemonSet`
-- image: `ghcr.io/curvineio/curvine-fluid:latest`
-
 Apply it:
 
 ```bash
 kubectl apply -f curvine-docker/fluid/cache-runtime/curvine-cache-runtime-class.yaml
 ```
 
-### Step 2: Create a Dataset
+The class describes how Fluid starts each Curvine role:
+
+| Role | Kubernetes workload | Responsibility |
+| --- | --- | --- |
+| `master` | `StatefulSet` | Curvine metadata and journal service. |
+| `worker` | `StatefulSet` | Cache storage. |
+| `client` | `DaemonSet` | FUSE mount for application pods. |
+
+The class also defines `executionEntries.mountUFS`. Fluid calls this entry so Curvine can mount Dataset UFS paths before serving the Dataset. In the Curvine image, the script is:
+
+```text
+/app/curvine/mountUfs.sh
+```
+
+The script reads `FLUID_RUNTIME_CONFIG_PATH`, runs `cv mount` for non-Curvine UFS paths, skips native `curvine://` paths, and returns JSON in the shape Fluid expects:
+
+```json
+{"mounted":["/path"]}
+```
+
+### 2. Create the Dataset and CacheRuntime
 
 Start from:
 
@@ -150,76 +120,228 @@ Start from:
 curvine-docker/fluid/cache-runtime/curvine-dataset.yaml
 ```
 
-The sample contains:
-
-- `kind: Dataset`
-- `kind: CacheRuntime`
-- `runtimeClassName: curvine`
-- `mountPoint: "curvine:///data"`
-
 Apply it:
 
 ```bash
 kubectl apply -f curvine-docker/fluid/cache-runtime/curvine-dataset.yaml
 ```
 
-### Step 3: Understand how config is generated
+The example contains both resources:
 
-`generate_config.py` merges Fluid topology and component options into Curvine config.
-
-Important behaviors:
-
-- `CURVINE_DATASET_NAME` becomes the Curvine `cluster_id`
-- Master journal peer addresses are generated from Fluid master pod topology
-- `worker.data_dir` is derived from `worker.options.data_dir` or `tieredStore`
-- `client.targetPath` becomes `fuse.mnt_path`
-- `client.master_addrs` is derived from generated master endpoints
-
-This means the effective Curvine configuration is **not** a static hand-written TOML file. It is generated from Fluid runtime config plus environment variables.
-
-### Step 4: Verify the runtime
-
-Check the core resources:
-
-```bash
-kubectl get cacheruntimeclass
-kubectl get dataset
-kubectl get pods -A | grep curvine
+```yaml
+apiVersion: data.fluid.io/v1alpha1
+kind: Dataset
+metadata:
+  name: curvine-demo
+  namespace: default
+spec:
+  mounts:
+    - name: curvine
+      mountPoint: "curvine:///data"
+---
+apiVersion: data.fluid.io/v1alpha1
+kind: CacheRuntime
+metadata:
+  name: curvine-demo
+  namespace: default
+spec:
+  runtimeClassName: curvine
 ```
 
-### Step 5: Run the sample test pod
+`Dataset.spec.mounts[].mountPoint` is the backend path that Curvine exposes through Fluid. The application pod later mounts the Dataset PVC, not this raw backend path.
 
-Start from:
+### 3. Wait for the runtime
+
+Check the Fluid resources and Curvine pods:
+
+```bash
+kubectl get dataset curvine-demo
+kubectl get cacheruntime curvine-demo
+kubectl get pods -A | grep curvine-demo
+```
+
+If the Dataset is not ready, inspect the Dataset and the Curvine pod logs:
+
+```bash
+kubectl describe dataset curvine-demo
+kubectl logs <curvine-master-pod>
+kubectl logs <curvine-worker-pod>
+kubectl logs <curvine-client-pod>
+```
+
+### 4. Run the test pod
+
+Use the sample workload:
 
 ```text
 curvine-docker/fluid/cache-runtime/test-pod.yaml
 ```
 
-Apply it:
+Apply it and read the logs:
 
 ```bash
 kubectl apply -f curvine-docker/fluid/cache-runtime/test-pod.yaml
 kubectl logs curvine-demo
 ```
 
-The sample pod mounts the Curvine-backed PVC at `/data` and performs simple read/write verification.
+The pod mounts the Fluid PVC backed by Curvine and performs a simple read/write check.
 
-## ThinRuntime Integration
+## How CacheRuntime config is generated
 
-ThinRuntime mode is the right choice when you already have a Curvine cluster and only want Fluid to mount it into workloads.
+CacheRuntime pods do not use a static hand-written TOML file.
 
-### Step 1: Create the ThinRuntimeProfile
+Fluid writes runtime information into the file pointed to by:
 
-Use the profile from:
+```text
+FLUID_RUNTIME_CONFIG_PATH
+```
+
+Curvine then runs:
+
+```text
+curvine-docker/fluid/generate_config.py
+```
+
+The script reads the Fluid JSON and writes:
+
+```text
+$CURVINE_HOME/conf/curvine-cluster.toml
+```
+
+Important generated values include:
+
+| Curvine config | Source |
+| --- | --- |
+| `cluster_id` | Dataset name or Dataset mount option. |
+| `journal.journal_addrs` | Fluid master topology and service name. |
+| `worker.data_dir` | Worker options or Fluid `tieredStore`. |
+| `client.master_addrs` | Generated master RPC endpoints. |
+| `fuse.mnt_path` | Fluid client target path. |
+
+This is why `FLUID_RUNTIME_CONFIG_PATH` is important for master, worker, and client pods.
+
+## DataLoad with CacheRuntime
+
+`DataLoad` asks Fluid to preload one or more Dataset paths into the cache. For Curvine, the DataLoad job should eventually run:
+
+```bash
+/app/curvine/bin/cv load <path> --watch --conf <curvine-conf>
+```
+
+There are two separate parts:
+
+1. `CacheRuntimeClass.dataOperationSpecs` tells Fluid how to run a DataLoad job for this cache runtime.
+2. A `DataLoad` resource asks Fluid to preload paths for a specific Dataset.
+
+### 1. Enable DataLoad in CacheRuntimeClass
+
+Add `dataOperationSpecs` at the top level of the existing `CacheRuntimeClass`.
+
+Do not change `topology`, `fileSystemType`, or the master/worker/client definitions just to enable DataLoad.
+
+```yaml
+apiVersion: data.fluid.io/v1alpha1
+kind: CacheRuntimeClass
+metadata:
+  name: curvine
+fileSystemType: curvinefs
+dataOperationSpecs:
+  - name: DataLoad
+    command:
+      - /bin/bash
+      - -c
+    args:
+      - |
+        # The command must prepare a Curvine config for this job,
+        # then load every path passed by Fluid.
+        IFS=: read -ra paths <<< "$FLUID_DATALOAD_DATA_PATH"
+        for p in "${paths[@]}"; do
+          /app/curvine/bin/cv load "$p" --watch --conf /etc/curvine.toml || exit 1
+        done
+topology:
+  master:
+    # Keep the existing CacheRuntime topology here.
+```
+
+Do not copy this snippet as a complete production command unless your DataLoad image or script creates `/etc/curvine.toml` before running `cv load`.
+
+Fluid injects these environment variables into the DataLoad job:
+
+| Variable | Meaning |
+| --- | --- |
+| `FLUID_DATALOAD_METADATA` | Whether metadata should be loaded. |
+| `FLUID_DATALOAD_DATA_PATH` | Paths to load, joined by `:`. |
+| `FLUID_DATALOAD_PATH_REPLICAS` | Replica count for each path, joined by `:`. |
+
+The upstream Fluid Curvine e2e sample currently uses an inline workaround script and writes `/etc/curvine.toml` for the test topology. Treat that sample as a field-level reference. For a real cluster, make sure the command uses the correct Curvine master endpoints for your Dataset.
+
+### 2. Create a DataLoad resource
+
+Example:
+
+```yaml
+apiVersion: data.fluid.io/v1alpha1
+kind: DataLoad
+metadata:
+  name: curvine-dataload
+  namespace: default
+spec:
+  dataset:
+    name: curvine-demo
+    namespace: default
+  target:
+    - path: /minio
+```
+
+Apply it:
+
+```bash
+kubectl apply -f dataload.yaml
+```
+
+`spec.dataset` selects the Dataset. `spec.target[].path` selects the Dataset path to preload. Fluid passes the target paths to the job through `FLUID_DATALOAD_DATA_PATH`.
+
+### 3. Check the DataLoad job
+
+```bash
+kubectl get dataload curvine-dataload
+kubectl get job -l role=dataload-job,targetDataset=curvine-demo
+kubectl get pods -l role=dataload-pod,targetDataset=curvine-demo
+kubectl logs -l role=dataload-pod,targetDataset=curvine-demo
+```
+
+The DataLoad job is successful only if the Curvine load command exits successfully for every target path. If `cv load --watch` returns an error, the job should fail so Fluid can report the problem.
+
+### About `/etc/fluid/config/runtime.json`
+
+Newer Fluid code sets `FLUID_RUNTIME_CONFIG_PATH` for CacheRuntime components. Some DataLoad job templates set this environment variable but do not mount the runtime config file into the DataLoad pod.
+
+If your DataLoad command needs the runtime JSON, verify both conditions:
+
+1. `FLUID_RUNTIME_CONFIG_PATH` is set in the DataLoad pod.
+2. The file exists inside the DataLoad pod.
+
+If the file is missing, update the DataLoad command to use another reliable source, such as the Dataset name, Fluid pod labels, or a generated Curvine config mounted by your runtime class.
+
+## ThinRuntime quick start
+
+Use ThinRuntime when Curvine already runs outside Fluid and Fluid only needs to mount it.
+
+### 1. Create the ThinRuntimeProfile
+
+Use:
 
 ```text
 curvine-docker/fluid/thin-runtime/curvine-thinruntime.yaml
 ```
 
-Key fields:
+The key fields are:
 
 ```yaml
+apiVersion: data.fluid.io/v1alpha1
 kind: ThinRuntimeProfile
+metadata:
+  name: curvine-profile
 spec:
   fileSystemType: fuse
   fuse:
@@ -227,34 +349,38 @@ spec:
     imageTag: latest
 ```
 
-### Step 2: Create the Dataset
+### 2. Create the Dataset
 
-The same sample file also contains the Dataset:
+The same sample contains a Dataset. The important option is `master-endpoints`:
 
 ```yaml
+apiVersion: data.fluid.io/v1alpha1
 kind: Dataset
+metadata:
+  name: curvine-dataset
 spec:
   mounts:
-  - mountPoint: curvine:///data
-    options:
-      master-endpoints: "127.0.0.1:8995"
+    - mountPoint: curvine:///data
+      options:
+        master-endpoints: "127.0.0.1:8995"
 ```
 
-The most important Dataset options parsed by `config-parse.py` are:
+Supported Dataset options include:
 
 | Option | Required | Meaning |
 | --- | --- | --- |
-| `master-endpoints` | yes | Curvine Master RPC endpoint, `host:port` |
-| `master-web-port` | no | Master web port override |
-| `io-threads` | no | FUSE I/O thread count |
-| `worker-threads` | no | FUSE worker thread count |
-| `mnt-number` | no | FUSE mount count |
+| `master-endpoints` | yes | Curvine master RPC endpoint, `host:port`. |
+| `master-web-port` | no | Master web port override. |
+| `io-threads` | no | FUSE I/O thread count. |
+| `worker-threads` | no | FUSE worker thread count. |
+| `mnt-number` | no | FUSE mount count. |
 
-### Step 3: Create the ThinRuntime
+### 3. Create the ThinRuntime
 
-The sample also contains:
+The same file also contains:
 
 ```yaml
+apiVersion: data.fluid.io/v1alpha1
 kind: ThinRuntime
 metadata:
   name: curvine-dataset
@@ -262,113 +388,95 @@ spec:
   profileName: curvine-profile
 ```
 
-Apply the combined sample:
+Apply the sample:
 
 ```bash
 kubectl apply -f curvine-docker/fluid/thin-runtime/curvine-thinruntime.yaml
 ```
 
-### Step 4: Understand generated files
-
-In ThinRuntime mode, `config-parse.py` generates:
-
-- `$CURVINE_HOME/conf/curvine-cluster.toml`
-- `$CURVINE_HOME/mount-curvine.sh`
-
-The generated TOML contains:
-
-- `master.hostname`
-- `client.master_addrs`
-- `fuse.mnt_path`
-- `fuse.fs_path`
-
-derived from the Fluid Dataset config.
-
-### Step 5: Verify the ThinRuntime
-
-Check resources:
+### 4. Verify ThinRuntime
 
 ```bash
-kubectl get thinruntime
-kubectl get dataset
+kubectl get thinruntime curvine-dataset
+kubectl get dataset curvine-dataset
 kubectl get pods -A | grep curvine
 ```
 
-## Verification Checklist
+In ThinRuntime mode, `config-parse.py` reads the Fluid runtime JSON and writes:
 
-For either mode, verify:
-
-- the relevant Fluid resource is `Ready` / `Bound`
-- the Curvine or FUSE pods are running
-- the mount path inside the workload is accessible
-- reads and writes behave as expected for your selected mode
-
-Useful commands:
-
-```bash
-kubectl get dataset
-kubectl get thinruntime
-kubectl get cacheruntime
-kubectl get pods -A | grep curvine
-kubectl describe dataset <name>
+```text
+$CURVINE_HOME/conf/curvine-cluster.toml
+$CURVINE_HOME/mount-curvine.sh
 ```
+
+The generated mount script starts `curvine-fuse` with the target path provided by Fluid.
 
 ## Troubleshooting
 
-### Image starts in the wrong mode
+### The image starts in the wrong mode
 
-Check:
+Check the pod environment and command:
+
+```bash
+kubectl describe pod <pod>
+```
+
+The main inputs are:
 
 - `FLUID_RUNTIME_TYPE`
 - `FLUID_RUNTIME_COMPONENT_TYPE`
-- whether `FLUID_RUNTIME_CONFIG_PATH` exists
-- the container arguments (`master`, `worker`, `client`, or `fluid-thin-runtime`)
+- `FLUID_RUNTIME_CONFIG_PATH`
+- container arguments such as `master`, `worker`, `client`, or `fluid-thin-runtime`
 
-### ThinRuntime cannot reach Curvine
+### CacheRuntime pods cannot generate Curvine config
 
-Check the Dataset option:
-
-```yaml
-master-endpoints: "host:port"
-```
-
-It must point to a reachable Curvine Master RPC endpoint.
-
-### FUSE mount is missing
-
-Inspect:
+Check whether the runtime config exists:
 
 ```bash
+kubectl exec <pod> -- ls -l "$FLUID_RUNTIME_CONFIG_PATH"
 kubectl logs <pod>
 ```
 
-and check whether:
+`generate_config.py` needs valid Fluid runtime JSON. If the file is empty, missing, or malformed, the Curvine TOML file will not be generated correctly.
 
-- `/dev/fuse` is available
-- the runtime is privileged when required
-- `targetPath` and `mountPoint` are correct
+### MountUFS fails
 
-### CacheRuntime topology looks wrong
-
-Inspect the generated runtime config and logs:
+Check the master pod logs and the Dataset mount options:
 
 ```bash
-kubectl logs <master-pod>
-kubectl logs <worker-pod>
-kubectl logs <client-pod>
+kubectl logs <curvine-master-pod>
+kubectl describe dataset <dataset-name>
 ```
 
-`generate_config.py` relies on Fluid topology metadata to derive journal peers and service FQDNs. If topology is missing or malformed, the generated Curvine config will also be wrong.
+For object storage, make sure endpoint, access key, secret key, region, and path-style options are correct. Secrets referenced by Fluid must be mounted into the pod before `mountUfs.sh` reads them.
 
-## Recommended Documentation Pattern
+### FUSE mount is missing
 
-When you extend this integration in the future, keep the documentation aligned to the code with this structure:
+Check the client or ThinRuntime pod:
 
-1. Runtime modes
-2. Source-of-truth files
-3. Build image
-4. Install manifests
-5. Verification
-6. Troubleshooting
+```bash
+kubectl logs <curvine-client-pod>
+```
 
-That keeps the integration guide stable even when manifest layout changes.
+Confirm:
+
+- `/dev/fuse` exists in the pod.
+- the container is privileged when required by your cluster.
+- the Fluid target path and Dataset mount path are correct.
+
+### DataLoad job starts but fails
+
+Check the DataLoad pod logs:
+
+```bash
+kubectl logs -l role=dataload-pod,targetDataset=<dataset-name>
+```
+
+Common causes:
+
+- `dataOperationSpecs` is missing from the `CacheRuntimeClass`.
+- `FLUID_DATALOAD_DATA_PATH` is empty or points to a path that Curvine did not mount.
+- the DataLoad command uses the wrong Curvine config or master address.
+- the DataLoad pod expects `FLUID_RUNTIME_CONFIG_PATH`, but the file is not mounted.
+
+Fix the command in `dataOperationSpecs`, reapply the `CacheRuntimeClass`, and create a new `DataLoad` resource.
