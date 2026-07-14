@@ -30,18 +30,24 @@ Curvine 的 Fluid 物料在 Curvine 源码中：
 | `curvine-docker/fluid/generate_config.py` | 解析 Fluid runtime JSON，为 CacheRuntime Pod 生成 Curvine TOML 配置。 |
 | `curvine-docker/fluid/config-parse.py` | 解析 Fluid runtime JSON，为 ThinRuntime 生成 Curvine TOML 配置和挂载脚本。 |
 | `curvine-docker/fluid/mountUfs.sh` | 把 Dataset 的 UFS 路径挂载到 Curvine，并把已挂载的 Curvine 路径返回给 Fluid。 |
+| `curvine-docker/fluid/reportSummary.sh` | 向 Fluid 输出 Curvine 缓存状态 JSON。 |
 | `curvine-docker/fluid/cache-runtime/` | CacheRuntime 示例。 |
 | `curvine-docker/fluid/thin-runtime/` | ThinRuntime 示例。 |
 
 Fluid 侧参考资料：
 
 - [Generic CacheRuntime 集成文档](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/dev/generic_cache_runtime_integration.md)
-- [CacheRuntime 数据操作文档](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/samples/cacheruntime_data_operations.md)
+- [ReportSummary 输出格式要求](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/dev/generic_cache_runtime_integration.md#%E6%AD%A5%E9%AA%A428-reportsummary-%E8%84%9A%E6%9C%AC%E8%BE%93%E5%87%BA%E6%A0%BC%E5%BC%8F%E8%A6%81%E6%B1%82)
+- [CacheRuntime 数据操作文档](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/samples/cacheruntime/cacheruntime_data_operations.md)
+- [Fluid Curvine CacheRuntime 示例文档](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/samples/cacheruntime/curvine_cache_runtime.md)
 - [Fluid Curvine e2e 示例](https://github.com/fluid-cloudnative/fluid/blob/master/test/gha-e2e/curvine/cacheruntimeclass.yaml)
+- [Fluid chart `helm-chart-fluid-1.1.0-alpha.10`](https://github.com/fluid-cloudnative/charts/releases/tag/helm-chart-fluid-1.1.0-alpha.10)
 
 ## 构建供 Fluid 使用的 Curvine 镜像
 
 Fluid 直接使用普通 `curvine` 运行时镜像。这个镜像里已经包含 Fluid entrypoint 和辅助脚本。
+
+当前版本不要再构建或部署单独的 `curvine-fluid` 镜像。旧的 Fluid 专用镜像已经合并进主运行时镜像。
 
 ```bash
 cd /path/to/curvine
@@ -116,6 +122,26 @@ kubectl apply -f curvine-docker/fluid/cache-runtime/curvine-cache-runtime-class.
 ```json
 {"mounted":["/path"]}
 ```
+
+这个 class 还定义了 `executionEntries.ReportSummary`。Fluid 会在 master Pod 中调用这个入口，把缓存状态刷新到 Dataset Status。Curvine 镜像中的脚本路径是：
+
+```text
+/app/curvine/reportSummary.sh
+```
+
+该脚本会执行：
+
+```bash
+/app/curvine/bin/cv report fluid-summary --conf "$CURVINE_CONF_FILE"
+```
+
+它只向 stdout 输出严格 JSON，格式遵循 Fluid 的 [ReportSummary 输出要求](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/dev/generic_cache_runtime_integration.md#%E6%AD%A5%E9%AA%A428-reportsummary-%E8%84%9A%E6%9C%AC%E8%BE%93%E5%87%BA%E6%A0%BC%E5%BC%8F%E8%A6%81%E6%B1%82)：
+
+```json
+{"cached":"0.00B","cachedPercentage":"0","cacheCapacity":"4.00GiB","cacheHitRatio":"0","fileNum":"0","ufsTotal":"0"}
+```
+
+Curvine 只上报 master 能低成本返回的值：已缓存字节数、缓存容量和文件数。`ufsTotal`、`cachedPercentage`、`cacheHitRatio` 暂时保持为 `0`，直到 Curvine 有权威的 UFS 总量和命中率元数据。这样可以避免把“缓存容量使用率”误写成“Dataset 缓存百分比”。
 
 ### 2. 创建 Dataset 和 CacheRuntime
 
