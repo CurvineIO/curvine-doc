@@ -30,18 +30,24 @@ The Curvine Fluid materials live in the Curvine source tree:
 | `curvine-docker/fluid/generate_config.py` | Parses Fluid runtime JSON and writes the Curvine TOML config for CacheRuntime pods. |
 | `curvine-docker/fluid/config-parse.py` | Parses Fluid runtime JSON and writes the Curvine TOML config plus mount script for ThinRuntime. |
 | `curvine-docker/fluid/mountUfs.sh` | Mounts the Dataset UFS paths into Curvine and reports mounted Curvine paths back to Fluid. |
+| `curvine-docker/fluid/reportSummary.sh` | Reports Curvine cache summary JSON to Fluid. |
 | `curvine-docker/fluid/cache-runtime/` | CacheRuntime examples. |
 | `curvine-docker/fluid/thin-runtime/` | ThinRuntime examples. |
 
 Useful Fluid references:
 
 - [Generic CacheRuntime integration](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/dev/generic_cache_runtime_integration.md)
-- [CacheRuntime data operations](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/samples/cacheruntime_data_operations.md)
+- [ReportSummary output requirements](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/dev/generic_cache_runtime_integration.md#%E6%AD%A5%E9%AA%A428-reportsummary-%E8%84%9A%E6%9C%AC%E8%BE%93%E5%87%BA%E6%A0%BC%E5%BC%8F%E8%A6%81%E6%B1%82)
+- [CacheRuntime data operations](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/samples/cacheruntime/cacheruntime_data_operations.md)
+- [Fluid Curvine CacheRuntime sample](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/samples/cacheruntime/curvine_cache_runtime.md)
 - [Fluid Curvine e2e sample](https://github.com/fluid-cloudnative/fluid/blob/master/test/gha-e2e/curvine/cacheruntimeclass.yaml)
+- [Fluid chart `helm-chart-fluid-1.1.0-alpha.10`](https://github.com/fluid-cloudnative/charts/releases/tag/helm-chart-fluid-1.1.0-alpha.10)
 
 ## Build the Curvine image for Fluid
 
 Fluid uses the same `curvine` runtime image as a normal Curvine deployment. The image also contains the Fluid entrypoint and helper scripts.
+
+Do not build or deploy a separate `curvine-fluid` image for current Curvine. The old Fluid-only image has been merged into the main runtime image.
 
 ```bash
 cd /path/to/curvine
@@ -116,6 +122,26 @@ The script reads `FLUID_RUNTIME_CONFIG_PATH`, runs `cv mount` for non-Curvine UF
 ```json
 {"mounted":["/path"]}
 ```
+
+The class also defines `executionEntries.ReportSummary`. Fluid calls this entry from the master pod to refresh Dataset cache status. In the Curvine image, the script is:
+
+```text
+/app/curvine/reportSummary.sh
+```
+
+The script runs:
+
+```bash
+/app/curvine/bin/cv report fluid-summary --conf "$CURVINE_CONF_FILE"
+```
+
+It prints strict JSON to stdout, as required by Fluid's [ReportSummary contract](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/dev/generic_cache_runtime_integration.md#%E6%AD%A5%E9%AA%A428-reportsummary-%E8%84%9A%E6%9C%AC%E8%BE%93%E5%87%BA%E6%A0%BC%E5%BC%8F%E8%A6%81%E6%B1%82):
+
+```json
+{"cached":"0.00B","cachedPercentage":"0","cacheCapacity":"4.00GiB","cacheHitRatio":"0","fileNum":"0","ufsTotal":"0"}
+```
+
+Curvine reports values that the master can return cheaply: cached bytes, cache capacity, and file count. `ufsTotal`, `cachedPercentage`, and `cacheHitRatio` stay `0` until Curvine has authoritative UFS total and hit-ratio metadata. This avoids showing a cache-capacity percentage as a Dataset cache percentage.
 
 ### 2. Create the Dataset and CacheRuntime
 
