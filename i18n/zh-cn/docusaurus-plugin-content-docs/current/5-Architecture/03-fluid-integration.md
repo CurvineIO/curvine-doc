@@ -24,8 +24,9 @@ Curvine 的 Fluid 物料在 Curvine 源码中：
 
 | 文件 | 用途 |
 | --- | --- |
-| `curvine-docker/fluid/Dockerfile` | 构建 `curvine-fluid` 镜像。 |
-| `curvine-docker/fluid/entrypoint.sh` | 判断 CacheRuntime / ThinRuntime 模式，并启动对应 Curvine 组件。 |
+| `curvine-docker/deploy/Dockerfile_*` | 构建普通 `curvine` 运行时镜像；Fluid 支持已经包含在这个镜像里。 |
+| `curvine-docker/deploy/entrypoint.sh` | 启动普通 Curvine 服务；如果检测到 Fluid 运行时模式，则转到 `/fluid-entrypoint.sh`。 |
+| `curvine-docker/fluid/entrypoint.sh` | Fluid 入口脚本，会作为 `/fluid-entrypoint.sh` 打进主镜像，并判断 CacheRuntime / ThinRuntime 模式。 |
 | `curvine-docker/fluid/generate_config.py` | 解析 Fluid runtime JSON，为 CacheRuntime Pod 生成 Curvine TOML 配置。 |
 | `curvine-docker/fluid/config-parse.py` | 解析 Fluid runtime JSON，为 ThinRuntime 生成 Curvine TOML 配置和挂载脚本。 |
 | `curvine-docker/fluid/mountUfs.sh` | 把 Dataset 的 UFS 路径挂载到 Curvine，并把已挂载的 Curvine 路径返回给 Fluid。 |
@@ -38,41 +39,45 @@ Fluid 侧参考资料：
 - [CacheRuntime 数据操作文档](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/samples/cacheruntime_data_operations.md)
 - [Fluid Curvine e2e 示例](https://github.com/fluid-cloudnative/fluid/blob/master/test/gha-e2e/curvine/cacheruntimeclass.yaml)
 
-## 构建 Fluid 镜像
+## 构建供 Fluid 使用的 Curvine 镜像
 
-在 Curvine 源码目录中执行：
+Fluid 直接使用普通 `curvine` 运行时镜像。这个镜像里已经包含 Fluid entrypoint 和辅助脚本。
 
 ```bash
 cd /path/to/curvine
-make docker-build-fluid
+make docker-build
 ```
 
 该命令会构建：
 
 ```text
-curvine-fluid:latest
+curvine:latest
 ```
+
+如果构建过程要求选择运行时基础镜像，请选择和集群匹配的基础镜像。本次集成验证使用 Rocky 9 镜像。
 
 如果使用本地集群，可以把镜像加载进去：
 
 ```bash
-kind load docker-image curvine-fluid:latest
+kind load docker-image curvine:latest
 ```
 
 或：
 
 ```bash
-minikube image load curvine-fluid:latest
+minikube image load curvine:latest
 ```
 
 如果使用共享集群，需要推送到镜像仓库，并同步修改 Fluid 清单里的镜像地址：
 
 ```bash
-docker tag curvine-fluid:latest <registry>/curvine-fluid:<tag>
-docker push <registry>/curvine-fluid:<tag>
+docker tag curvine:latest <registry>/curvine:<tag>
+docker push <registry>/curvine:<tag>
 ```
 
-如果要使用 `DataLoad`，请确保安装的 Fluid chart 或 controller 已包含 CacheRuntime data operation 支持。旧版 Fluid 只能创建基础 CacheRuntime，无法运行 CacheRuntime DataLoad。
+在 `CacheRuntimeClass` 和 `ThinRuntimeProfile` 里使用同一个镜像。
+
+CacheRuntime `DataLoad` 路径已经用 Fluid chart `helm-chart-fluid-1.1.0-alpha.10` 验证过；该 chart 对应的 Fluid 镜像 tag 是 `v1.1.0-676f47a`。如果使用更旧的 chart 或自定义 DataLoad 模板，请看下面 DataLoad 章节里的 fallback 说明。
 
 ## CacheRuntime 快速开始
 
@@ -263,7 +268,7 @@ topology:
     # 保留已有 CacheRuntime topology。
 ```
 
-不要把这段直接当成完整生产命令复制使用，除非你的 DataLoad 镜像或脚本会在执行 `cv load` 前生成 `/etc/curvine.toml`。
+不要把这段直接当成完整生产命令复制使用，除非你的 DataLoad 镜像或脚本会在执行 `cv load` 前生成 `/etc/curvine.toml`。Curvine 示例 `curvine-docker/fluid/cache-runtime/curvine-cache-runtime-class.yaml` 已经包含这部分逻辑。
 
 Fluid 会把这些环境变量注入 DataLoad Job：
 
@@ -273,7 +278,9 @@ Fluid 会把这些环境变量注入 DataLoad Job：
 | `FLUID_DATALOAD_DATA_PATH` | 要加载的路径，多个路径用 `:` 连接。 |
 | `FLUID_DATALOAD_PATH_REPLICAS` | 每个路径的副本数，多个值用 `:` 连接。 |
 
-Fluid 上游的 Curvine e2e 示例目前使用的是 workaround：在 `dataOperationSpecs` 里内联脚本，并为测试拓扑写死 `/etc/curvine.toml`。这个示例适合参考字段结构。真实集群中，要确保 DataLoad 命令使用的是当前 Dataset 对应的 Curvine master 地址。
+Curvine 的 CacheRuntimeClass 示例会在 `dataOperationSpecs` 里内联 DataLoad 脚本，因为 Fluid 会把数据操作作为短生命周期 Job 执行。脚本会先从 Fluid runtime JSON 生成 Curvine 配置；如果这个文件没有挂载，再依次回退到 Dataset 元数据、Pod label，以及 `<dataset>-load` 这类 DataLoad 名称规则。
+
+当 Fluid 传入 `/minio` 这样的 Dataset 内路径时，脚本会读取 Curvine mount 元数据，把它解析成真正需要加载的 Curvine source，再执行 `cv load --watch`。这样 DataLoad 和 `mountUFS` 的语义是一致的。
 
 ### 2. 创建 DataLoad 资源
 
@@ -314,14 +321,22 @@ kubectl logs -l role=dataload-pod,targetDataset=curvine-demo
 
 ### 关于 `/etc/fluid/config/runtime.json`
 
-新版 Fluid 会为 CacheRuntime 组件设置 `FLUID_RUNTIME_CONFIG_PATH`。但有些 DataLoad Job 模板只设置了这个环境变量，并没有把 runtime config 文件挂载进 DataLoad Pod。
+Fluid chart `helm-chart-fluid-1.1.0-alpha.10` 会把 runtime config 文件挂载进 CacheRuntime DataLoad Pod，并设置 `FLUID_RUNTIME_CONFIG_PATH`。使用这个版本时，Curvine DataLoad 可以像 master、worker、client Pod 一样生成配置。
+
+更旧的 Fluid 版本或自定义 DataLoad 模板，可能只设置了 `FLUID_RUNTIME_CONFIG_PATH`，但没有把 runtime config 文件挂载进 DataLoad Pod。
 
 如果你的 DataLoad 命令需要读取 runtime JSON，请同时确认两件事：
 
 1. DataLoad Pod 中设置了 `FLUID_RUNTIME_CONFIG_PATH`。
 2. DataLoad Pod 内这个文件真实存在。
 
-如果文件不存在，不要只依赖这个路径。可以让 DataLoad 命令改用 Dataset 名称、Fluid Pod label，或由 runtime class 显式生成并挂载 Curvine 配置。
+如果文件不存在，Curvine 示例会按下面顺序尝试 fallback：
+
+1. `CURVINE_DATALOAD_DATASET`、`FLUID_DATASET_NAME` 或 `CURVINE_DATALOAD_MASTER_HOST`。
+2. Fluid Pod label，例如 `targetDataset` 或 `fluid.io/dataset-id`。
+3. 从 DataLoad 名称推断 Dataset，例如 `<dataset>-load`。
+
+如果这些信息都拿不到，请显式设置 Dataset 或 master host，不要写死一个错误的 master endpoint。
 
 ## ThinRuntime 快速开始
 
@@ -345,7 +360,7 @@ metadata:
 spec:
   fileSystemType: fuse
   fuse:
-    image: ghcr.io/curvineio/curvine-fluid
+    image: ghcr.io/curvineio/curvine
     imageTag: latest
 ```
 
@@ -477,6 +492,6 @@ kubectl logs -l role=dataload-pod,targetDataset=<dataset-name>
 - `CacheRuntimeClass` 中没有配置 `dataOperationSpecs`。
 - `FLUID_DATALOAD_DATA_PATH` 为空，或指向 Curvine 没有挂载的路径。
 - DataLoad 命令使用了错误的 Curvine 配置或 master 地址。
-- DataLoad Pod 期望读取 `FLUID_RUNTIME_CONFIG_PATH`，但文件没有挂载进来。
+- 更旧或自定义 Fluid 模板设置了 `FLUID_RUNTIME_CONFIG_PATH`，但没有挂载 runtime config 文件。
 
 修复 `dataOperationSpecs` 中的命令后，重新应用 `CacheRuntimeClass`，再创建新的 `DataLoad` 资源。

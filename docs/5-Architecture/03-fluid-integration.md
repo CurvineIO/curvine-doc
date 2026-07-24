@@ -24,8 +24,9 @@ The Curvine Fluid materials live in the Curvine source tree:
 
 | File | Purpose |
 | --- | --- |
-| `curvine-docker/fluid/Dockerfile` | Builds the `curvine-fluid` image. |
-| `curvine-docker/fluid/entrypoint.sh` | Selects CacheRuntime or ThinRuntime mode and starts the right Curvine component. |
+| `curvine-docker/deploy/Dockerfile_*` | Builds the normal `curvine` runtime image. Fluid support is included in this image. |
+| `curvine-docker/deploy/entrypoint.sh` | Starts normal Curvine services, or delegates to `/fluid-entrypoint.sh` when Fluid runtime mode is detected. |
+| `curvine-docker/fluid/entrypoint.sh` | Fluid entrypoint copied into the main image as `/fluid-entrypoint.sh`; selects CacheRuntime or ThinRuntime mode. |
 | `curvine-docker/fluid/generate_config.py` | Parses Fluid runtime JSON and writes the Curvine TOML config for CacheRuntime pods. |
 | `curvine-docker/fluid/config-parse.py` | Parses Fluid runtime JSON and writes the Curvine TOML config plus mount script for ThinRuntime. |
 | `curvine-docker/fluid/mountUfs.sh` | Mounts the Dataset UFS paths into Curvine and reports mounted Curvine paths back to Fluid. |
@@ -38,41 +39,45 @@ Useful Fluid references:
 - [CacheRuntime data operations](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/samples/cacheruntime_data_operations.md)
 - [Fluid Curvine e2e sample](https://github.com/fluid-cloudnative/fluid/blob/master/test/gha-e2e/curvine/cacheruntimeclass.yaml)
 
-## Build the Fluid image
+## Build the Curvine image for Fluid
 
-Build the Curvine image used by Fluid:
+Fluid uses the same `curvine` runtime image as a normal Curvine deployment. The image also contains the Fluid entrypoint and helper scripts.
 
 ```bash
 cd /path/to/curvine
-make docker-build-fluid
+make docker-build
 ```
 
 This builds:
 
 ```text
-curvine-fluid:latest
+curvine:latest
 ```
+
+If the build asks for a runtime base image, choose the base image that matches your cluster. This integration was verified with the Rocky 9 image.
 
 For a local cluster, load the image into the cluster runtime:
 
 ```bash
-kind load docker-image curvine-fluid:latest
+kind load docker-image curvine:latest
 ```
 
 or:
 
 ```bash
-minikube image load curvine-fluid:latest
+minikube image load curvine:latest
 ```
 
 For a shared cluster, tag and push it to a registry, then update the image in the Fluid manifests:
 
 ```bash
-docker tag curvine-fluid:latest <registry>/curvine-fluid:<tag>
-docker push <registry>/curvine-fluid:<tag>
+docker tag curvine:latest <registry>/curvine:<tag>
+docker push <registry>/curvine:<tag>
 ```
 
-Use a Fluid chart or controller version that includes CacheRuntime data operation support if you plan to run `DataLoad`.
+Set the same image in `CacheRuntimeClass` and `ThinRuntimeProfile`.
+
+The CacheRuntime `DataLoad` path has been verified with Fluid chart `helm-chart-fluid-1.1.0-alpha.10`, whose Fluid image tag is `v1.1.0-676f47a`. Older or custom Fluid charts may need the fallback notes in the DataLoad section.
 
 ## CacheRuntime quick start
 
@@ -263,7 +268,7 @@ topology:
     # Keep the existing CacheRuntime topology here.
 ```
 
-Do not copy this snippet as a complete production command unless your DataLoad image or script creates `/etc/curvine.toml` before running `cv load`.
+Do not copy this snippet as a complete production command unless your DataLoad image or script creates `/etc/curvine.toml` before running `cv load`. The Curvine sample `curvine-docker/fluid/cache-runtime/curvine-cache-runtime-class.yaml` includes that setup logic.
 
 Fluid injects these environment variables into the DataLoad job:
 
@@ -273,7 +278,9 @@ Fluid injects these environment variables into the DataLoad job:
 | `FLUID_DATALOAD_DATA_PATH` | Paths to load, joined by `:`. |
 | `FLUID_DATALOAD_PATH_REPLICAS` | Replica count for each path, joined by `:`. |
 
-The upstream Fluid Curvine e2e sample currently uses an inline workaround script and writes `/etc/curvine.toml` for the test topology. Treat that sample as a field-level reference. For a real cluster, make sure the command uses the correct Curvine master endpoints for your Dataset.
+The Curvine CacheRuntimeClass sample uses an inline DataLoad script because Fluid runs data operations as short-lived Jobs. The script first generates Curvine config from the Fluid runtime JSON. If that file is not mounted, it falls back to Dataset metadata, pod labels, and finally a DataLoad name pattern such as `<dataset>-load`.
+
+When Fluid passes a Dataset path such as `/minio`, the script checks Curvine mount metadata and resolves it to the real Curvine load source before running `cv load --watch`. This keeps DataLoad aligned with `mountUFS`.
 
 ### 2. Create a DataLoad resource
 
@@ -314,14 +321,22 @@ The DataLoad job is successful only if the Curvine load command exits successful
 
 ### About `/etc/fluid/config/runtime.json`
 
-Newer Fluid code sets `FLUID_RUNTIME_CONFIG_PATH` for CacheRuntime components. Some DataLoad job templates set this environment variable but do not mount the runtime config file into the DataLoad pod.
+Fluid chart `helm-chart-fluid-1.1.0-alpha.10` mounts the runtime config file into CacheRuntime DataLoad pods and sets `FLUID_RUNTIME_CONFIG_PATH`. With that version, Curvine DataLoad can generate config the same way as master, worker, and client pods.
+
+Older Fluid versions or custom DataLoad templates may set `FLUID_RUNTIME_CONFIG_PATH` without mounting the file into the DataLoad pod.
 
 If your DataLoad command needs the runtime JSON, verify both conditions:
 
 1. `FLUID_RUNTIME_CONFIG_PATH` is set in the DataLoad pod.
 2. The file exists inside the DataLoad pod.
 
-If the file is missing, update the DataLoad command to use another reliable source, such as the Dataset name, Fluid pod labels, or a generated Curvine config mounted by your runtime class.
+If the file is missing, Curvine's sample tries these fallbacks in order:
+
+1. `CURVINE_DATALOAD_DATASET`, `FLUID_DATASET_NAME`, or `CURVINE_DATALOAD_MASTER_HOST`.
+2. Fluid pod labels such as `targetDataset` or `fluid.io/dataset-id`.
+3. DataLoad names derived from the Dataset name, for example `<dataset>-load`.
+
+If none of these identify the Dataset, set the Dataset or master host explicitly instead of hard-coding a wrong master endpoint.
 
 ## ThinRuntime quick start
 
@@ -345,7 +360,7 @@ metadata:
 spec:
   fileSystemType: fuse
   fuse:
-    image: ghcr.io/curvineio/curvine-fluid
+    image: ghcr.io/curvineio/curvine
     imageTag: latest
 ```
 
@@ -477,6 +492,6 @@ Common causes:
 - `dataOperationSpecs` is missing from the `CacheRuntimeClass`.
 - `FLUID_DATALOAD_DATA_PATH` is empty or points to a path that Curvine did not mount.
 - the DataLoad command uses the wrong Curvine config or master address.
-- the DataLoad pod expects `FLUID_RUNTIME_CONFIG_PATH`, but the file is not mounted.
+- an older or custom Fluid template sets `FLUID_RUNTIME_CONFIG_PATH`, but does not mount the runtime config file.
 
 Fix the command in `dataOperationSpecs`, reapply the `CacheRuntimeClass`, and create a new `DataLoad` resource.
