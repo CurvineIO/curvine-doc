@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="1200" height="780">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="arr-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+    </marker>
+    <marker id="arr-green-rev" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+      <polygon points="10 0, 0 3.5, 10 7" fill="#16a34a"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="780" fill="#ffffff"/>
+
+  <!-- ==================== USE CASES LAYER ==================== -->
+  <text x="40" y="30" fill="#9ca3af" font-size="12" font-weight="600" letter-spacing="2">USE CASES</text>
+
+  <!-- Case 1 -->
+  <rect x="40" y="44" width="352" height="96" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <circle cx="70" cy="74" r="15" fill="#16a34a"/>
+  <text x="70" y="79" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">1</text>
+  <text x="96" y="79" fill="#111827" font-size="15" font-weight="600">AI Agent Platform Storage</text>
+  <text x="96" y="102" fill="#6b7280" font-size="12">Isolated POSIX workspaces for tens of</text>
+  <text x="96" y="120" fill="#6b7280" font-size="12">thousands of stateful Agent Pods on K8s</text>
+
+  <!-- Case 2 -->
+  <rect x="424" y="44" width="352" height="96" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <circle cx="454" cy="74" r="15" fill="#16a34a"/>
+  <text x="454" y="79" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">2</text>
+  <text x="480" y="79" fill="#111827" font-size="15" font-weight="600">LLM Training Acceleration</text>
+  <text x="480" y="102" fill="#6b7280" font-size="12">Cache datasets &amp; checkpoints near GPU</text>
+  <text x="480" y="120" fill="#6b7280" font-size="12">nodes to shorten training cycles</text>
+
+  <!-- Case 3 -->
+  <rect x="808" y="44" width="352" height="96" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <circle cx="838" cy="74" r="15" fill="#16a34a"/>
+  <text x="838" y="79" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">3</text>
+  <text x="864" y="79" fill="#111827" font-size="15" font-weight="600">LLM Model Distribution</text>
+  <text x="864" y="102" fill="#6b7280" font-size="12">Fast multi-region model artifact</text>
+  <text x="864" y="120" fill="#6b7280" font-size="12">distribution through the cache</text>
+
+  <!-- Case 4 -->
+  <rect x="40" y="156" width="352" height="96" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <circle cx="70" cy="186" r="15" fill="#16a34a"/>
+  <text x="70" y="191" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">4</text>
+  <text x="96" y="191" fill="#111827" font-size="15" font-weight="600">Multimodal Data Lake Access</text>
+  <text x="96" y="214" fill="#6b7280" font-size="12">POSIX access over multimodal lakes</text>
+  <text x="96" y="232" fill="#6b7280" font-size="12">without copying data locally</text>
+
+  <!-- Case 5 -->
+  <rect x="424" y="156" width="352" height="96" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <circle cx="454" cy="186" r="15" fill="#16a34a"/>
+  <text x="454" y="191" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">5</text>
+  <text x="480" y="191" fill="#111827" font-size="15" font-weight="600">OLAP Query Acceleration</text>
+  <text x="480" y="214" fill="#6b7280" font-size="12">Hot data cache for compute-storage</text>
+  <text x="480" y="232" fill="#6b7280" font-size="12">separated OLAP engines</text>
+
+  <!-- Case 6 -->
+  <rect x="808" y="156" width="352" height="96" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <circle cx="838" cy="186" r="15" fill="#16a34a"/>
+  <text x="838" y="191" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">6</text>
+  <text x="864" y="191" fill="#111827" font-size="15" font-weight="600">Multi-Cloud Data Caching</text>
+  <text x="864" y="214" fill="#6b7280" font-size="12">Unified cache layer across multi-cloud</text>
+  <text x="864" y="232" fill="#6b7280" font-size="12">object storage backends</text>
+
+  <!-- ==================== ARROWS: cases -> curvine ==================== -->
+  <line x1="216" y1="258" x2="216" y2="304" stroke="#16a34a" stroke-width="2" marker-start="url(#arr-green-rev)" marker-end="url(#arr-green)"/>
+  <line x1="600" y1="258" x2="600" y2="304" stroke="#16a34a" stroke-width="2" marker-start="url(#arr-green-rev)" marker-end="url(#arr-green)"/>
+  <line x1="984" y1="258" x2="984" y2="304" stroke="#16a34a" stroke-width="2" marker-start="url(#arr-green-rev)" marker-end="url(#arr-green)"/>
+  <rect x="502" y="270" width="196" height="22" fill="#ffffff" opacity="0.95"/>
+  <text x="600" y="285" text-anchor="middle" fill="#166534" font-size="12">POSIX / CSI / S3 / HDFS access</text>
+
+  <!-- ==================== CURVINE LAYER ==================== -->
+  <rect x="40" y="310" width="1120" height="210" rx="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+  <text x="600" y="352" text-anchor="middle" fill="#14532d" font-size="24" font-weight="700" letter-spacing="4">CURVINE</text>
+  <text x="600" y="376" text-anchor="middle" fill="#166534" font-size="13">Cloud-Native Distributed Cache  ·  Master (Raft HA) + Worker Nodes</text>
+
+  <!-- Access interface chips -->
+  <rect x="85" y="398" width="190" height="40" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+  <text x="180" y="423" text-anchor="middle" fill="#166534" font-size="13">POSIX / FUSE</text>
+  <rect x="295" y="398" width="190" height="40" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+  <text x="390" y="423" text-anchor="middle" fill="#166534" font-size="13">CSI Driver (K8s)</text>
+  <rect x="505" y="398" width="190" height="40" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+  <text x="600" y="423" text-anchor="middle" fill="#166534" font-size="13">S3 Gateway</text>
+  <rect x="715" y="398" width="190" height="40" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+  <text x="810" y="423" text-anchor="middle" fill="#166534" font-size="13">HDFS API</text>
+  <rect x="925" y="398" width="190" height="40" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+  <text x="1020" y="423" text-anchor="middle" fill="#166534" font-size="13">Java / Python SDK</text>
+
+  <!-- Multi-tier cache row -->
+  <text x="250" y="483" fill="#166534" font-size="13" font-weight="600">Multi-Tier Cache:</text>
+  <rect x="386" y="458" width="110" height="40" rx="20" fill="#dcfce7" stroke="#16a34a" stroke-width="1"/>
+  <text x="441" y="483" text-anchor="middle" fill="#14532d" font-size="13" font-weight="600">Memory</text>
+  <polygon points="507,471 521,478 507,485" fill="#16a34a"/>
+  <rect x="532" y="458" width="110" height="40" rx="20" fill="#bbf7d0" stroke="#16a34a" stroke-width="1"/>
+  <text x="587" y="483" text-anchor="middle" fill="#14532d" font-size="13" font-weight="600">SSD</text>
+  <polygon points="653,471 667,478 653,485" fill="#16a34a"/>
+  <rect x="678" y="458" width="110" height="40" rx="20" fill="#86efac" stroke="#16a34a" stroke-width="1"/>
+  <text x="733" y="483" text-anchor="middle" fill="#14532d" font-size="13" font-weight="600">HDD</text>
+  <text x="812" y="483" fill="#6b7280" font-size="11">hot data auto-promotion</text>
+
+  <!-- ==================== ARROWS: curvine -> storage ==================== -->
+  <line x1="216" y1="526" x2="216" y2="570" stroke="#16a34a" stroke-width="2" marker-start="url(#arr-green-rev)" marker-end="url(#arr-green)"/>
+  <line x1="600" y1="526" x2="600" y2="570" stroke="#16a34a" stroke-width="2" marker-start="url(#arr-green-rev)" marker-end="url(#arr-green)"/>
+  <line x1="984" y1="526" x2="984" y2="570" stroke="#16a34a" stroke-width="2" marker-start="url(#arr-green-rev)" marker-end="url(#arr-green)"/>
+  <rect x="541" y="537" width="118" height="22" fill="#ffffff" opacity="0.95"/>
+  <text x="600" y="552" text-anchor="middle" fill="#166534" font-size="12">load / persist</text>
+
+  <!-- ==================== STORAGE BACKENDS LAYER ==================== -->
+  <rect x="40" y="576" width="1120" height="164" rx="12" fill="#f9fafb" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="600" y="608" text-anchor="middle" fill="#9ca3af" font-size="11" font-weight="600" letter-spacing="1.5">OBJECT STORAGE BACKENDS — DURABLE PERSISTENCE LAYER</text>
+
+  <rect x="60" y="636" width="160" height="56" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="140" y="671" text-anchor="middle" fill="#374151" font-size="14" font-weight="600">Amazon S3</text>
+  <rect x="244" y="636" width="160" height="56" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="324" y="671" text-anchor="middle" fill="#374151" font-size="14" font-weight="600">HDFS</text>
+  <rect x="428" y="636" width="160" height="56" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="508" y="671" text-anchor="middle" fill="#374151" font-size="14" font-weight="600">Aliyun OSS</text>
+  <rect x="612" y="636" width="160" height="56" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="692" y="671" text-anchor="middle" fill="#374151" font-size="14" font-weight="600">MinIO</text>
+  <rect x="796" y="636" width="160" height="56" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="876" y="671" text-anchor="middle" fill="#374151" font-size="14" font-weight="600">RustFS</text>
+  <rect x="980" y="636" width="160" height="56" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="1060" y="671" text-anchor="middle" fill="#374151" font-size="14" font-weight="600">Google GCS</text>
+</svg>
