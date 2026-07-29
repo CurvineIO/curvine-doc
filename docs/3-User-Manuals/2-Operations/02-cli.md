@@ -1,6 +1,6 @@
 # Command Line Tools
 
-This section is based on the current repository source in `curvine-cli`, `build/bin/cv`, and `build/bin/dfs`. Curvine currently exposes three CLI entry styles:
+This section is based on the current repository source in `curvine-cli`, `build/cv`, and `build/bin/dfs`. Curvine currently exposes three CLI entry styles:
 
 - **Native Rust CLI `cv`**: the recommended entry point, with the full command tree from `curvine-cli`.
 - **Compatibility wrapper `dfs`**: bundled in the distribution; `fs` / `report` go through Java `CurvineShell` and keep Hadoop `FsShell` style.
@@ -25,8 +25,10 @@ Commands:
   fs
   report
   load
+  export
   load-status
   cancel-load
+  transfer
   mount
   umount
   node
@@ -37,16 +39,19 @@ All `cv` commands accept these global options:
 
 | Global option | Description |
 |---------------|-------------|
-| `-c, --conf <PATH>` | Cluster config file path. If omitted, the CLI also checks `CURVINE_CONF_FILE`. |
+| `-c, --conf <PATH>` | Override the cluster config file for this invocation. If omitted, the CLI uses its normal configured path or `CURVINE_CONF_FILE`. |
 | `--master-addrs <ADDRS>` | Override the client-side master address list directly, for example `m1:8995,m2:8995`. |
 
 :::tip
-To avoid ambiguity, this doc always uses `--conf` for the CLI config file and `--config key=value` for UFS mount properties. Do not rely on short `-c` inside `mount`.
+Normal production commands use `cv` directly because the cluster configuration
+is already installed or selected through `CURVINE_CONF_FILE`. Use `--conf` only
+to select a non-default configuration, for example during migration or
+diagnosis. `cv mount --config key=value` remains the UFS-property option.
 :::
 
 **Conventions:**
 
-- In the distribution, the CLI is usually invoked as `build/dist/bin/cv`.
+- In production, add the distribution `bin/` directory to `PATH` and invoke `cv` directly.
 - When run via `cargo run -p curvine-cli -- ...`, the help output shows the binary name as `curvine-cli`.
 - Items such as `<PATH>` and `<JOB_ID>` are positional arguments; `[OPTION]` means optional.
 
@@ -68,13 +73,13 @@ To avoid ambiguity, this doc always uses `--conf` for the CLI config file and `-
 Examples:
 
 ```bash
-bin/cv report
-bin/cv report json
-bin/cv report all --show-workers false
-bin/cv report capacity
-bin/cv report capacity 192.168.1.10
-bin/cv report used
-bin/cv report available
+cv report
+cv report json
+cv report all --show-workers false
+cv report capacity
+cv report capacity 192.168.1.10
+cv report used
+cv report available
 ```
 
 :::note
@@ -101,10 +106,10 @@ In the current implementation, `cv report capacity <WORKER_ADDRESS>` matches by 
 Examples:
 
 ```bash
-bin/cv node -l
-bin/cv node --add-decommission host1:8997 host2:8997
-bin/cv node --add-decommission host1:8997,host2:8997
-bin/cv node --remove-decommission host1:8997
+cv node -l
+cv node --add-decommission host1:8997 host2:8997
+cv node --add-decommission host1:8997,host2:8997
+cv node --remove-decommission host1:8997
 ```
 
 :::note
@@ -147,21 +152,21 @@ The current source exposes these `fs` subcommands:
 Common examples:
 
 ```bash
-bin/cv fs ls /
-bin/cv fs ls / --cache-only
-bin/cv fs mkdir -p /data/a/b
-bin/cv fs put ./local.txt /data/remote.txt
-bin/cv fs get /data/remote.txt ./local.txt
-bin/cv fs cat /data/remote.txt
-bin/cv fs stat /data
-bin/cv fs count /data
-bin/cv fs mv /data/a /data/b
-bin/cv fs du -h /data
-bin/cv fs df -h
-bin/cv fs chmod 755 /data/script.sh
-bin/cv fs chown user:group /data
-bin/cv fs blocks /data/file.txt --format json
-bin/cv fs free /data --recursive
+cv fs ls /
+cv fs ls / --cache-only
+cv fs mkdir -p /data/a/b
+cv fs put ./local.txt /data/remote.txt
+cv fs get /data/remote.txt ./local.txt
+cv fs cat /data/remote.txt
+cv fs stat /data
+cv fs count /data
+cv fs mv /data/a /data/b
+cv fs du -h /data
+cv fs df -h
+cv fs chmod 755 /data/script.sh
+cv fs chown user:group /data
+cv fs blocks /data/file.txt --format json
+cv fs free /data --recursive
 ```
 
 `cv fs ls` also supports HDFS-style listing flags:
@@ -231,13 +236,13 @@ Examples:
 
 ```bash
 # List mount points
-bin/cv mount
+cv mount
 
 # List mount points and validate UFS availability
-bin/cv mount --check
+cv mount --check
 
 # Create an S3 mount
-bin/cv mount s3://bucket/datasets /bucket/datasets \
+cv mount s3://bucket/datasets /bucket/datasets \
   --config s3.endpoint_url=http://hostname.com \
   --config s3.region_name=cn \
   --config s3.credentials.access=access_key \
@@ -246,13 +251,13 @@ bin/cv mount s3://bucket/datasets /bucket/datasets \
   --provider opendal
 
 # Create an OSS mount through JindoSDK / OSS-HDFS
-bin/cv mount oss://my-bucket/prefix /oss-data --provider oss-hdfs \
+cv mount oss://my-bucket/prefix /oss-data --provider oss-hdfs \
   --config oss.endpoint=oss-cn-hangzhou.aliyuncs.com \
   --config oss.accessKeyId=xxx \
   --config oss.accessKeySecret=yyy
 
 # Run a metadata resync manually
-bin/cv mount resync /bucket/datasets --dry-run --verbose
+cv mount resync /bucket/datasets --dry-run --verbose
 ```
 
 For detailed parameter lists of each UFS type (S3, OSS, HDFS, WebHDFS), see [Appendix: UFS Mount Parameters](#appendix-ufs-mount-parameters) at the end.
@@ -274,7 +279,7 @@ In the current source, the first creation of an `fs_mode` mount automatically tr
 Example:
 
 ```bash
-bin/cv umount /bucket/datasets
+cv umount /bucket/datasets
 ```
 
 ---
@@ -287,20 +292,54 @@ bin/cv umount /bucket/datasets
 |-------------------|-------------|
 | `<PATH>` | Source path to load. In practice this is usually a UFS path that already belongs to a mount. |
 | `-w, --watch` | Watch job status immediately after submission. |
-| `--conf <PATH>` | CLI config file. |
+| `--conf <PATH>` | Optional one-command config override; normal use does not need it. |
 
 Examples:
 
 ```bash
-bin/cv load s3://bucket/datasets/train/part-0001.parquet
-bin/cv load s3://bucket/datasets/train/part-0001.parquet --watch
+cv load s3://bucket/datasets/train/part-0001.parquet
+cv load s3://bucket/datasets/train/part-0001.parquet --watch
 ```
 
 On success, the command prints `job_id` and `target_path`, which can then be used with `load-status` or `cancel-load`.
 
+#### Transfer routing
+
+The command line does not change when standalone Transfer is enabled:
+
+| Cluster configuration | `cv load` / `cv export` route |
+| --- | --- |
+| `[transfer] enabled = false` | Legacy Master Load API, for backward compatibility. |
+| `[transfer] enabled = true` | Transfer service RPC, selected directly by the CLI. |
+
+The Master does not proxy legacy submissions to Transfer. During a cutover, make
+sure the CLI has the same `[transfer]` configuration as the cluster; a stale
+CLI config is rejected rather than creating a second job owner.
+
 ---
 
-### 7. `load-status`: query job status
+### 7. `export`: export a Curvine path to UFS
+
+**Usage:** `cv export [OPTIONS] <PATH>`
+
+`<PATH>` must be a Curvine path below a mount. Curvine infers the UFS target
+from that mount.
+
+| Option / Argument | Description |
+|-------------------|-------------|
+| `<PATH>` | Curvine source path to export. |
+| `-w, --watch` | Watch job status immediately after submission. |
+| `--no-overwrite` | Fail when the UFS target already exists. |
+
+Example:
+
+```bash
+cv export /bucket/datasets/train/part-0001.parquet --watch
+```
+
+---
+
+### 8. `load-status`: query job status
 
 **Usage:** `cv load-status [OPTIONS] <JOB_ID>`
 
@@ -309,13 +348,13 @@ On success, the command prints `job_id` and `target_path`, which can then be use
 | `<JOB_ID>` | Load job identifier. |
 | `-v, --verbose` | Verbose output. |
 | `-w, --watch <INTERVAL>` | Poll interval, default `5s`. Supports formats such as `1s`, `1m`, and `1h`. |
-| `--conf <PATH>` | CLI config file. |
+| `--conf <PATH>` | Optional one-command config override; normal use does not need it. |
 
 Examples:
 
 ```bash
-bin/cv load-status <job_id>
-bin/cv load-status <job_id> -w 1s
+cv load-status <job_id>
+cv load-status <job_id> -w 1s
 ```
 
 :::note
@@ -324,31 +363,60 @@ In the current implementation, `load-status` enters watch mode by default with a
 
 ---
 
-### 8. `cancel-load`: cancel a load job
+### 9. `cancel-load`: cancel a load job
 
 **Usage:** `cv cancel-load [OPTIONS] <JOB_ID>`
 
 | Option / Argument | Description |
 |-------------------|-------------|
 | `<JOB_ID>` | Job identifier to cancel. |
-| `--conf <PATH>` | CLI config file. |
+| `--conf <PATH>` | Optional one-command config override; normal use does not need it. |
 
 Example:
 
 ```bash
-bin/cv cancel-load <job_id>
+cv cancel-load <job_id>
 ```
 
 ---
 
-### 9. `version`: show version
+### 10. `transfer`: operate Transfer jobs
+
+`cv transfer` is available only when `[transfer] enabled = true`. It is the
+operations command for listing, inspecting, retrying, and paging Transfer jobs;
+normal submission remains `cv load` or `cv export`.
+
+| Command | Description |
+| --- | --- |
+| `cv transfer list` | List jobs. Filter with `--kind load\|export`, `--state`, `--tenant`, or `--submitter`. |
+| `cv transfer status <JOB_ID>` | Show one job. Add `--verbose` for task detail or `--watch --interval 1s` to poll. |
+| `cv transfer tasks <JOB_ID>` | Show a task page for one job. |
+| `cv transfer cancel <JOB_ID>` | Cancel a Transfer job. |
+| `cv transfer retry <JOB_ID>` | Retry a failed, canceled, or partially successful job as a new job. |
+| `cv transfer tenants` | Summarize jobs by tenant. |
+
+Examples:
+
+```bash
+cv transfer list --kind load --state running
+cv transfer status <job_id> --watch --interval 2s
+cv transfer retry <job_id>
+```
+
+`load-status` and `cancel-load` remain compatible shortcuts. With Transfer
+enabled, they call Transfer; with Transfer disabled, they call the legacy
+Master implementation.
+
+---
+
+### 11. `version`: show version
 
 **Usage:** `cv version`
 
 Example:
 
 ```bash
-bin/cv version
+cv version
 ```
 
 The current implementation prints `curvine-cli <version>` together with commit / branch information.

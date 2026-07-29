@@ -1,6 +1,6 @@
 # 命令行工具
 
-本节基于当前仓库源码中的 `curvine-cli`、`build/bin/cv` 和 `build/bin/dfs` 整理 Curvine 的命令行入口。当前主要有三类：
+本节基于当前仓库源码中的 `curvine-cli`、`build/cv` 和 `build/bin/dfs` 整理 Curvine 的命令行入口。当前主要有三类：
 
 - **原生 Rust CLI `cv`**：推荐入口，功能最完整，命令树来自 `curvine-cli`。
 - **兼容包装器 `dfs`**：发行包自带的兼容入口，`fs` / `report` 走 Java `CurvineShell`，保留 Hadoop `FsShell` 风格。
@@ -25,8 +25,10 @@ Commands:
   fs
   report
   load
+  export
   load-status
   cancel-load
+  transfer
   mount
   umount
   node
@@ -37,16 +39,16 @@ Commands:
 
 | 全局参数 | 说明 |
 |----------|------|
-| `-c, --conf <PATH>` | 集群配置文件路径。未指定时会尝试使用环境变量 `CURVINE_CONF_FILE`。 |
+| `-c, --conf <PATH>` | 仅覆盖本次调用的集群配置文件。未指定时 CLI 使用正常配置路径或 `CURVINE_CONF_FILE`。 |
 | `--master-addrs <ADDRS>` | 直接覆盖客户端配置里的 Master 地址列表，例如 `m1:8995,m2:8995`。 |
 
 :::tip
-为避免歧义，本文统一使用 `--conf` 表示 CLI 配置文件，使用 `--config key=value` 表示 `mount` 的 UFS 参数。不要在 `mount` 场景里依赖短参数 `-c`。
+生产环境通常直接使用 `cv`，因为集群配置已安装，或已通过 `CURVINE_CONF_FILE` 选择。仅在迁移或诊断时使用 `--conf` 指向非默认配置。`cv mount --config key=value` 仍表示 UFS 配置项。
 :::
 
 **约定：**
 
-- 发行包里通常通过 `build/dist/bin/cv` 调用。
+- 生产环境将发行包的 `bin/` 加入 `PATH` 后，直接使用 `cv`。
 - 通过 `cargo run -p curvine-cli -- ...` 运行时，帮助中的程序名会显示为 `curvine-cli`。
 - 本文中的 `<PATH>`、`<JOB_ID>` 等为位置参数；`[OPTION]` 表示可选项。
 
@@ -68,13 +70,13 @@ Commands:
 示例：
 
 ```bash
-bin/cv report
-bin/cv report json
-bin/cv report all --show-workers false
-bin/cv report capacity
-bin/cv report capacity 192.168.1.10
-bin/cv report used
-bin/cv report available
+cv report
+cv report json
+cv report all --show-workers false
+cv report capacity
+cv report capacity 192.168.1.10
+cv report used
+cv report available
 ```
 
 :::note
@@ -101,10 +103,10 @@ bin/cv report available
 示例：
 
 ```bash
-bin/cv node -l
-bin/cv node --add-decommission host1:8997 host2:8997
-bin/cv node --add-decommission host1:8997,host2:8997
-bin/cv node --remove-decommission host1:8997
+cv node -l
+cv node --add-decommission host1:8997 host2:8997
+cv node --add-decommission host1:8997,host2:8997
+cv node --remove-decommission host1:8997
 ```
 
 :::note
@@ -147,21 +149,21 @@ bin/cv node --remove-decommission host1:8997
 常用示例：
 
 ```bash
-bin/cv fs ls /
-bin/cv fs ls / --cache-only
-bin/cv fs mkdir -p /data/a/b
-bin/cv fs put ./local.txt /data/remote.txt
-bin/cv fs get /data/remote.txt ./local.txt
-bin/cv fs cat /data/remote.txt
-bin/cv fs stat /data
-bin/cv fs count /data
-bin/cv fs mv /data/a /data/b
-bin/cv fs du -h /data
-bin/cv fs df -h
-bin/cv fs chmod 755 /data/script.sh
-bin/cv fs chown user:group /data
-bin/cv fs blocks /data/file.txt --format json
-bin/cv fs free /data --recursive
+cv fs ls /
+cv fs ls / --cache-only
+cv fs mkdir -p /data/a/b
+cv fs put ./local.txt /data/remote.txt
+cv fs get /data/remote.txt ./local.txt
+cv fs cat /data/remote.txt
+cv fs stat /data
+cv fs count /data
+cv fs mv /data/a /data/b
+cv fs du -h /data
+cv fs df -h
+cv fs chmod 755 /data/script.sh
+cv fs chown user:group /data
+cv fs blocks /data/file.txt --format json
+cv fs free /data --recursive
 ```
 
 `cv fs ls` 额外支持类 HDFS 的选项：
@@ -231,13 +233,13 @@ bin/cv fs free /data --recursive
 
 ```bash
 # 列出挂载点
-bin/cv mount
+cv mount
 
 # 列出挂载点并检查 UFS 可达性
-bin/cv mount --check
+cv mount --check
 
 # 创建 S3 挂载
-bin/cv mount s3://bucket/datasets /bucket/datasets \
+cv mount s3://bucket/datasets /bucket/datasets \
   --config s3.endpoint_url=http://hostname.com \
   --config s3.region_name=cn \
   --config s3.credentials.access=access_key \
@@ -246,13 +248,13 @@ bin/cv mount s3://bucket/datasets /bucket/datasets \
   --provider opendal
 
 # 通过 JindoSDK / OSS-HDFS 创建 OSS 挂载
-bin/cv mount oss://my-bucket/prefix /oss-data --provider oss-hdfs \
+cv mount oss://my-bucket/prefix /oss-data --provider oss-hdfs \
   --config oss.endpoint=oss-cn-hangzhou.aliyuncs.com \
   --config oss.accessKeyId=xxx \
   --config oss.accessKeySecret=yyy
 
 # 手动执行一次元数据 resync
-bin/cv mount resync /bucket/datasets --dry-run --verbose
+cv mount resync /bucket/datasets --dry-run --verbose
 ```
 
 各 UFS 类型（S3、OSS、HDFS、WebHDFS）的常见参数列表见文末 [附录：UFS 挂载参数](#附录ufs-挂载参数)。
@@ -274,7 +276,7 @@ bin/cv mount resync /bucket/datasets --dry-run --verbose
 示例：
 
 ```bash
-bin/cv umount /bucket/datasets
+cv umount /bucket/datasets
 ```
 
 ---
@@ -287,20 +289,51 @@ bin/cv umount /bucket/datasets
 |-------------|------|
 | `<PATH>` | 要加载的源路径。通常是已经建立挂载关系的 UFS 路径。 |
 | `-w, --watch` | 提交后立即持续观察任务状态。 |
-| `--conf <PATH>` | CLI 配置文件。 |
+| `--conf <PATH>` | 可选的单次配置覆盖；日常使用不需要。 |
 
 示例：
 
 ```bash
-bin/cv load s3://bucket/datasets/train/part-0001.parquet
-bin/cv load s3://bucket/datasets/train/part-0001.parquet --watch
+cv load s3://bucket/datasets/train/part-0001.parquet
+cv load s3://bucket/datasets/train/part-0001.parquet --watch
 ```
 
 成功时命令会输出 `job_id` 和 `target_path`，后续可交给 `load-status` 或 `cancel-load`。
 
+#### Transfer 路由
+
+启用独立 Transfer 后，命令行不变：
+
+| 集群配置 | `cv load` / `cv export` 路由 |
+| --- | --- |
+| `[transfer] enabled = false` | 为兼容已有集群，调用旧 Master Load API。 |
+| `[transfer] enabled = true` | CLI 直接调用 Transfer 服务 RPC。 |
+
+Master 不会将旧请求代理到 Transfer。切换时，必须保证 CLI 与集群使用相同的 `[transfer]` 配置；过期的 CLI 配置会被拒绝，避免产生第二个任务所有者。
+
 ---
 
-### 7. `load-status`：查询加载任务状态
+### 7. `export`：将 Curvine 路径导出到 UFS
+
+**用法：** `cv export [OPTIONS] <PATH>`
+
+`<PATH>` 必须是一个挂载路径下的 Curvine 路径。Curvine 会根据挂载自动推导 UFS 目标路径。
+
+| 选项 / 参数 | 说明 |
+|-------------|------|
+| `<PATH>` | 要导出的 Curvine 源路径。 |
+| `-w, --watch` | 提交后立即持续观察任务状态。 |
+| `--no-overwrite` | UFS 目标已存在时失败。 |
+
+示例：
+
+```bash
+cv export /bucket/datasets/train/part-0001.parquet --watch
+```
+
+---
+
+### 8. `load-status`：查询加载任务状态
 
 **用法：** `cv load-status [OPTIONS] <JOB_ID>`
 
@@ -309,13 +342,13 @@ bin/cv load s3://bucket/datasets/train/part-0001.parquet --watch
 | `<JOB_ID>` | 加载任务 ID。 |
 | `-v, --verbose` | 详细输出。 |
 | `-w, --watch <INTERVAL>` | 轮询间隔，默认 `5s`。支持 `1s`、`1m`、`1h` 等格式。 |
-| `--conf <PATH>` | CLI 配置文件。 |
+| `--conf <PATH>` | 可选的单次配置覆盖；日常使用不需要。 |
 
 示例：
 
 ```bash
-bin/cv load-status <job_id>
-bin/cv load-status <job_id> -w 1s
+cv load-status <job_id>
+cv load-status <job_id> -w 1s
 ```
 
 :::note
@@ -324,31 +357,56 @@ bin/cv load-status <job_id> -w 1s
 
 ---
 
-### 8. `cancel-load`：取消加载任务
+### 9. `cancel-load`：取消加载任务
 
 **用法：** `cv cancel-load [OPTIONS] <JOB_ID>`
 
 | 选项 / 参数 | 说明 |
 |-------------|------|
 | `<JOB_ID>` | 要取消的任务 ID。 |
-| `--conf <PATH>` | CLI 配置文件。 |
+| `--conf <PATH>` | 可选的单次配置覆盖；日常使用不需要。 |
 
 示例：
 
 ```bash
-bin/cv cancel-load <job_id>
+cv cancel-load <job_id>
 ```
 
 ---
 
-### 9. `version`：查看版本
+### 10. `transfer`：运维 Transfer 任务
+
+`cv transfer` 仅在 `[transfer] enabled = true` 时可用。它用于列举、查看、重试和分页查询 Transfer 任务；日常提交仍使用 `cv load` 或 `cv export`。
+
+| 命令 | 说明 |
+| --- | --- |
+| `cv transfer list` | 列出任务。可使用 `--kind load\|export`、`--state`、`--tenant`、`--submitter` 过滤。 |
+| `cv transfer status <JOB_ID>` | 查看单个任务。使用 `--verbose` 查看任务明细，或用 `--watch --interval 1s` 轮询。 |
+| `cv transfer tasks <JOB_ID>` | 查看单个任务的 task 分页。 |
+| `cv transfer cancel <JOB_ID>` | 取消一个 Transfer 任务。 |
+| `cv transfer retry <JOB_ID>` | 将失败、取消或部分成功任务重试为一个新任务。 |
+| `cv transfer tenants` | 按 tenant 汇总任务。 |
+
+示例：
+
+```bash
+cv transfer list --kind load --state running
+cv transfer status <job_id> --watch --interval 2s
+cv transfer retry <job_id>
+```
+
+`load-status` 与 `cancel-load` 仍保留为兼容命令。启用 Transfer 时它们调用 Transfer；关闭时调用旧 Master 实现。
+
+---
+
+### 11. `version`：查看版本
 
 **用法：** `cv version`
 
 示例：
 
 ```bash
-bin/cv version
+cv version
 ```
 
 当前实现会输出 `curvine-cli <version>`，并带上 commit / branch 信息。
