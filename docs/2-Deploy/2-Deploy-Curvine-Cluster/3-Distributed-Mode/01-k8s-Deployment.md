@@ -22,6 +22,8 @@ Helm release `curvine` is deployed in namespace `curvine`:
 | StatefulSet `curvine-worker` | Data nodes |
 | Service `curvine-master` | Headless, RPC 8995 |
 | Service `curvine-worker` | Headless, RPC 8997 |
+| Deployment `curvine-transfer` | Load / Export service, created only when enabled |
+| Service `curvine-transfer` | Internal Transfer RPC and web endpoint, created only when enabled |
 
 `openKruise.enabled` defaults to `false`. StatefulSets use `apps/v1`.
 
@@ -43,6 +45,40 @@ helm upgrade --install curvine curvine/curvine \
   --create-namespace \
   --wait --timeout 10m
 ```
+
+### Enable Transfer
+
+Use a Curvine image release that contains the Transfer binary. Do not use an
+older chart image tag just because the chart itself supports the values below.
+For production, MySQL must be reachable before the Transfer Pod starts:
+
+```yaml title="transfer-values.yaml"
+transfer:
+  enabled: true
+  storeUrl: "mysql://transfer_user:password@mysql.curvine.svc:3306/curvine_transfer"
+  replicas: 1
+```
+
+```bash
+helm upgrade --install curvine curvine/curvine \
+  -n curvine \
+  -f transfer-values.yaml \
+  --wait --timeout 10m
+```
+
+The chart creates `curvine-transfer` as an internal `ClusterIP` Service and
+writes its Service FQDN to `[transfer].hostname`. Curvine infers the RPC
+endpoint from that hostname and `transfer.rpcPort`; do not configure
+`endpoints` in normal Helm deployments.
+
+An empty `transfer.storeUrl` is a single-Pod SQLite development default. It
+uses an `emptyDir`, so it survives only container restarts in the same Pod. Use
+MySQL for production, and MySQL is mandatory when `transfer.replicas > 1`.
+
+The generated ConfigMap is used by Master, Worker, and Transfer. External CLI
+hosts must also use a cluster config with `[transfer] enabled = true`; the CLI
+commands remain `cv load`, `cv export`, `cv load-status`, and
+`cv cancel-load`.
 
 ### Verify
 
@@ -207,6 +243,20 @@ Set `openKruise.enabled=true` to install the kruise subchart and switch master/w
 | `worker.tolerations` | `[]` | Tolerations |
 | `worker.affinity` | `{}` | Affinity rules |
 
+### Transfer
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `transfer.enabled` | `false` | Creates no Transfer resources until enabled; disabled mode preserves the legacy Master Load API. |
+| `transfer.storeUrl` | `""` | Empty infers local SQLite. Use `mysql://...` for durable production storage. |
+| `transfer.replicas` | `1` | Transfer Pod replicas. Values greater than one require a MySQL `storeUrl`. |
+| `transfer.rpcPort` | `9010` | Transfer RPC Service and container port. |
+| `transfer.webPort` | `9011` | Transfer `/healthz`, `/readyz`, and `/metrics` port. |
+| `transfer.resources.requests.cpu` | `500m` | CPU request. |
+| `transfer.resources.requests.memory` | `1Gi` | Memory request. |
+| `transfer.resources.limits.cpu` | `1000m` | CPU limit. |
+| `transfer.resources.limits.memory` | `2Gi` | Memory limit. |
+
 ### Service
 
 | Parameter | Default | Description |
@@ -249,6 +299,7 @@ Override individual TOML sections without replacing the full config:
 | `configOverrides.journal` | `{}` | Journal section overrides |
 | `configOverrides.worker` | `{}` | Worker section overrides |
 | `configOverrides.client` | `{}` | Client section overrides |
+| `configOverrides.transfer` | `{}` | Additional public `[transfer]` settings such as `max_running_transfers`, `lease_timeout`, and `terminal_retention`. Chart-managed `enabled`, `hostname`, ports, and `store_url` cannot be overridden here. |
 | `configOverrides.log` | `{}` | Log section overrides |
 
 ### Storage modes

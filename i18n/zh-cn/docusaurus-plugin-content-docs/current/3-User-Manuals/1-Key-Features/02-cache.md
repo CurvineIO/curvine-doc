@@ -99,7 +99,7 @@ storage_type = "mem"
 | 关闭 | 信任缓存与统一文件系统默认回退逻辑。 |
 | 开启 | 读前按 UFS 元数据（`mtime` 与文件长度）校验缓存。 |
 
-当校验失败或缓存未命中时，会直接从 UFS 读取；若该挂载启用了自动缓存，可同时异步将数据加载到 Curvine。
+当校验失败或缓存未命中时，会直接从 UFS 读取；若该挂载启用了自动缓存，可同时异步将数据加载到 Curvine。`[transfer] enabled = true` 时，该任务由独立 Transfer 服务负责；否则仍使用旧 Master 任务路径。
 
 ## 七、数据过期管理（TTL）
 
@@ -198,7 +198,7 @@ quota_eviction_high_rate = 0.8
 
 ### 9.1 自动缓存
 
-当某挂载配置了非零 TTL（例如 `cv mount s3://bucket/prefix /path --ttl-ms 7d`）时，即启用该挂载的自动缓存。在该挂载下首次读取某个 UFS 文件（缓存未命中）时，Curvine 会提交一个异步加载任务，将数据拉取到 Curvine；本次读取由 UFS 直接返回，任务在后台执行。
+当某挂载配置了非零 TTL（例如 `cv mount s3://bucket/prefix /path --ttl-ms 7d`）时，即启用该挂载的自动缓存。在该挂载下首次读取某个 UFS 文件（缓存未命中）时，Curvine 会提交一个异步加载任务，将数据拉取到 Curvine；本次读取由 UFS 直接返回，任务在后台执行。该任务与手工 `cv load` 使用相同的 Transfer 路由规则。
 
 在日志中可看到类似输出：
 
@@ -209,7 +209,7 @@ Submit async cache successfully for s3://bucket/cache/test.log, job res CacheJob
 可用 `job_id` 查询缓存任务状态：
 
 ```plain
-bin/cv load-status 7c00853f-13c8-43c1-8b3f-44740750b5a0
+cv load-status 7c00853f-13c8-43c1-8b3f-44740750b5a0
 ```
 
 ### 9.2 主动缓存
@@ -217,10 +217,12 @@ bin/cv load-status 7c00853f-13c8-43c1-8b3f-44740750b5a0
 可以使用 `load` 命令主动加载 UFS 数据到 Curvine，示例如下：
 
 ```plain
-bin/cv load s3://bucket/cache/test.log
+cv load s3://bucket/cache/test.log
 ```
 
 自动缓存与主动缓存可同时使用；主动缓存可缩短该文件首次读取的等待时间。
+
+启用 Transfer 后，可使用 `cv transfer list` 和 `cv transfer status <job_id>` 执行任务级运维；`cv load-status` 仍是兼容的状态查询命令。
 
 :::tip
 加载数据前，须先将 UFS 挂载到 Curvine（`cv mount`）。

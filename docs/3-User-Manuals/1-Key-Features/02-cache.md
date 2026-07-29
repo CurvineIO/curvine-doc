@@ -99,7 +99,7 @@ The current read-side validation control is `--read-verify-ufs` on the mount:
 | disabled | Cached data is trusted and normal unified filesystem fallback rules apply. |
 | enabled | On reads, Curvine compares cached file metadata against UFS (`mtime` and file length) before serving cached data. |
 
-When validation fails, or when the cache misses, data is read directly from UFS. If automatic caching is enabled for that mount, Curvine can also submit a background load job.
+When validation fails, or when the cache misses, data is read directly from UFS. If automatic caching is enabled for that mount, Curvine can also submit a background load job. With `[transfer] enabled = true`, that job is owned by the standalone Transfer service; otherwise it uses the legacy Master job path.
 
 ## 7. Data Expiration Management (TTL)
 
@@ -198,7 +198,7 @@ If `ttl_action = "none"` is configured, disabling time-based expiration, the dat
 
 ### 9.1 Automatic Caching
 
-Automatic caching is enabled for a mount when that mount has a non-zero TTL, for example `cv mount s3://bucket/prefix /path --ttl-ms 7d`. On the first read of a UFS file under that mount, Curvine submits an asynchronous load job to bring the data into Curvine. The read is served from UFS while the job runs in the background.
+Automatic caching is enabled for a mount when that mount has a non-zero TTL, for example `cv mount s3://bucket/prefix /path --ttl-ms 7d`. On the first read of a UFS file under that mount, Curvine submits an asynchronous load job to bring the data into Curvine. The read is served from UFS while the job runs in the background. The job follows the same Transfer routing as a manual `cv load` command.
 
 Example log output:
 
@@ -209,7 +209,7 @@ Submit async cache successfully for s3://bucket/cache/test.log, job res CacheJob
 Use the `job_id` to query the caching task status:
 
 ```plain
-bin/cv load-status 7c00853f-13c8-43c1-8b3f-44740750b5a0
+cv load-status 7c00853f-13c8-43c1-8b3f-44740750b5a0
 ```
 
 ### 9.2 Proactive Caching
@@ -217,10 +217,12 @@ bin/cv load-status 7c00853f-13c8-43c1-8b3f-44740750b5a0
 You can proactively load UFS data into Curvine using the `load` command:
 
 ```plain
-bin/cv load s3://bucket/cache/test.log
+cv load s3://bucket/cache/test.log
 ```
 
 Automatic caching and proactive caching are not mutually exclusive. Proactive caching can reduce the time required for the first read of a UFS file.
+
+When Transfer is enabled, use `cv transfer list` and `cv transfer status <job_id>` for job-wide operations. `cv load-status` remains the compatible status command.
 
 :::tip
 Before loading data, the UFS must first be mounted to Curvine with `cv mount`.
