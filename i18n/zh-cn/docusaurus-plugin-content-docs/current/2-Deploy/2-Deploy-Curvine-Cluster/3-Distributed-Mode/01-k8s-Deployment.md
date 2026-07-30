@@ -48,7 +48,7 @@ helm upgrade --install curvine curvine/curvine \
 
 ### 启用 Transfer
 
-使用包含 Transfer 二进制的 Curvine 镜像版本；不要只因 Chart 支持以下参数就使用较旧的镜像 tag。生产环境必须先保证 MySQL 可达，再启动 Transfer Pod：
+使用包含 Transfer 二进制的 Curvine 镜像版本；不要只因 Chart 支持以下参数就使用较旧的镜像 tag。高可用或多副本部署时，必须先保证 MySQL 可达，再启动 Transfer Pod：
 
 ```yaml title="transfer-values.yaml"
 transfer:
@@ -66,7 +66,9 @@ helm upgrade --install curvine curvine/curvine \
 
 Chart 会创建仅集群内可见的 `curvine-transfer` `ClusterIP` Service，并将其 FQDN 写入 `[transfer].hostname`。Curvine 根据该 hostname 和 `transfer.rpcPort` 自动推导 RPC 地址；常规 Helm 部署不要配置 `endpoints`。
 
-`transfer.storeUrl` 为空时使用单 Pod SQLite 开发默认值，数据位于 `emptyDir`，只会跨同一 Pod 内的容器重启保留。生产环境使用 MySQL；`transfer.replicas > 1` 时 MySQL 是必需的。
+`transfer.storeUrl` 为空时使用单 Pod SQLite 默认值。Chart 会为其数据目录创建 `ReadWriteOnce` PVC，且不设置 `storageClassName`，因此 Kubernetes 自动使用默认 StorageClass；Pod 被替换后数据仍会保留。`transfer.replicas > 1` 时 MySQL 是必需的，高可用部署也建议使用 MySQL。
+
+SQLite 模式下，Transfer Deployment 使用 `Recreate`，使旧 Pod 在新 Pod 启动前释放 `ReadWriteOnce` 卷。Helm 卸载时会保留 SQLite PVC；只有明确丢弃 Transfer 元数据时才手动删除它。
 
 生成的 ConfigMap 同时供 Master、Worker 和 Transfer 使用。集群外 CLI 主机也必须使用 `[transfer] enabled = true` 的集群配置；客户端命令仍是 `cv load`、`cv export`、`cv load-status` 和 `cv cancel-load`。
 
@@ -173,7 +175,8 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 | 参数 | 默认值 | 说明 |
 |-----------|---------|-------------|
 | `transfer.enabled` | `false` | 未启用时不创建 Transfer 资源；关闭时保持旧 Master Load API。 |
-| `transfer.storeUrl` | `""` | 空值自动推导本地 SQLite。生产持久化存储使用 `mysql://...`。 |
+| `transfer.storeUrl` | `""` | 空值自动推导由 Chart 管理 PVC 的本地 SQLite。高可用或多副本使用 `mysql://...`。 |
+| `transfer.storage.size` | `1Gi` | SQLite PVC 的申请容量；Kubernetes 自动选择默认 StorageClass。 |
 | `transfer.replicas` | `1` | Transfer Pod 副本数。大于 1 时必须使用 MySQL `storeUrl`。 |
 | `transfer.rpcPort` | `9010` | Transfer RPC Service 与容器端口。 |
 | `transfer.webPort` | `9011` | Transfer `/healthz`、`/readyz`、`/metrics` 端口。 |

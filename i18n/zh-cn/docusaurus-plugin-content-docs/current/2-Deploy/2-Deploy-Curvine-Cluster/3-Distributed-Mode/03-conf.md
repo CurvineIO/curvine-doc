@@ -222,7 +222,7 @@ Master 不会将旧 Load / Export 请求转发给 Transfer。切换到 Transfer 
 
 ### 生产环境必填配置
 
-单进程本地开发只需设置 `enabled = true`，Curvine 会推导本地 SQLite。生产环境需要一个可连接的 MySQL URL：
+单个 Transfer 实例只需设置 `enabled = true`，Curvine 会推导本地 SQLite。高可用或多副本 Transfer 需要一个可连接的 MySQL URL：
 
 ```toml
 [transfer]
@@ -242,7 +242,7 @@ bin/curvine-transfer.sh start
 
 按以下顺序切换：
 
-1. 确保 MySQL 可达，并在共享集群配置中加入 `[transfer]`。
+1. 准备持久化的 Transfer 存储：单实例使用持久 SQLite 路径，高可用或多实例使用 MySQL；然后在共享集群配置中加入 `[transfer]`。
 2. 启动 Transfer，等待其 RPC 与 Web 端点就绪。
 3. 重启 Master 和 Worker，使其读取 `transfer.enabled = true`。
 4. 向 CLI 主机分发同一份配置，然后仍通过普通 `cv load` 或 `cv export` 提交任务。
@@ -256,7 +256,7 @@ bin/curvine-transfer.sh start
 | 字段 | 默认值 | 含义 |
 | --- | --- | --- |
 | `enabled` | `false` | 启用 Transfer 模式。`false` 保留旧 Master Load / Export 路径。 |
-| `store_url` | 推导后为 `sqlite://data/transfer/transfer.db` | 任务元数据存储。生产环境和多副本 Transfer 使用 `mysql://...`。 |
+| `store_url` | 推导后为 `sqlite://data/transfer/transfer.db` | 任务元数据存储。单实例使用持久 SQLite 路径；高可用或多副本 Transfer 使用 `mysql://...`。 |
 | `hostname` | `localhost` | 对外声明的 Transfer 主机名。Kubernetes Chart 会自动设置为集群内 Service DNS。 |
 | `rpc_port` | `9010` | Transfer RPC 端口。 |
 | `web_port` | `9011` | 提供 `/healthz`、`/readyz`、`/metrics` 的 Web 端口。 |
