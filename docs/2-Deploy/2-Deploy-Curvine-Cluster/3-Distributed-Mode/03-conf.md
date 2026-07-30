@@ -37,7 +37,8 @@ The current `ClusterConf` contains these main sections:
 | `[fuse]` | FUSE mount and cache settings |
 | `[log]` | Global client / FUSE log settings |
 | `[s3_gateway]` | S3-compatible gateway settings |
-| `[job]` | Load-job lifecycle and concurrency settings |
+| `[job]` | Legacy Master load-job lifecycle and concurrency settings |
+| `[transfer]` | Standalone Load / Export service configuration |
 | `[cli]` | CLI log settings |
 
 :::warning
@@ -213,6 +214,78 @@ Important FUSE defaults from `FuseConf`:
 | `check_permission` | `true` | Enforce permission checks |
 | `list_limit` | `1000` | Directory listing limit |
 
+## `[transfer]`
+
+Transfer separates Load and Export orchestration from Master. It is disabled by
+default, so an existing cluster continues to use the legacy Master Load API
+unchanged. When enabled, `cv load`, `cv export`, `cv load-status`, and
+`cv cancel-load` keep the same syntax but call Transfer directly.
+
+There is no Master-side redirect. The Master rejects a legacy Load / Export
+submission after it has been switched to Transfer mode, because accepting both
+paths would create two independent job owners. Therefore Master, Worker,
+Transfer, and external CLI hosts must use the same `[transfer]` setting during
+the cutover.
+
+### Required production settings
+
+For a single local development process, `enabled = true` is enough: Curvine
+infers a local SQLite database. Production requires a reachable MySQL URL:
+
+```toml
+[transfer]
+enabled = true
+store_url = "mysql://transfer_user:password@mysql.example:3306/curvine_transfer"
+```
+
+Do not place a production password in source control. Distribute the same
+runtime configuration through the deployment system already used for the
+cluster and for CLI hosts.
+
+### Start and cut over
+
+For a package or bare-metal deployment, install a Curvine version containing
+the Transfer binary on the service host, then use the normal cluster config:
+
+```bash
+bin/curvine-transfer.sh start
+```
+
+Cut over in this order:
+
+1. Make MySQL reachable and add `[transfer]` to the shared cluster config.
+2. Start Transfer and wait for its RPC and web endpoints to become ready.
+3. Restart Master and Worker so they read `transfer.enabled = true`.
+4. Distribute the same config to CLI hosts, then submit with normal `cv load`
+   or `cv export` commands.
+
+Pause new Load / Export submissions while steps 2-4 are in progress. A CLI
+that still has `enabled = false` after Master has switched reports a clear
+legacy-API-disabled error; it is not silently redirected.
+
+### Parameters
+
+Only the following fields are operator configuration. Time values use Curvine
+duration syntax such as `90s`, `24h`, and `168h`.
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `enabled` | `false` | Enables Transfer mode. `false` preserves the legacy Master Load / Export path. |
+| `store_url` | `sqlite://data/transfer/transfer.db` after inference | Job metadata store. Use `mysql://...` for durable production operation and for more than one Transfer replica. |
+| `hostname` | `localhost` | Advertised Transfer hostname. In Kubernetes the chart sets the internal Service DNS automatically. |
+| `rpc_port` | `9010` | Transfer RPC port. |
+| `web_port` | `9011` | Transfer web endpoint for `/healthz`, `/readyz`, and `/metrics`. |
+| `endpoints` | `[]` | Client RPC endpoints. Empty automatically becomes `hostname:rpc_port`; normally leave it empty. |
+| `instance_id` | empty | Lease owner ID. Empty generates a unique ID on each Transfer process start. |
+| `cv_metadata_reader` | `auto` | Resolves to the metadata replica reader. A MySQL production store requires this effective value to be `replica`. |
+| `max_running_transfers` | `64` | Maximum transfers allowed to run concurrently. |
+| `lease_timeout` | `120s` | Lease duration used to recover work from a lost Transfer instance. |
+| `terminal_retention` | `168h` | Retention period for completed, failed, or canceled transfer records. |
+
+`store_type`, `sqlite_path`, and `mysql_url` are compatibility inputs from an
+earlier configuration shape. Use `store_url`; it determines the store type from
+the URI and needs no separate selector.
+
 ## `[log]`, `[cli]`, `[job]`, `[s3_gateway]`
 
 ### Global `[log]`
@@ -224,6 +297,10 @@ The top-level `[log]` section is the shared client/FUSE log config. In the sampl
 `CliConf` is intentionally small: it currently contains only `log`, and the default CLI log level is `warn`.
 
 ### `[job]`
+
+`[job]` configures the legacy Master job implementation used while
+`transfer.enabled = false`. After the Transfer cutover, job ownership,
+recovery, and retention use `[transfer]` instead.
 
 Important job defaults from `JobConf`:
 
@@ -277,6 +354,9 @@ master_addrs = [
   { hostname = "master2", port = 8995 },
   { hostname = "master3", port = 8995 },
 ]
+
+[transfer]
+enabled = false
 
 [fuse]
 mnt_path = "/curvine-fuse"

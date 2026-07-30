@@ -22,6 +22,8 @@ Helm release `curvine` 部署于 namespace `curvine`：
 | StatefulSet `curvine-worker` | 数据节点 |
 | Service `curvine-master` | Headless，RPC 8995 |
 | Service `curvine-worker` | Headless，RPC 8997 |
+| Deployment `curvine-transfer` | Load / Export 服务，仅在启用时创建 |
+| Service `curvine-transfer` | 集群内 Transfer RPC 与 Web 端点，仅在启用时创建 |
 
 默认 `openKruise.enabled=false`，StatefulSet 使用 `apps/v1`。
 
@@ -43,6 +45,30 @@ helm upgrade --install curvine curvine/curvine \
   --create-namespace \
   --wait --timeout 10m
 ```
+
+### 启用 Transfer
+
+使用包含 Transfer 二进制的 Curvine 镜像版本；不要只因 Chart 支持以下参数就使用较旧的镜像 tag。生产环境必须先保证 MySQL 可达，再启动 Transfer Pod：
+
+```yaml title="transfer-values.yaml"
+transfer:
+  enabled: true
+  storeUrl: "mysql://transfer_user:password@mysql.curvine.svc:3306/curvine_transfer"
+  replicas: 1
+```
+
+```bash
+helm upgrade --install curvine curvine/curvine \
+  -n curvine \
+  -f transfer-values.yaml \
+  --wait --timeout 10m
+```
+
+Chart 会创建仅集群内可见的 `curvine-transfer` `ClusterIP` Service，并将其 FQDN 写入 `[transfer].hostname`。Curvine 根据该 hostname 和 `transfer.rpcPort` 自动推导 RPC 地址；常规 Helm 部署不要配置 `endpoints`。
+
+`transfer.storeUrl` 为空时使用单 Pod SQLite 开发默认值，数据位于 `emptyDir`，只会跨同一 Pod 内的容器重启保留。生产环境使用 MySQL；`transfer.replicas > 1` 时 MySQL 是必需的。
+
+生成的 ConfigMap 同时供 Master、Worker 和 Transfer 使用。集群外 CLI 主机也必须使用 `[transfer] enabled = true` 的集群配置；客户端命令仍是 `cv load`、`cv export`、`cv load-status` 和 `cv cancel-load`。
 
 ### 验证
 
@@ -141,6 +167,20 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 | `openKruise.persistentPodState.requiredPersistentTopology` | `""` | 强制拓扑键（可选） |
 | `kruise.installation.namespace` | `kruise-system` | Kruise 子 chart 命名空间（启用时） |
 | `kruise.installation.createNamespace` | `true` | 创建 Kruise 命名空间 |
+
+### Transfer
+
+| 参数 | 默认值 | 说明 |
+|-----------|---------|-------------|
+| `transfer.enabled` | `false` | 未启用时不创建 Transfer 资源；关闭时保持旧 Master Load API。 |
+| `transfer.storeUrl` | `""` | 空值自动推导本地 SQLite。生产持久化存储使用 `mysql://...`。 |
+| `transfer.replicas` | `1` | Transfer Pod 副本数。大于 1 时必须使用 MySQL `storeUrl`。 |
+| `transfer.rpcPort` | `9010` | Transfer RPC Service 与容器端口。 |
+| `transfer.webPort` | `9011` | Transfer `/healthz`、`/readyz`、`/metrics` 端口。 |
+| `transfer.resources.requests.cpu` | `500m` | CPU request。 |
+| `transfer.resources.requests.memory` | `1Gi` | 内存 request。 |
+| `transfer.resources.limits.cpu` | `1000m` | CPU limit。 |
+| `transfer.resources.limits.memory` | `2Gi` | 内存 limit。 |
 
 ### Master
 
@@ -249,6 +289,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 | `configOverrides.journal` | `{}` | Journal 段覆盖 |
 | `configOverrides.worker` | `{}` | Worker 段覆盖 |
 | `configOverrides.client` | `{}` | Client 段覆盖 |
+| `configOverrides.transfer` | `{}` | `[transfer]` 额外公开配置，如 `max_running_transfers`、`lease_timeout`、`terminal_retention`。Chart 管理的 `enabled`、`hostname`、端口和 `store_url` 不能在此覆盖。 |
 | `configOverrides.log` | `{}` | Log 段覆盖 |
 
 ### 存储方式
