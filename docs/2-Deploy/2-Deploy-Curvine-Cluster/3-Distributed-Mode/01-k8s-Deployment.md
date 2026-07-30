@@ -50,7 +50,8 @@ helm upgrade --install curvine curvine/curvine \
 
 Use a Curvine image release that contains the Transfer binary. Do not use an
 older chart image tag just because the chart itself supports the values below.
-For production, MySQL must be reachable before the Transfer Pod starts:
+For high availability or more than one Transfer replica, MySQL must be reachable
+before the Transfer Pod starts:
 
 ```yaml title="transfer-values.yaml"
 transfer:
@@ -71,9 +72,15 @@ writes its Service FQDN to `[transfer].hostname`. Curvine infers the RPC
 endpoint from that hostname and `transfer.rpcPort`; do not configure
 `endpoints` in normal Helm deployments.
 
-An empty `transfer.storeUrl` is a single-Pod SQLite development default. It
-uses an `emptyDir`, so it survives only container restarts in the same Pod. Use
-MySQL for production, and MySQL is mandatory when `transfer.replicas > 1`.
+An empty `transfer.storeUrl` uses the single-Pod SQLite default. The chart
+creates a `ReadWriteOnce` PVC for its data directory without setting
+`storageClassName`, so Kubernetes uses the default StorageClass. The PVC
+persists across Pod replacement. MySQL is mandatory when
+`transfer.replicas > 1` and recommended for high availability.
+
+For SQLite, the Transfer Deployment uses `Recreate` so the old Pod detaches its
+`ReadWriteOnce` volume before a replacement starts. Helm retains the SQLite PVC
+on uninstall; delete it explicitly only when discarding Transfer metadata.
 
 The generated ConfigMap is used by Master, Worker, and Transfer. External CLI
 hosts must also use a cluster config with `[transfer] enabled = true`; the CLI
@@ -248,7 +255,8 @@ Set `openKruise.enabled=true` to install the kruise subchart and switch master/w
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `transfer.enabled` | `false` | Creates no Transfer resources until enabled; disabled mode preserves the legacy Master Load API. |
-| `transfer.storeUrl` | `""` | Empty infers local SQLite. Use `mysql://...` for durable production storage. |
+| `transfer.storeUrl` | `""` | Empty infers local SQLite backed by a chart-managed PVC. Use `mysql://...` for high availability or multiple replicas. |
+| `transfer.storage.size` | `1Gi` | Requested capacity for the SQLite PVC. Kubernetes selects the default StorageClass. |
 | `transfer.replicas` | `1` | Transfer Pod replicas. Values greater than one require a MySQL `storeUrl`. |
 | `transfer.rpcPort` | `9010` | Transfer RPC Service and container port. |
 | `transfer.webPort` | `9011` | Transfer `/healthz`, `/readyz`, and `/metrics` port. |

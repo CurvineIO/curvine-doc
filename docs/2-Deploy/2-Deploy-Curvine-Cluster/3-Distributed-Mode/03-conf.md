@@ -229,8 +229,9 @@ the cutover.
 
 ### Required production settings
 
-For a single local development process, `enabled = true` is enough: Curvine
-infers a local SQLite database. Production requires a reachable MySQL URL:
+For a single Transfer instance, `enabled = true` is enough: Curvine infers a
+local SQLite database. High availability and more than one Transfer replica
+require a reachable MySQL URL:
 
 ```toml
 [transfer]
@@ -253,7 +254,9 @@ bin/curvine-transfer.sh start
 
 Cut over in this order:
 
-1. Make MySQL reachable and add `[transfer]` to the shared cluster config.
+1. Prepare persistent Transfer storage: a durable SQLite path for one instance,
+   or MySQL for high availability and multiple instances. Add `[transfer]` to
+   the shared cluster config.
 2. Start Transfer and wait for its RPC and web endpoints to become ready.
 3. Restart Master and Worker so they read `transfer.enabled = true`.
 4. Distribute the same config to CLI hosts, then submit with normal `cv load`
@@ -271,7 +274,7 @@ duration syntax such as `90s`, `24h`, and `168h`.
 | Field | Default | Meaning |
 | --- | --- | --- |
 | `enabled` | `false` | Enables Transfer mode. `false` preserves the legacy Master Load / Export path. |
-| `store_url` | `sqlite://data/transfer/transfer.db` after inference | Job metadata store. Use `mysql://...` for durable production operation and for more than one Transfer replica. |
+| `store_url` | `sqlite://data/transfer/transfer.db` after inference | Job metadata store. Use a persistent SQLite path for one Transfer instance, or `mysql://...` for high availability and more than one replica. |
 | `hostname` | `localhost` | Advertised Transfer hostname. In Kubernetes the chart sets the internal Service DNS automatically. |
 | `rpc_port` | `9010` | Transfer RPC port. |
 | `web_port` | `9011` | Transfer web endpoint for `/healthz`, `/readyz`, and `/metrics`. |
