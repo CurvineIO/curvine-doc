@@ -143,7 +143,7 @@ entries:
     version: 0.3.1-alpha
   - apiVersion: v2
     appVersion: latest
-    created: "2026-07-13T08:30:10.704522749Z"
+    created: "2026-07-30T01:32:18.431934855Z"
     dependencies:
     - condition: openKruise.enabled
       name: kruise
@@ -151,7 +151,7 @@ entries:
       version: 1.9.0
     description: A Helm chart for deploying Curvine distributed multi-level cache
       system cluster on Kubernetes
-    digest: 8a16d2caca68e182e2c60f7a14763102f02158aa3b717ac82e19af470f063eac
+    digest: cdc8c7b1371d3c9f44d51a934958c93d84af0d4995d2533b3f4d08df886303f3
     home: https://github.com/CurvineIO/curvine
     icon: https://curvineio.github.io/img/curvine_logo.png
     keywords:
@@ -277,9 +277,9 @@ entries:
     version: 0.3.1-alpha
   - apiVersion: v2
     appVersion: latest
-    created: "2026-07-13T08:30:10.706112278Z"
+    created: "2026-07-30T01:32:18.433072503Z"
     description: A Helm chart for Curvine CSI Driver
-    digest: fe519b7cadbe5916de1b831b5732798e4f5bc962432d634578e5bbd880530c63
+    digest: 7f329aa720f9ba28e5d1a37a13ef568c57b7638753fbbb4c91470ef575178f12
     home: https://github.com/CurvineIO/curvine
     keywords:
     - storage
@@ -296,4 +296,4 @@ entries:
     urls:
     - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-csi-0.0.0-dev.tgz
     version: 0.0.0-dev
-generated: "2026-07-24T01:28:06.267235698Z"
+generated: "2026-07-30T01:32:18.42787857Z"
