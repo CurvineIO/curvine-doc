@@ -65,31 +65,25 @@ bin/cv mount hdfs://namenode:9000/data /mnt/hdfs
 
 ### Load Feature - Loading External Data
 
-The `load` feature allows directly loading data from external storage into Curvine, supporting single file or batch loading.
-
-#### Single File Load Examples
-
-```bash
-# Load single file from S3
-bin/cv load s3://flink/user/simple_test.txt \
-    -c s3.endpoint_url=http://s3v2.dg-access-test.wanyol.com \
-    -c s3.region_name=cn-south-1 \
-    -c s3.credentials.access=*** \
-    -c s3.credentials.secret=***
-```
-
-#### Batch Load Examples
+Mount an external path once, including its UFS credentials and endpoint, then
+load through the mounted Curvine path. This keeps credentials out of every
+Load invocation and makes the source-to-target mapping unambiguous.
 
 ```bash
-# Load entire directory from OSS
-bin/cv load oss://my-bucket/datasets/ \
-    -c oss.endpoint_url=https://oss-cn-hangzhou.aliyuncs.com \
-    -c oss.credentials.access_key_id=*** \
-    -c oss.credentials.access_key_secret=***
+# The S3 path is already mounted at /mnt/s3.
+cv load /mnt/s3/simple_test.txt --watch
 
-# Load from HDFS
-bin/cv load hdfs://namenode:9000/data/logs/
+# Load a mounted OSS directory.
+cv load /mnt/oss/datasets --watch
+
+# Load a mounted HDFS directory.
+cv load /mnt/hdfs/logs --watch
 ```
+
+When Transfer is enabled in the client configuration, the same `cv load`
+command submits an independent Transfer job. See
+[Transfer Service deployment](../2-Deploy/3-Transfer-Service/0-Overview.md)
+for service and client configuration.
 
 ### Configuration Parameters
 
@@ -153,5 +147,4 @@ export LD_LIBRARY_PATH=/opt/hadoop/lib/native:$LD_LIBRARY_PATH
 ```
 
 **Note**: Ensure all Worker nodes have the correct Java and Hadoop environment variables configured, otherwise HDFS mount and load operations will fail.
-
 

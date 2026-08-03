@@ -39,7 +39,7 @@ Commands:
 
 | 全局参数 | 说明 |
 |----------|------|
-| `-c, --conf <PATH>` | 仅覆盖本次调用的集群配置文件。未指定时 CLI 使用正常配置路径或 `CURVINE_CONF_FILE`。 |
+| `--conf <PATH>` | 仅覆盖本次调用的集群配置文件。未指定时 CLI 使用正常配置路径或 `CURVINE_CONF_FILE`。 |
 | `--master-addrs <ADDRS>` | 直接覆盖客户端配置里的 Master 地址列表，例如 `m1:8995,m2:8995`。 |
 
 :::tip
@@ -281,35 +281,38 @@ cv umount /bucket/datasets
 
 ---
 
-### 6. `load`：提交加载任务
+### 6. `load`：提交 Load 任务
 
-**用法：** `cv load [OPTIONS] <PATH>`
+**用法：** `cv load [OPTIONS] <SOURCE_PATH> [TARGET_PATH]`
 
 | 选项 / 参数 | 说明 |
 |-------------|------|
-| `<PATH>` | 要加载的源路径。通常是已经建立挂载关系的 UFS 路径。 |
+| `<SOURCE_PATH>` | UFS 源 URI，或已有 mount 下的 Curvine 路径。 |
+| `[TARGET_PATH]` | 可选 Curvine 目标路径。已挂载源路径会自动推导目标。 |
 | `-w, --watch` | 提交后立即持续观察任务状态。 |
-| `--conf <PATH>` | 可选的单次配置覆盖；日常使用不需要。 |
+| `--no-overwrite` | 目标已经存在时失败，不覆盖目标。 |
 
 示例：
 
 ```bash
-cv load s3://bucket/datasets/train/part-0001.parquet
-cv load s3://bucket/datasets/train/part-0001.parquet --watch
+cv load /datasets/train/part-0001.parquet --watch
+cv load s3://bucket/datasets/train/part-0001.parquet /datasets/train/part-0001.parquet --no-overwrite --watch
 ```
 
-成功时命令会输出 `job_id` 和 `target_path`，后续可交给 `load-status` 或 `cancel-load`。
+启用 Transfer 后，`load` 会提交 Transfer Job；否则使用旧 Master Job 路径。两种模式
+下命令都会输出 Job ID 和目标路径。
 
 #### Transfer 路由
 
 启用独立 Transfer 后，命令行不变：
 
-| 集群配置 | `cv load` / `cv export` 路由 |
+| 客户端配置 | `cv load` / `cv export` 路由 |
 | --- | --- |
 | `[transfer] enabled = false` | 为兼容已有集群，调用旧 Master Load API。 |
 | `[transfer] enabled = true` | CLI 直接调用 Transfer 服务 RPC。 |
 
-Master 不会将旧请求代理到 Transfer。切换时，必须保证 CLI 与集群使用相同的 `[transfer]` 配置；过期的 CLI 配置会被拒绝，避免产生第二个任务所有者。
+Transfer 服务和客户端都需要配置 Transfer。按客户端切换时无需修改 Master 和 Worker
+配置；`transfer.enabled = false` 的客户端会继续调用旧 Master API。
 
 ---
 
@@ -377,6 +380,9 @@ cv cancel-load <job_id>
 ### 10. `transfer`：运维 Transfer 任务
 
 `cv transfer` 仅在 `[transfer] enabled = true` 时可用。它用于列举、查看、重试和分页查询 Transfer 任务；日常提交仍使用 `cv load` 或 `cv export`。
+
+该命令要求客户端配置可访问的 Transfer endpoint。服务部署见
+[Transfer 服务](../../2-Deploy/3-Transfer-Service/0-Overview.md)。
 
 | 命令 | 说明 |
 | --- | --- |

@@ -67,31 +67,22 @@ bin/cv mount hdfs://namenode:9000/data /mnt/hdfs
 
 ### Load 功能 - 加载外部数据
 
-`load` 功能允许直接从外部存储加载数据到 Curvine 中，支持单文件或批量加载。
-
-#### 单文件加载示例
-
-```bash
-# 从 S3 加载单个文件
-bin/cv load s3://flink/user/simple_test.txt \
-    -c s3.endpoint_url=http://s3v2.dg-access-test.wanyol.com \
-    -c s3.region_name=cn-south-1 \
-    -c s3.credentials.access=*** \
-    -c s3.credentials.secret=***
-```
-
-#### 批量加载示例
+外部路径只需在挂载时配置一次，包括 UFS 凭据和 endpoint；随后通过挂载后的 Curvine
+路径加载。这样无需在每次 Load 命令中传递凭据，源路径和目标路径的映射也更明确。
 
 ```bash
-# 从 OSS 加载整个目录
-bin/cv load oss://my-bucket/datasets/ \
-    -c oss.endpoint_url=https://oss-cn-hangzhou.aliyuncs.com \
-    -c oss.credentials.access_key_id=*** \
-    -c oss.credentials.access_key_secret=***
+# S3 已挂载到 /mnt/s3。
+cv load /mnt/s3/simple_test.txt --watch
 
-# 从 HDFS 加载
-bin/cv load hdfs://namenode:9000/data/logs/
+# 加载已挂载的 OSS 目录。
+cv load /mnt/oss/datasets --watch
+
+# 加载已挂载的 HDFS 目录。
+cv load /mnt/hdfs/logs --watch
 ```
+
+客户端启用 Transfer 后，同一个 `cv load` 会提交独立的 Transfer Job。服务和客户端配置
+见 [Transfer 服务部署](../2-Deploy/3-Transfer-Service/0-Overview.md)。
 
 ### 配置参数说明
 
@@ -155,4 +146,3 @@ export LD_LIBRARY_PATH=/opt/hadoop/lib/native:$LD_LIBRARY_PATH
 ```
 
 **注意**：请确保所有 Worker 节点都配置了正确的 Java 和 Hadoop 环境变量，否则 HDFS 挂载和加载操作将会失败。
-

@@ -27,6 +27,12 @@ Helm release `curvine` 部署于 namespace `curvine`：
 
 默认 `openKruise.enabled=false`，StatefulSet 使用 `apps/v1`。
 
+## Transfer 服务
+
+Transfer 是用于独立调度 Load 和 Export 的可选服务。当前 Helm Chart 不会创建该服务，
+并且部署它不需要修改正在运行的 Master 或 Worker 配置。应在集群健康后单独部署，参见
+[Kubernetes 部署 Transfer](../../3-Transfer-Service/2-Kubernetes.md)。
+
 ## 部署
 
 ### 添加仓库

@@ -39,7 +39,7 @@ All `cv` commands accept these global options:
 
 | Global option | Description |
 |---------------|-------------|
-| `-c, --conf <PATH>` | Override the cluster config file for this invocation. If omitted, the CLI uses its normal configured path or `CURVINE_CONF_FILE`. |
+| `--conf <PATH>` | Override the cluster config file for this invocation. If omitted, the CLI uses its normal configured path or `CURVINE_CONF_FILE`. |
 | `--master-addrs <ADDRS>` | Override the client-side master address list directly, for example `m1:8995,m2:8995`. |
 
 :::tip
@@ -284,37 +284,41 @@ cv umount /bucket/datasets
 
 ---
 
-### 6. `load`: submit a load job
+### 6. `load`: submit a Load job
 
-**Usage:** `cv load [OPTIONS] <PATH>`
+**Usage:** `cv load [OPTIONS] <SOURCE_PATH> [TARGET_PATH]`
 
 | Option / Argument | Description |
 |-------------------|-------------|
-| `<PATH>` | Source path to load. In practice this is usually a UFS path that already belongs to a mount. |
+| `<SOURCE_PATH>` | UFS source URI or a Curvine path below an existing mount. |
+| `[TARGET_PATH]` | Optional Curvine destination. A mounted source path derives its target automatically. |
 | `-w, --watch` | Watch job status immediately after submission. |
-| `--conf <PATH>` | Optional one-command config override; normal use does not need it. |
+| `--no-overwrite` | Fail instead of replacing an existing target. |
 
 Examples:
 
 ```bash
-cv load s3://bucket/datasets/train/part-0001.parquet
-cv load s3://bucket/datasets/train/part-0001.parquet --watch
+cv load /datasets/train/part-0001.parquet --watch
+cv load s3://bucket/datasets/train/part-0001.parquet /datasets/train/part-0001.parquet --no-overwrite --watch
 ```
 
-On success, the command prints `job_id` and `target_path`, which can then be used with `load-status` or `cancel-load`.
+With Transfer enabled, `load` submits a Transfer job. Otherwise it uses the
+legacy Master job path. The command prints a job ID and target path in either
+mode.
 
 #### Transfer routing
 
 The command line does not change when standalone Transfer is enabled:
 
-| Cluster configuration | `cv load` / `cv export` route |
+| Client configuration | `cv load` / `cv export` route |
 | --- | --- |
 | `[transfer] enabled = false` | Legacy Master Load API, for backward compatibility. |
 | `[transfer] enabled = true` | Transfer service RPC, selected directly by the CLI. |
 
-The Master does not proxy legacy submissions to Transfer. During a cutover, make
-sure the CLI has the same `[transfer]` configuration as the cluster; a stale
-CLI config is rejected rather than creating a second job owner.
+The Transfer service and the client must both be configured for Transfer. Master
+and Worker configuration does not change for a client-side rollout. A client
+with `transfer.enabled = false` continues to submit through the legacy Master
+API.
 
 ---
 
@@ -385,6 +389,9 @@ cv cancel-load <job_id>
 `cv transfer` is available only when `[transfer] enabled = true`. It is the
 operations command for listing, inspecting, retrying, and paging Transfer jobs;
 normal submission remains `cv load` or `cv export`.
+
+It requires a reachable Transfer endpoint in the client configuration. See
+[Transfer Service](../../2-Deploy/3-Transfer-Service/0-Overview.md) for deployment.
 
 | Command | Description |
 | --- | --- |

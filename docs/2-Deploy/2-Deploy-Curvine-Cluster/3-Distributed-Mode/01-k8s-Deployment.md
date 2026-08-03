@@ -27,6 +27,13 @@ Helm release `curvine` is deployed in namespace `curvine`:
 
 `openKruise.enabled` defaults to `false`. StatefulSets use `apps/v1`.
 
+## Transfer Service
+
+Transfer is an optional service for independent Load and Export scheduling. It
+is not created by the current Helm chart and does not require changing the
+running Master or Worker configuration. Deploy it separately after the cluster
+is healthy; see [Deploy Transfer on Kubernetes](../../3-Transfer-Service/2-Kubernetes.md).
+
 ## Deployment
 
 ### Add repository
