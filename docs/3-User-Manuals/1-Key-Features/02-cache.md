@@ -206,23 +206,30 @@ Example log output:
 Submit async cache successfully for s3://bucket/cache/test.log, job res CacheJobResult { job_id: 7c00853f-13c8-43c1-8b3f-44740750b5a0, target_path: /s3/cache/test.log }
 ```
 
-Use the `job_id` to query the caching task status:
+When the client has Transfer enabled, automatic caching creates a Transfer job.
+Use the job ID to query its status:
 
 ```plain
-cv load-status 7c00853f-13c8-43c1-8b3f-44740750b5a0
+cv transfer status 7c00853f-13c8-43c1-8b3f-44740750b5a0
 ```
+
+`load-status` remains a compatibility command. A client without Transfer
+enabled continues to query the legacy Master job path.
 
 ### 9.2 Proactive Caching
 
-You can proactively load UFS data into Curvine using the `load` command:
+Mount the UFS first, then proactively load its Curvine path:
 
 ```plain
-cv load s3://bucket/cache/test.log
+cv load /data/cache/test.log --watch
 ```
 
 Automatic caching and proactive caching are not mutually exclusive. Proactive caching can reduce the time required for the first read of a UFS file.
 
-When Transfer is enabled, use `cv transfer list` and `cv transfer status <job_id>` for job-wide operations. `cv load-status` remains the compatible status command.
+With Transfer enabled in the client configuration, `cv load` automatically
+submits a Transfer job. Use `cv transfer list` and `cv transfer status <job_id>`
+for job-wide operations. Deployment and client routing are described in
+[Transfer Service](../../2-Deploy/3-Transfer-Service/0-Overview.md).
 
 :::tip
 Before loading data, the UFS must first be mounted to Curvine with `cv mount`.

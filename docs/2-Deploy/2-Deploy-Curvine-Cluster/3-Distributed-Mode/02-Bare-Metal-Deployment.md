@@ -48,6 +48,11 @@ flowchart TB
 - **Cluster core (required):** Start `curvine-master` and `curvine-worker` on the intended hosts. The cluster is operational once Master and Workers are running; you can use the CLI (`cv`) or SDK without FUSE.
 - **FUSE (optional):** Start `curvine-fuse` only when you need a POSIX filesystem mount (e.g. for legacy tools or scripts). FUSE is not a core service—the cluster does not depend on it to start or run.
 
+When Load and Export jobs need independent scheduling, deploy Transfer as a
+separate optional service after the cluster is healthy. It does not join the
+Master Raft group and does not require a Master or Worker configuration change.
+See [Deploy Transfer on Bare Metal](../../3-Transfer-Service/1-Bare-Metal.md).
+
 :::info
 **FUSE is not part of cluster startup.** The Curvine cluster is formed by Master and Worker nodes. FUSE is one of several access methods (along with CLI, SDK, S3 gateway) and is only needed when applications require a local mount point.
 :::

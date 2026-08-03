@@ -206,23 +206,27 @@ quota_eviction_high_rate = 0.8
 Submit async cache successfully for s3://bucket/cache/test.log, job res CacheJobResult { job_id: 7c00853f-13c8-43c1-8b3f-44740750b5a0, target_path: /s3/cache/test.log }
 ```
 
-可用 `job_id` 查询缓存任务状态：
+客户端启用 Transfer 后，自动缓存会创建 Transfer Job。可使用 Job ID 查询状态：
 
 ```plain
-cv load-status 7c00853f-13c8-43c1-8b3f-44740750b5a0
+cv transfer status 7c00853f-13c8-43c1-8b3f-44740750b5a0
 ```
+
+`load-status` 仍是兼容命令。未启用 Transfer 的客户端仍查询旧 Master Job 路径。
 
 ### 9.2 主动缓存
 
-可以使用 `load` 命令主动加载 UFS 数据到 Curvine，示例如下：
+先挂载 UFS，再通过它在 Curvine 中的路径主动加载：
 
 ```plain
-cv load s3://bucket/cache/test.log
+cv load /data/cache/test.log --watch
 ```
 
 自动缓存与主动缓存可同时使用；主动缓存可缩短该文件首次读取的等待时间。
 
-启用 Transfer 后，可使用 `cv transfer list` 和 `cv transfer status <job_id>` 执行任务级运维；`cv load-status` 仍是兼容的状态查询命令。
+客户端启用 Transfer 后，同一个 `cv load` 会自动提交 Transfer Job。服务部署和客户端
+路由见 [Transfer 服务](../../2-Deploy/3-Transfer-Service/0-Overview.md)。可使用
+`cv transfer list` 和 `cv transfer status <job_id>` 执行任务级运维。
 
 :::tip
 加载数据前，须先将 UFS 挂载到 Curvine（`cv mount`）。

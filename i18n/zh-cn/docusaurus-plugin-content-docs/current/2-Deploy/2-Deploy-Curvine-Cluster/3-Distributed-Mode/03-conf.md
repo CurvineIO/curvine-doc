@@ -37,8 +37,8 @@ Curvine 常见的配置输入包括：
 | `[fuse]` | FUSE 挂载与缓存参数 |
 | `[log]` | 全局 client / fuse 日志 |
 | `[s3_gateway]` | S3 兼容网关配置 |
-| `[job]` | 旧 Master load 任务的生命周期与并发控制 |
-| `[transfer]` | 独立的 Load / Export 服务配置 |
+| `[job]` | load 任务生命周期与并发控制 |
+| `[transfer]` | 独立 Load / Export 服务、状态存储和客户端路由 |
 | `[cli]` | CLI 日志配置 |
 
 :::warning
@@ -214,61 +214,6 @@ data_dir = [
 | `check_permission` | `true` | 是否执行权限检查 |
 | `list_limit` | `1000` | 目录列举数量限制 |
 
-## `[transfer]`
-
-Transfer 将 Load 和 Export 的编排从 Master 中独立出来。默认关闭，因此已有集群继续使用旧 Master Load API，不改变原有行为。开启后，`cv load`、`cv export`、`cv load-status` 和 `cv cancel-load` 命令不变，但会由 CLI 直接调用 Transfer。
-
-Master 不会将旧 Load / Export 请求转发给 Transfer。切换到 Transfer 模式后，Master 会拒绝旧请求，因为同时接受两条路径会产生两个独立的任务所有者。因此切换时，Master、Worker、Transfer 和集群外的 CLI 都必须使用相同的 `[transfer]` 配置。
-
-### 生产环境必填配置
-
-单个 Transfer 实例只需设置 `enabled = true`，Curvine 会推导本地 SQLite。高可用或多副本 Transfer 需要一个可连接的 MySQL URL：
-
-```toml
-[transfer]
-enabled = true
-store_url = "mysql://transfer_user:password@mysql.example:3306/curvine_transfer"
-```
-
-不要将生产密码写入源码。通过现有的部署系统向集群和 CLI 主机分发同一份运行时配置。
-
-### 启动与切换
-
-包部署或裸机部署时，在服务主机安装包含 Transfer 二进制的 Curvine 版本，然后使用集群的正常配置启动：
-
-```bash
-bin/curvine-transfer.sh start
-```
-
-按以下顺序切换：
-
-1. 准备持久化的 Transfer 存储：单实例使用持久 SQLite 路径，高可用或多实例使用 MySQL；然后在共享集群配置中加入 `[transfer]`。
-2. 启动 Transfer，等待其 RPC 与 Web 端点就绪。
-3. 重启 Master 和 Worker，使其读取 `transfer.enabled = true`。
-4. 向 CLI 主机分发同一份配置，然后仍通过普通 `cv load` 或 `cv export` 提交任务。
-
-执行步骤 2 至 4 时暂停新的 Load / Export 提交。若 Master 已切换而 CLI 仍使用 `enabled = false`，会收到清晰的旧 API 已禁用错误，不会被静默转发。
-
-### 参数
-
-以下是运维需要配置的字段。时长使用 Curvine 格式，例如 `90s`、`24h` 和 `168h`。
-
-| 字段 | 默认值 | 含义 |
-| --- | --- | --- |
-| `enabled` | `false` | 启用 Transfer 模式。`false` 保留旧 Master Load / Export 路径。 |
-| `store_url` | 推导后为 `sqlite://data/transfer/transfer.db` | 任务元数据存储。单实例使用持久 SQLite 路径；高可用或多副本 Transfer 使用 `mysql://...`。 |
-| `hostname` | `localhost` | 对外声明的 Transfer 主机名。Kubernetes Chart 会自动设置为集群内 Service DNS。 |
-| `rpc_port` | `9010` | Transfer RPC 端口。 |
-| `web_port` | `9011` | 提供 `/healthz`、`/readyz`、`/metrics` 的 Web 端口。 |
-| `endpoints` | `[]` | 客户端 RPC 地址。为空时自动推导为 `hostname:rpc_port`，通常保持为空。 |
-| `instance_id` | 空 | 租约所有者 ID。为空时每个 Transfer 进程启动自动生成唯一 ID。 |
-| `cv_metadata_reader` | `auto` | 实际使用元数据副本读取器。MySQL 生产存储要求其生效值为 `replica`。 |
-| `max_running_transfers` | `64` | 同时运行的 Transfer 最大数量。 |
-| `lease_timeout` | `120s` | 用于从失联 Transfer 实例恢复任务的租约时长。 |
-| `terminal_retention` | `168h` | 已完成、失败或取消任务记录的保留时间。 |
-
-`store_type`、`sqlite_path` 和 `mysql_url` 是早期配置形态的兼容输入。新配置只使用 `store_url`，存储类型由 URI 自动推导，不需要单独指定。
-
 ## `[log]`、`[cli]`、`[job]`、`[s3_gateway]`
 
 ### 全局 `[log]`
@@ -281,7 +226,7 @@ bin/curvine-transfer.sh start
 
 ### `[job]`
 
-`[job]` 用于 `transfer.enabled = false` 时的旧 Master 任务实现。切换到 Transfer 后，任务所有权、恢复和保留策略由 `[transfer]` 控制。
+`[job]` 用于 `transfer.enabled = false` 的客户端所走的旧 Master 任务实现。Transfer Job 的任务所有权、恢复和保留策略由 `[transfer]` 控制。
 
 `JobConf` 中关键默认值：
 
@@ -293,6 +238,28 @@ bin/curvine-transfer.sh start
 | `task_timeout` | `1h` |
 | `task_report_interval` | `10s` |
 | `worker_max_concurrent_tasks` | `100` |
+
+## `[transfer]`
+
+`[transfer]` 由独立 Transfer 服务和需要将 Load / Export 提交给该服务的客户端读取。
+Transfer 服务除本段外，还需要正常的 `[client]` Master 地址。灰度阶段应保持 Master 和
+Worker 配置中的 Transfer 为关闭状态，只在 Transfer 服务和选定客户端配置中启用。
+
+| 字段 | 默认值 | 含义 |
+| --- | --- | --- |
+| `enabled` | `false` | 在当前进程启用 Transfer 路由。客户端启用后 `load`、`export` 使用 Transfer；Transfer 服务端启用后启动该服务。 |
+| `store_url` | `sqlite://data/transfer/transfer.db` | 状态存储 URL。单实例使用 `sqlite:///绝对路径.db`；多实例使用一个共享 `mysql://...` URL。 |
+| `hostname` | `localhost` | 未显式配置 endpoint 时使用的 RPC / Web 监听 hostname。 |
+| `rpc_port` | `9010` | Transfer RPC 端口。 |
+| `web_port` | `9011` | 健康检查和指标 HTTP 端口。 |
+| `endpoints` | 推导为 `["<hostname>:<rpc_port>"]` | 客户端访问的 Transfer RPC 地址。应填写 Service 或负载均衡地址，而不是监听地址。 |
+| `instance_id` | 空 | 可选的稳定服务 owner ID。留空时 Transfer 进程自动生成 UUID。 |
+| `max_running_transfers` | `64` | 当前 Transfer 实例可并发执行的最大 Job 数。 |
+| `lease_timeout` | `120s` | 恢复和多实例协调使用的 owner 租约时长。 |
+| `terminal_retention` | `168h` | Completed、Failed、Canceled Job 记录的保留时间。 |
+
+新配置不要使用兼容字段 `store_type`、`sqlite_path`、`mysql_url`。`store_url` 根据 URL
+scheme 推导存储后端。内部队列、探测和调度参数不属于公开的用户配置面。
 
 ### `[s3_gateway]`
 
