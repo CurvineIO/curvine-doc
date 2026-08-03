@@ -48,6 +48,10 @@ flowchart TB
 - **集群核心（必选）：** 在规划的主机上启动 `curvine-master` 与 `curvine-worker`。二者就绪后集群即可工作，可通过 CLI（`cv`）或 SDK 访问，**无需先启动 FUSE**。
 - **FUSE（可选）：** 仅当需要 POSIX 文件系统挂载（如兼容旧工具、脚本）时再启动 `curvine-fuse`。FUSE 不是核心服务，集群的启动与运行不依赖它。
 
+如需让 Load 和 Export 使用独立调度，应在集群健康后部署独立的可选 Transfer 服务。
+它不加入 Master Raft 组，也不要求修改 Master 或 Worker 配置。参见
+[物理机部署 Transfer](../../3-Transfer-Service/1-Bare-Metal.md)。
+
 :::info
 **FUSE 不参与集群启动。** Curvine 集群由 Master 与 Worker 组成。FUSE 与 CLI、SDK、S3 网关一样，只是多种访问方式之一，仅在应用需要本地挂载点时才有必要启用。
 :::
