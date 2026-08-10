@@ -19,6 +19,10 @@
     "message": "Discord",
     "description": "The label of footer link with label=Discord linking to https://discord.com/invite/xfxMQKv3"
   },
+  "link.item.label.Slack": {
+    "message": "Slack",
+    "description": "The label of footer link with label=Slack linking to https://join.slack.com/t/curvineio/shared_invite/zt-4673r43cn-prajma_q5ZI3BUxuaY5kiQ"
+  },
   "link.item.label.X": {
     "message": "X",
     "description": "The label of footer link with label=X linking to https://x.com/szbr8896"
