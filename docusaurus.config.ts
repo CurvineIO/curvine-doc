@@ -143,6 +143,10 @@ const config: Config = {
               href: 'https://discord.com/invite/xfxMQKv3',
             },
             {
+              label: 'Slack',
+              href: 'https://join.slack.com/t/curvineio/shared_invite/zt-4673r43cn-prajma_q5ZI3BUxuaY5kiQ',
+            },
+            {
               label: 'X',
               href: 'https://x.com/szbr8896',
             },
