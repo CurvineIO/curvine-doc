@@ -5,7 +5,7 @@ In addition to the SDK, S3 gateway, and CLI, Curvine provides **FUSE (Filesystem
 In cloud-native environments, FUSE can be used via volume mounts; Curvine also provides a [CSI driver](../5-K8S-CSI-Driver/01-Setup.md) for Kubernetes.
 
 :::info
-**FUSE is an optional access method.** The Curvine cluster (Master + Worker) must be running first. FUSE is only needed when applications require a POSIX mount point. See [Deployment Architecture](../../2-Deploy/2-Deploy-Curvine-Cluster/0-Deployment-Architecture.md) for the role of each component.
+**FUSE is an optional access method.** The Curvine cluster (Master + Worker) must be running first. FUSE is only needed when applications require a POSIX mount point. See [Deployment Architecture](../../2-Deploy/0-Deployment-Overview/0-Deployment-Architecture.md) for the role of each component.
 :::
 
 ## Architecture

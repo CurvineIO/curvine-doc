@@ -129,4 +129,4 @@ For native Curvine paths (non-UFS), writes go to Workers and are recorded in the
 | **Worker** | Block storage (BlockStore/BlockDataset), block read/write RPC, heartbeat to Master. |
 | **Client** | Get metadata and block locations from Master; read/write block data from/to Workers; for UFS mounts, apply write type and cache/consistency behavior. |
 
-For deployment topology and startup order, see [Deployment Architecture](/docs/Deploy/Deploy-Curvine-Cluster/Deployment-Architecture). For UFS and cache semantics, see [Data Orchestration](/docs/User-Manuals/Key-Features/ufs) and [Cache](/docs/User-Manuals/Key-Features/cache).
+For deployment topology and startup order, see [Deployment Architecture](/docs/Deploy/Deployment-Overview/Deployment-Architecture). For UFS and cache semantics, see [Data Orchestration](/docs/User-Manuals/Key-Features/ufs) and [Cache](/docs/User-Manuals/Key-Features/cache).

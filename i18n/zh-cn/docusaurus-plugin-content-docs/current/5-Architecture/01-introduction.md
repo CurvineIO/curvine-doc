@@ -129,4 +129,4 @@ Client 指使用 Curvine 文件系统的任何一方：**FUSE**、**Rust/Java/Py
 | **Worker** | 块存储（BlockStore/BlockDataset）、块读写 RPC、向 Master 心跳。 |
 | **Client** | 从 Master 获取元数据与块位置；从 Worker 读写块数据；UFS 挂载下按写类型与缓存/一致性策略执行。 |
 
-部署拓扑与启动顺序见 [部署架构](/zh-cn/docs/Deploy/Deploy-Curvine-Cluster/Deployment-Architecture)。UFS 与缓存语义见 [数据编排](/zh-cn/docs/User-Manuals/Key-Features/ufs) 与 [缓存](/zh-cn/docs/User-Manuals/Key-Features/cache)。
+部署拓扑与启动顺序见 [部署架构](/zh-cn/docs/Deploy/Deployment-Overview/Deployment-Architecture)。UFS 与缓存语义见 [数据编排](/zh-cn/docs/User-Manuals/Key-Features/ufs) 与 [缓存](/zh-cn/docs/User-Manuals/Key-Features/cache)。
