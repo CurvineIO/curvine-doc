@@ -70,7 +70,7 @@ In addition, Curvine provides foundational components:
 - **curvine-web**: Admin UI and cluster management
 - **Metrics**: Prometheus-based monitoring (master/worker/client, job, cache)
 
-For deployment topology and component roles, see [Deployment Architecture](../2-Deploy/2-Deploy-Curvine-Cluster/0-Deployment-Architecture.md). For internal data flow (journal, replay, client read/write), see [Basic Architecture](../5-Architecture/01-introduction.md).
+For deployment topology and component roles, see [Deployment Architecture](../2-Deploy/0-Deployment-Overview/0-Deployment-Architecture.md). For internal data flow (journal, replay, client read/write), see [Basic Architecture](../5-Architecture/01-introduction.md).
 
 ## High-Performance Design
 

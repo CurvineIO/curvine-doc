@@ -70,7 +70,7 @@ Worker 支持**多层存储**：
 - **curvine-web**：管理 UI 和集群管理
 - **Metrics**：基于 Prometheus 的监控（master/worker/client、job、cache）
 
-部署拓扑与组件角色见 [部署架构](../2-Deploy/2-Deploy-Curvine-Cluster/0-Deployment-Architecture.md)；内部数据流（journal、回放、客户端读写）见 [基本架构](../5-Architecture/01-introduction.md)。
+部署拓扑与组件角色见 [部署架构](../2-Deploy/0-Deployment-Overview/0-Deployment-Architecture.md)；内部数据流（journal、回放、客户端读写）见 [基本架构](../5-Architecture/01-introduction.md)。
 
 ## 高性能设计
 Curvine为了实现高性能、高并发、低资源消耗的目标，采用了以下技术和设计原则：
