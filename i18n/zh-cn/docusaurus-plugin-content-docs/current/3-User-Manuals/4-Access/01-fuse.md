@@ -5,7 +5,7 @@
 在云原生场景下，可通过卷挂载使用 FUSE；Curvine 还提供 [CSI 驱动](../5-K8S-CSI-Driver/01-Setup.md) 用于 Kubernetes。
 
 :::info
-**FUSE 是可选接入方式。** 须先启动 Curvine 集群（Master + Worker），FUSE 仅在应用需要 POSIX 挂载点时使用。各组件角色见 [部署架构](../../2-Deploy/2-Deploy-Curvine-Cluster/0-Deployment-Architecture.md)。
+**FUSE 是可选接入方式。** 须先启动 Curvine 集群（Master + Worker），FUSE 仅在应用需要 POSIX 挂载点时使用。各组件角色见 [部署架构](../../2-Deploy/0-Deployment-Overview/0-Deployment-Architecture.md)。
 :::
 
 ## 架构示意
