@@ -30,6 +30,23 @@ master,worker,fuse,s3 gateway会通过http接口暴露监控指标，可以在pr
 | replication_failure_count | 累计复制失败的总次数 |
 | operation_duration | 操作耗时（按类型分类，不包括心跳） |
 
+### 兼容性指标
+
+master 会对每个 worker 心跳和客户端握手执行兼容性评估，并将结果暴露为指标
+（详见[版本管理与兼容性](04-version-management.md)）：
+
+| 指标名称 | 类型 | 标签 | 描述 |
+|---------|------|------|------|
+| compat_worker_verdict | Gauge | `worker_id`、`verdict` | 每个 worker 当前兼容性结论，为 1 |
+| compat_client_verdict | Gauge | `client_addr`、`verdict` | 每个 client 当前兼容性结论，为 1 |
+| compat_enforce_rejected_total | Counter | `component`、`verdict` | enforce 模式下累计拒绝次数 |
+
+`verdict` 标签取值：`compatible`、`missing_info`、`blocked`、
+`protocol_mismatch`、`version_too_old`、`version_unknown`。建议对
+`compat_worker_verdict` / `compat_client_verdict` 中非 `compatible` 的结论设置告警，
+以发现混合版本集群；对 `compat_enforce_rejected_total` 的增长设置告警，
+及早发现升级冲突。
+
 ## Journal Node 指标
 
 | 指标名称 | 描述 |
