@@ -31,6 +31,24 @@ Master, worker, FUSE, and S3 gateway nodes expose monitoring metrics through HTT
 | replication_failure_count | Total cumulative replication failures |
 | operation_duration | Operation duration (classified by type, excluding heartbeats) |
 
+### Compatibility Metrics
+
+The master evaluates every worker heartbeat and client handshake against its
+compatibility contract and exposes the results as metrics (see
+[Version Management and Compatibility](04-version-management.md)):
+
+| Metric Name | Type | Labels | Description |
+|-------------|------|--------|-------------|
+| compat_worker_verdict | Gauge | `worker_id`, `verdict` | 1 for the current compatibility verdict of each worker |
+| compat_client_verdict | Gauge | `client_addr`, `verdict` | 1 for the current compatibility verdict of each client |
+| compat_enforce_rejected_total | Counter | `component`, `verdict` | Total number of enforce-mode compatibility rejections |
+
+The `verdict` label takes one of: `compatible`, `missing_info`, `blocked`,
+`protocol_mismatch`, `version_too_old`, `version_unknown`. Alert on
+`compat_worker_verdict` / `compat_client_verdict` with a non-`compatible`
+verdict to surface mixed-version clusters, and on `compat_enforce_rejected_total`
+increases to catch upgrade conflicts early.
+
 ## Journal Node Metrics
 
 | Metric Name | Description |
