@@ -92,6 +92,7 @@ cv report available
 | 选项 | 说明 |
 |------|------|
 | `-l, --list` | 列出 live / lost worker。 |
+| `--versions` | 展示所有在线 worker 的版本分布。 |
 | `--add-decommission <NODES>...` | 将一个或多个 worker 加入退役列表。 |
 | `--remove-decommission <NODES>...` | 将一个或多个 worker 从退役列表移除。 |
 
@@ -104,10 +105,26 @@ cv report available
 
 ```bash
 cv node -l
+cv node --versions
 cv node --add-decommission host1:8997 host2:8997
 cv node --add-decommission host1:8997,host2:8997
 cv node --remove-decommission host1:8997
 ```
+
+`cv node --versions` 打印在线 worker 的版本分布，优先使用心跳上报的结构化
+`component_info.release_version`，回退到旧的 `software_version` 字符串：
+
+```text
+Version Distribution:
+----------------------------------------
+  0.4.0-alpha              : 3 worker(s)
+  0.4.0-beta               : 5 worker(s)
+  legacy (0.3.0-test)      : 1 worker(s)
+----------------------------------------
+  total                    : 9 worker(s)
+```
+
+这些版本的含义以及 master 如何评估混合版本 peer，请参阅[版本管理与兼容性](04-version-management.md)。
 
 :::note
 当前实现会在退役 API 调用前把 `hostname:port` 截断为 `hostname`。也就是说，端口主要用于人类可读和输入格式统一。
@@ -416,6 +433,17 @@ cv version
 ```
 
 当前实现会输出 `curvine-cli <version>`，并带上 commit / branch 信息。
+
+所有二进制还支持全局 `--version-json` 参数，以 JSON 形式输出完整结构化版本
+（组件名、发布版本、git 来源、协议版本、能力）：
+
+```bash
+cv --version-json
+curvine-master --version-json
+curvine-worker --version-json
+```
+
+详细说明请参阅[版本管理与兼容性](04-version-management.md)。
 
 ---
 

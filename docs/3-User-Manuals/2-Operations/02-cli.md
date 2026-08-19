@@ -95,6 +95,7 @@ In the current implementation, `cv report capacity <WORKER_ADDRESS>` matches by 
 | Option | Description |
 |--------|-------------|
 | `-l, --list` | List live and lost workers. |
+| `--versions` | Show release-version distribution across all live workers. |
 | `--add-decommission <NODES>...` | Add one or more workers to the decommission list. |
 | `--remove-decommission <NODES>...` | Remove one or more workers from the decommission list. |
 
@@ -107,10 +108,28 @@ Examples:
 
 ```bash
 cv node -l
+cv node --versions
 cv node --add-decommission host1:8997 host2:8997
 cv node --add-decommission host1:8997,host2:8997
 cv node --remove-decommission host1:8997
 ```
+
+`cv node --versions` prints the release-version distribution across live
+workers, preferring the structured `component_info.release_version` reported on
+heartbeat and falling back to the legacy `software_version` string:
+
+```text
+Version Distribution:
+----------------------------------------
+  0.4.0-alpha              : 3 worker(s)
+  0.4.0-beta               : 5 worker(s)
+  legacy (0.3.0-test)      : 1 worker(s)
+----------------------------------------
+  total                    : 9 worker(s)
+```
+
+See [Version Management and Compatibility](04-version-management.md) for the
+meaning of these versions and how the master evaluates mixed-version peers.
 
 :::note
 The current implementation strips `hostname:port` down to `hostname` before calling the decommission API. The port is mainly for readability and consistent input format.
@@ -427,6 +446,17 @@ cv version
 ```
 
 The current implementation prints `curvine-cli <version>` together with commit / branch information.
+
+Every binary also accepts the global `--version-json` flag to print its full
+structured version (component, release version, git provenance, protocol
+version, capabilities) as JSON — see
+[Version Management and Compatibility](04-version-management.md):
+
+```bash
+cv --version-json
+curvine-master --version-json
+curvine-worker --version-json
+```
 
 ---
 
