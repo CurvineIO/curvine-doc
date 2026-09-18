@@ -2,6 +2,34 @@ apiVersion: v1
 entries:
   curvine:
   - apiVersion: v2
+    appVersion: 0.5.2-alpha
+    created: "2026-09-18T01:38:25.975252929Z"
+    dependencies:
+    - condition: openKruise.enabled
+      name: kruise
+      repository: https://openkruise.github.io/charts/
+      version: 1.9.0
+    description: A Helm chart for deploying Curvine distributed multi-level cache
+      system cluster on Kubernetes
+    digest: aef2565fe8c7b414a9b8f76316aa01ec167345b3bd7aea030a5aeef086da7567
+    home: https://github.com/CurvineIO/curvine
+    icon: https://curvineio.github.io/img/curvine_logo.png
+    keywords:
+    - curvine
+    - multi-level cache system
+    - master-worker
+    - raft
+    maintainers:
+    - email: curvine@example.com
+      name: Curvine Team
+    name: curvine
+    sources:
+    - https://github.com/CurvineIO/curvine
+    type: application
+    urls:
+    - https://github.com/CurvineIO/curvine-helm/releases/download/v0.5.2-alpha/curvine-0.5.2-alpha.tgz
+    version: 0.5.2-alpha
+  - apiVersion: v2
     appVersion: 0.5.1-alpha
     created: "2026-09-11T01:38:14.355709868Z"
     dependencies:
@@ -255,6 +283,27 @@ entries:
     version: 0.0.0-dev
   curvine-csi:
   - apiVersion: v2
+    appVersion: 0.5.2-alpha
+    created: "2026-09-18T01:38:25.975975347Z"
+    description: A Helm chart for Curvine CSI Driver
+    digest: afa778810c509a400605466bd879080643435e199768d86ff1aefd036a80115d
+    home: https://github.com/CurvineIO/curvine
+    keywords:
+    - storage
+    - csi
+    - curvine
+    maintainers:
+    - email: lzjqsdd@gmail.com
+      name: Barry Liu
+      url: https://github.com/lzjqsdd
+    name: curvine-csi
+    sources:
+    - https://github.com/CurvineIO/curvine
+    type: application
+    urls:
+    - https://github.com/CurvineIO/curvine-helm/releases/download/v0.5.2-alpha/curvine-csi-0.5.2-alpha.tgz
+    version: 0.5.2-alpha
+  - apiVersion: v2
     appVersion: 0.5.1-alpha
     created: "2026-09-11T01:38:14.357268505Z"
     description: A Helm chart for Curvine CSI Driver
@@ -443,4 +492,4 @@ entries:
     urls:
     - https://github.com/CurvineIO/curvine-helm/releases/download/latest/curvine-csi-0.0.0-dev.tgz
     version: 0.0.0-dev
-generated: "2026-09-11T01:38:14.352128498Z"
+generated: "2026-09-18T01:38:25.971547019Z"
