@@ -1,0 +1,110 @@
+name: Deploy Fumadocs (next)
+
+# Second pipeline, alongside `deploy.yml` (Docusaurus).
+#  - pull_request : build only, so the Fumadocs rewrite is verified on every PR.
+#  - workflow_dispatch : build and publish, replacing the live site. Manual only,
+#    because both pipelines publish to the same target repo/branch.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'docs/**'
+      - 'i18n/**'
+      - 'blog/**'
+      - '.github/workflows/deploy-fumadocs.yml'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Publish the built site to curvineio.github.io'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fumadocs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Regenerates content/docs, content/blog, public/doc-assets and .source
+      # from the Docusaurus sources at the repository root. .source is needed
+      # by `next build` *and* by `tsc`, so it runs before typecheck.
+      - name: Sync content
+        run: npm run sync
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build static site
+        run: npm run build
+
+      - name: Report output
+        run: |
+          echo "pages: $(find out -name '*.html' | wc -l)"
+          du -sh out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fumadocs-out
+          path: site/out
+          retention-days: 5
+
+  deploy:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: fumadocs-out
+          path: site-out
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+
+      # Same target as the Docusaurus pipeline: the org Pages repository.
+      - name: Publish to GitHub Pages
+        env:
+          TARGET: git@github.com:CurvineIO/curvineio.github.io.git
+        run: |
+          git config --global user.email "lzjqsdd@github.com"
+          git config --global user.name "lzjqsdd"
+          git config --global core.sshCommand "ssh -o StrictHostKeyChecking=no"
+
+          git clone --depth 1 --branch main "$TARGET" published
+          cd published
+
+          # Full replace: the export already carries every file it needs,
+          # including .nojekyll (required so Jekyll keeps the _next directory).
+          find . -mindepth 1 -maxdepth 1 -not -name '.git' -exec rm -rf {} +
+          cp -a ../site-out/. .
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+            exit 0
+          fi
+          git commit -m "site: publish fumadocs build from ${GITHUB_SHA:0:7}"
+          git push origin main
