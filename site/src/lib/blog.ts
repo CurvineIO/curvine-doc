@@ -1,6 +1,7 @@
 import { createGetUrl } from 'fumadocs-core/source';
 import { pageSchema } from 'fumadocs-core/source/schema';
 import { z } from 'zod';
+import { i18n } from '@/lib/i18n';
 
 export const blogPageSchema = pageSchema.extend({
   /** explicit URL, e.g. `2025/11/27/observability` or `welcome` */
@@ -43,7 +44,9 @@ interface BlogPage {
   data: z.output<typeof blogPageSchema>;
 }
 
-export const getBlogUrl = createGetUrl('/blog');
+// The i18n config must be passed in: without it `hideLocale` defaults to
+// `'never'`, which would emit `/en/blog/tags/...` for English pages.
+export const getBlogUrl = createGetUrl('/blog', i18n);
 
 /** lowercase, whitespace replaced by `-` */
 export function tagSlug(tag: string): string {
