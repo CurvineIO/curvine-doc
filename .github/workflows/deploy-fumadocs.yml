@@ -68,6 +68,10 @@ jobs:
         with:
           name: fumadocs-out
           path: site/out
+          # `.nojekyll` is a dotfile and would be skipped by default; without it
+          # GitHub Pages runs Jekyll, which strips the `_next/` directory and
+          # breaks every CSS/JS asset.
+          include-hidden-files: true
           retention-days: 5
 
   deploy:
@@ -79,6 +83,14 @@ jobs:
         with:
           name: fumadocs-out
           path: site-out
+
+      - name: Verify artifact
+        run: |
+          test -f site-out/.nojekyll \
+            || { echo '::error::.nojekyll missing from the artifact; GitHub Pages would strip _next/'; exit 1; }
+          test -d site-out/_next/static \
+            || { echo '::error::_next/static missing from the artifact'; exit 1; }
+          echo "ok: $(find site-out -name '*.html' | wc -l) pages, .nojekyll present"
 
       - uses: webfactory/ssh-agent@v0.9.0
         with:
