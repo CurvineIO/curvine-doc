@@ -170,14 +170,22 @@ export function RecentPosts({
               {year}
               <span className="ms-auto text-xs font-normal opacity-70">{items.length}</span>
             </summary>
-            <ul className="mt-1 space-y-0.5 border-s ps-3">
-              {items.map((post) => (
+            <ul className="mt-1.5 space-y-1.5 border-s ps-3">
+              {items.map((post, index) => (
                 <li key={post.url}>
-                  {/* Single line; hovering expands the full title in place. */}
+                  {/*
+                    Single line, alternating text tone so neighbouring posts stay
+                    distinguishable; hovering expands the full title in place.
+                  */}
                   <Link
                     href={post.url}
                     data-active={post.url === activeUrl}
-                    className="block truncate rounded-md py-1 text-fd-muted-foreground transition-colors hover:overflow-visible hover:whitespace-normal hover:text-fd-primary data-[active=true]:font-medium data-[active=true]:text-fd-primary"
+                    className={
+                      'block truncate rounded-md px-2 py-1.5 transition-colors ' +
+                      'hover:overflow-visible hover:whitespace-normal hover:text-fd-primary ' +
+                      'data-[active=true]:font-semibold data-[active=true]:text-fd-primary ' +
+                      (index % 2 === 1 ? 'text-fd-muted-foreground' : 'text-fd-foreground')
+                    }
                   >
                     {post.title}
                   </Link>
