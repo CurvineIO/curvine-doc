@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+@import '@fumadocs/base-ui/css/neutral.css';
+@import '@fumadocs/base-ui/css/generated/spacious.css';
+@import '@fumadocs/base-ui/css/preset.css';
+
+/*
+ * Curvine brand palette (mirrors the green of the old Docusaurus site).
+ * Fumadocs reads every colour from `--color-fd-*` custom properties, so the
+ * whole UI follows the accent defined here.
+ */
+:root {
+  --fd-curvine: hsl(142 71% 45%);
+
+  --color-fd-primary: hsl(142 71% 38%);
+  --color-fd-primary-foreground: hsl(0 0% 100%);
+  --color-fd-ring: hsl(142 71% 45%);
+}
+
+.dark {
+  --color-fd-primary: hsl(142 70% 62%);
+  --color-fd-primary-foreground: hsl(145 60% 8%);
+  --color-fd-ring: hsl(142 70% 62%);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Geist + JetBrains Mono, the same pairing the official Fumadocs docs use. */
+@theme inline {
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background-color: var(--color-fd-background);
+}
+
+/* Mermaid diagrams are centred and can be scrolled horizontally. */
+.curvine-diagram svg {
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  display: block;
+}
+
+/*
+ * Docs sidebar header: search input and collapse button on one line.
+ *
+ * Upstream renders the header as two rows (title + collapse, then search). The
+ * site header already shows the logo, so the title row is replaced by our own
+ * trigger via the `navTitle` slot. We then:
+ *   - hide the trigger upstream adds next to that slot
+ *   - lift the remaining row up to sit beside the search input
+ */
+/* anchor the absolute header row to the sidebar itself */
+#nd-sidebar > div {
+  position: relative;
+}
+
+#nd-sidebar > div > div:first-child {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.625rem;
+  z-index: 2;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+
+/* the trigger upstream renders next to the slot (ours carries the marker class) */
+#nd-sidebar > div > div:first-child > button:not(.curvine-sidebar-collapse) {
+  display: none;
+}
+
+#nd-sidebar > div > div:nth-child(2) {
+  position: relative;
+  /* vertical breathing room now that row 1 is out of flow */
+  padding-top: 0.5rem;
+  /* room for the absolutely positioned collapse button */
+  padding-right: 2.75rem;
+}
+
+#nd-sidebar > div > div:nth-child(2) > button[data-search-full] {
+  height: 2rem;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  padding-left: 0.625rem;
+  padding-right: 0.5rem;
+}

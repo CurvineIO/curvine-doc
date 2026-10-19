@@ -1,0 +1,18 @@
+node_modules
+.next
+out
+.source
+next-env.d.ts
+*.tsbuildinfo
+
+# Generated from the Docusaurus sources by `npm run sync`
+content/
+public/doc-assets/
+public/blog/
+# mirror of the repo-root static/ directory
+public/img/
+public/helm-charts/
+public/install.sh
+
+# written by `next dev`
+AGENTS.md
