@@ -12,6 +12,7 @@ import {
   formatDate,
 } from '@/components/blog';
 import { getMDXComponents } from '@/components/mdx';
+import { BlogTOC } from '@/components/blog-toc';
 
 export default async function BlogPostPage(props: {
   params: Promise<{ slug: string[] }>;
@@ -28,7 +29,11 @@ export default async function BlogPostPage(props: {
   const MDX = page.data.body;
 
   return (
-    <BlogShell sidebar={<RecentPosts posts={posts} activeUrl={page.url} />}>
+    <BlogShell
+      locale="zh-cn"
+      sidebar={<RecentPosts posts={posts} activeUrl={page.url} />}
+      toc={<BlogTOC toc={page.data.toc} title={'本页目录'} />}
+    >
       <article className="min-w-0 max-w-3xl">
         <Link
           href="/zh-cn/blog"
@@ -55,6 +60,11 @@ export default async function BlogPostPage(props: {
 
         <div className="prose max-w-none">
           <MDX components={getMDXComponents()} />
+        </div>
+
+        {/* Inline TOC below the article on small screens. */}
+        <div className="mt-10 lg:hidden">
+          <BlogTOC toc={page.data.toc} title={'本页目录'} inline />
         </div>
 
         <BlogPostNav newer={newer} older={older} />
