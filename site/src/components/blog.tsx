@@ -173,10 +173,11 @@ export function RecentPosts({
             <ul className="mt-1 space-y-0.5 border-s ps-3">
               {items.map((post) => (
                 <li key={post.url}>
+                  {/* Single line; hovering expands the full title in place. */}
                   <Link
                     href={post.url}
                     data-active={post.url === activeUrl}
-                    className="block rounded-md py-1 text-fd-muted-foreground transition-colors hover:text-fd-primary data-[active=true]:font-medium data-[active=true]:text-fd-primary"
+                    className="block truncate rounded-md py-1 text-fd-muted-foreground transition-colors hover:overflow-visible hover:whitespace-normal hover:text-fd-primary data-[active=true]:font-medium data-[active=true]:text-fd-primary"
                   >
                     {post.title}
                   </Link>
