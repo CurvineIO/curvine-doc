@@ -76,6 +76,16 @@ body {
   display: none;
 }
 
+/* On mobile the sidebar is a drawer opened by the layout's own trigger in
+ * #nd-subnav, so our desktop collapse button (rendered through `navTitle`,
+ * which the mobile header also renders) must go — it only toggles the
+ * desktop `collapsed` state and would otherwise duplicate the trigger. */
+@media (max-width: 767px) {
+  .curvine-sidebar-collapse {
+    display: none;
+  }
+}
+
 #nd-sidebar > div > div:nth-child(2) {
   position: relative;
   /* vertical breathing room now that row 1 is out of flow */
@@ -90,4 +100,25 @@ body {
   border-radius: 0.5rem;
   padding-left: 0.625rem;
   padding-right: 0.5rem;
+}
+
+/*
+ * Mobile sidebar drawer: slide in from the LEFT.
+ *
+ * Upstream anchors the drawer to the block end (right edge) and animates it
+ * with `--fd-sidebar-drawer-offset: 100%`. Flip both the anchor and the
+ * offset so the drawer matches the trigger position on the left of the
+ * subnav. (The trigger upstream renders on the drawer's end edge is our
+ * close affordance; it stays inside the drawer, just flipped.)
+ */
+@media (max-width: 767px) {
+  #nd-sidebar-mobile {
+    inset-inline: 0 auto; /* anchor to the start (left) edge */
+    border-inline-end: 1px solid var(--color-fd-border);
+    border-inline-start: none;
+  }
+
+  :root:has(#nd-sidebar-mobile) {
+    --fd-sidebar-drawer-offset: -100%;
+  }
 }

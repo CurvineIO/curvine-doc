@@ -4,7 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { ChevronDownIcon, LanguagesIcon } from 'lucide-react';
+import { ChevronDownIcon, LanguagesIcon, MenuIcon } from 'lucide-react';
+import { Menu } from '@base-ui/react/menu';
 import { SearchTrigger } from '@fumadocs/base-ui/layouts/shared/slots/search-trigger';
 import { ThemeSwitch } from '@fumadocs/base-ui/layouts/shared/slots/theme-switch';
 import {
@@ -58,7 +59,7 @@ export function SiteHeader({
           <span className="font-semibold">Curvine</span>
         </Link>
 
-        <nav className="ms-2 hidden items-center gap-0.5 text-sm sm:flex">
+        <nav className="ms-2 hidden items-center gap-0.5 text-sm md:flex">
           {items.map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
@@ -73,6 +74,9 @@ export function SiteHeader({
             );
           })}
         </nav>
+
+        {/* Mobile nav: hamburger dropdown with the same links. */}
+        <MobileNav items={items} pathname={pathname} />
 
         <div className="ms-auto flex items-center gap-1">
           {actions}
@@ -97,5 +101,58 @@ export function SiteHeader({
         </div>
       </div>
     </header>
+  );
+}
+
+/**
+ * Hamburger dropdown for small viewports — the inline nav (`md:flex`) is
+ * hidden there. Uses the same base-ui Menu primitives as the Fumadocs layout,
+ * so behaviour (outside-click, focus, animations) matches the docs UI.
+ */
+function MobileNav({
+  items,
+  pathname,
+}: {
+  items: { label: string; href: string }[];
+  pathname: string;
+}) {
+  const activeItem = items.find(
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+  );
+
+  return (
+    <Menu.Root>
+      <Menu.Trigger
+        aria-label="Open Menu"
+        className="inline-flex size-9 items-center justify-center rounded-lg text-fd-muted-foreground transition-colors hover:bg-fd-accent hover:text-fd-accent-foreground md:hidden"
+      >
+        <MenuIcon className="size-5" />
+      </Menu.Trigger>
+      <Menu.Portal>
+        <Menu.Positioner align="start" sideOffset={8} className="z-[60]">
+          <Menu.Popup className="flex min-w-44 flex-col rounded-xl border bg-fd-popover p-1 text-sm text-fd-popover-foreground shadow-lg outline-none transition-[opacity,scale] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] data-[starting-style]:opacity-0 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[ending-style]:scale-95 motion-reduce:transition-none">
+            {items.map((item) => {
+              const active =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Menu.LinkItem
+                  key={item.href}
+                  closeOnClick
+                  render={<Link href={item.href} />}
+                  className="flex min-h-9 items-center gap-2 rounded-lg px-3 py-1.5 outline-none transition-colors data-[highlighted]:bg-fd-accent data-[highlighted]:text-fd-accent-foreground"
+                >
+                  <span className={active ? 'font-medium text-fd-primary' : ''}>
+                    {item.label}
+                  </span>
+                  {item === activeItem && (
+                    <span className="ms-auto size-1.5 rounded-full bg-fd-primary" />
+                  )}
+                </Menu.LinkItem>
+              );
+            })}
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
   );
 }
