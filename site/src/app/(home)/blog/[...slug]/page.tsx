@@ -34,7 +34,7 @@ export default async function BlogPostPage(props: {
       sidebar={<RecentPosts posts={posts} activeUrl={page.url} />}
       toc={<BlogTOC toc={page.data.toc} title={'On this page'} />}
     >
-      <article className="min-w-0 max-w-3xl">
+      <article className="min-w-0 max-w-4xl">
         <Link
           href="/blog"
           className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-primary"
