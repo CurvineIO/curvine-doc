@@ -50,7 +50,9 @@ export function SiteHeader({
     <header
       className={`sticky top-0 z-50 w-full shrink-0 border-b bg-fd-background/85 backdrop-blur ${className}`}
     >
-      <div className="mx-auto flex h-14 w-full max-w-[1436px] items-center gap-2 px-4 md:px-6">
+      {/* Full-bleed row: logo pinned to the left edge, controls to the right,
+       *  so they line up with the viewport instead of a centered column. */}
+      <div className="flex h-14 w-full items-center gap-2 px-4 md:px-6">
         <Link
           href={locale === 'zh-cn' ? '/zh-cn' : '/'}
           className="flex shrink-0 items-center gap-2"
