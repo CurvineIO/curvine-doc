@@ -1,7 +1,9 @@
+/* Fonts: Geist + JetBrains Mono, loaded as CSS variables on <html> by the
+ * root layout — the same pairing the docs pages use. */
 .curvine-homepage {
-  --hp-font-sans: "Aptos", "Segoe UI Variable Text", "Segoe UI", "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --hp-font-display: "Bahnschrift", "Aptos Display", "Segoe UI Variable Display", "Segoe UI", "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --hp-font-mono: "Cascadia Mono", "IBM Plex Mono", "SFMono-Regular", "JetBrains Mono", ui-monospace, monospace;
+  --hp-font-sans: var(--font-sans), system-ui, sans-serif;
+  --hp-font-display: var(--font-sans), system-ui, sans-serif;
+  --hp-font-mono: var(--font-mono), ui-monospace, monospace;
   --page-bg: #ffffff;
   --ink: #18181b;
   --muted: #52525b;
