@@ -215,7 +215,9 @@ export function BlogShell({
   locale?: 'en' | 'zh-cn';
 }) {
   return (
-    <div className="mx-auto flex w-full max-w-[1436px] flex-col gap-8 px-4 py-10 md:px-6 lg:flex-row-reverse lg:gap-10">
+    // Full-bleed like the header: the recent-posts rail hugs the viewport
+    // left edge and the content column takes all remaining width.
+    <div className="flex w-full flex-col gap-8 px-4 py-10 md:px-6 lg:flex-row-reverse lg:gap-10">
       <div className="order-2 flex min-w-0 flex-1 flex-col gap-10 lg:order-none lg:flex-row-reverse">
         {toc ? (
           <div className="hidden w-52 shrink-0 lg:block">
