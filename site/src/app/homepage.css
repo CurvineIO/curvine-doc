@@ -1,7 +1,9 @@
+/* Fonts: Geist + JetBrains Mono, loaded as CSS variables on <html> by the
+ * root layout — the same pairing the docs pages use. */
 .curvine-homepage {
-  --hp-font-sans: "Aptos", "Segoe UI Variable Text", "Segoe UI", "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --hp-font-display: "Bahnschrift", "Aptos Display", "Segoe UI Variable Display", "Segoe UI", "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --hp-font-mono: "Cascadia Mono", "IBM Plex Mono", "SFMono-Regular", "JetBrains Mono", ui-monospace, monospace;
+  --hp-font-sans: var(--font-sans), system-ui, sans-serif;
+  --hp-font-display: var(--font-sans), system-ui, sans-serif;
+  --hp-font-mono: var(--font-mono), ui-monospace, monospace;
   --page-bg: #ffffff;
   --ink: #18181b;
   --muted: #52525b;
@@ -17,7 +19,11 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.07);
 }
 
-.dark {
+/* Tokens must be re-declared on `.curvine-homepage` itself: the light block
+ * above pins them on the wrapper, which would otherwise beat the values
+ * inherited from `html.dark` (declaration on the element beats inheritance). */
+.dark,
+.dark .curvine-homepage {
   --page-bg: #0a0a0b;
   --ink: #fafafa;
   --muted: #a1a1aa;
