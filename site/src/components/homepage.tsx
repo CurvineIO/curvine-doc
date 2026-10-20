@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CopyInstallCommand } from '@/components/copy-install-command';
 import { HomepageIcon } from '@/components/homepage-icons';
+import { ScenarioGallery, type ScenarioSlide } from '@/components/scenario-gallery';
 
 /**
  * The original Docusaurus home page, ported to React.
@@ -15,6 +16,60 @@ export function Homepage({ locale }: { locale: 'en' | 'zh-cn' }) {
   const t = (en: string, cn: string) => (zh ? cn : en);
 
   const installCommand = 'curl -fsSL https://curvineio.github.io/install.sh | bash';
+
+  // Use-case scenarios shown as a horizontal gif gallery in the
+  // "Why Choose Curvine" section. The gifs live in the Docusaurus
+  // `static/img/` tree and are mirrored to `/img` by the sync script.
+  const useCaseSlides: ScenarioSlide[] = [
+    {
+      src: '/img/01-ai-agent-platform-storage.gif',
+      title: t('AI Agent Platform Storage', 'AI Agent 平台存储'),
+      description: t(
+        'Gives AI agents a high-performance, file-semantic workspace over cloud object storage.',
+        '为 AI Agent 提供基于云对象存储的高性能文件语义工作空间。',
+      ),
+    },
+    {
+      src: '/img/02-llm-training-acceleration.gif',
+      title: t('LLM Training Acceleration', '大模型训练加速'),
+      description: t(
+        'Speeds up data loading for training jobs and raises GPU utilization.',
+        '加速训练任务的数据加载，提升 GPU 利用率。',
+      ),
+    },
+    {
+      src: '/img/03-llm-model-distribution.gif',
+      title: t('LLM Model Distribution', '大模型分发加速'),
+      description: t(
+        'Distributes model weights to inference clusters with shared-cache reads.',
+        '通过共享缓存读取，将模型权重快速分发到推理集群。',
+      ),
+    },
+    {
+      src: '/img/04-multimodal-data-lake.gif',
+      title: t('Multimodal Data Lake', '多模态数据湖'),
+      description: t(
+        'Unifies file and object access across multimodal datasets in one cache layer.',
+        '在统一缓存层中打通多模态数据集的文件与对象访问。',
+      ),
+    },
+    {
+      src: '/img/05-olap-query-acceleration.gif',
+      title: t('OLAP Query Acceleration', 'OLAP 查询加速'),
+      description: t(
+        'Caches hot data to cut scan latency and speed up interactive analytics.',
+        '缓存热数据以降低扫描延迟，加速交互式分析。',
+      ),
+    },
+    {
+      src: '/img/06-multi-cloud-data-caching.gif',
+      title: t('Multi-Cloud Data Caching', '多云数据缓存'),
+      description: t(
+        'Accelerates cross-cloud and hybrid-cloud access with a unified cache.',
+        '以统一缓存加速跨云与混合云的数据访问。',
+      ),
+    },
+  ];
 
   return (
     <div className="curvine-homepage" data-locale={locale}>
@@ -167,48 +222,7 @@ export function Homepage({ locale }: { locale: 'en' | 'zh-cn' }) {
               )}
             </p>
           </div>
-          <div className="feature-cards four-columns compact-cards">
-            <article className="feature-card">
-              <div className="feature-icon"><HomepageIcon name="training" /></div>
-              <h3>{t('AI Training Acceleration', 'AI 训练加速')}</h3>
-              <p>
-                {t(
-                  'Provides high-speed data access for deep learning training, significantly reducing data loading time, improving GPU utilization, and accelerating model training processes.',
-                  '为深度学习训练提供高速数据访问，显著减少数据加载时间、提升 GPU 利用率并加速模型训练过程。',
-                )}
-              </p>
-            </article>
-            <article className="feature-card">
-              <div className="feature-icon"><HomepageIcon name="inference" /></div>
-              <h3>{t('Large Model Inference Acceleration', '大模型推理加速')}</h3>
-              <p>
-                {t(
-                  'Optimizes data access for large language model inference scenarios, reducing inference latency and improving model service response speed and throughput.',
-                  '面向大语言模型推理场景优化数据访问，降低推理延迟，提升模型服务的响应速度与吞吐。',
-                )}
-              </p>
-            </article>
-            <article className="feature-card">
-              <div className="feature-icon"><HomepageIcon name="cloud" /></div>
-              <h3>{t('Agent Native Storage on Cloud', '云端 Agent 原生存储')}</h3>
-              <p>
-                {t(
-                  'Provides high-performance cloud object storage accessed like a local disk for AI agents, enabling fast access to datasets, model artifacts, and contextual data while improving scalability and reducing cloud storage latency.',
-                  '为 AI Agent 提供可像本地磁盘一样访问的高性能云对象存储，快速读取数据集、模型产物与上下文数据，同时提升扩展性并降低云存储延迟。',
-                )}
-              </p>
-            </article>
-            <article className="feature-card">
-              <div className="feature-icon"><HomepageIcon name="database" /></div>
-              <h3>{t('Big Data Computing', '大数据计算')}</h3>
-              <p>
-                {t(
-                  'Provides hot data caching and shuffle acceleration for big data offline computing, significantly improving data processing efficiency.',
-                  '为大数据离线计算提供热数据缓存与 Shuffle 加速，显著提升数据处理效率。',
-                )}
-              </p>
-            </article>
-          </div>
+          <ScenarioGallery slides={useCaseSlides} />
         </div>
       </section>
 
