@@ -1,11 +1,21 @@
 name: Deploy Fumadocs (next)
 
-# Second pipeline, alongside `deploy.yml` (Docusaurus).
-#  - pull_request : build only, so the Fumadocs rewrite is verified on every PR.
-#  - workflow_dispatch : build and publish, replacing the live site. Manual only,
-#    because both pipelines publish to the same target repo/branch.
+# Sole documentation pipeline (Fumadocs; the old Docusaurus `deploy.yml` has
+# been removed).
+#  - pull_request : build only, so every PR is verified before merge.
+#  - push (main)  : build and publish, keeping the live site up to date on
+#    every merge to main.
+#  - workflow_dispatch : manual build and publish.
 on:
   pull_request:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'docs/**'
+      - 'i18n/**'
+      - 'blog/**'
+      - '.github/workflows/deploy-fumadocs.yml'
+  push:
     branches: [main]
     paths:
       - 'site/**'
@@ -76,7 +86,10 @@ jobs:
 
   deploy:
     needs: build
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    # Publish on every push to main, or a manual dispatch with deploy=true.
+    if: >-
+      github.event_name == 'push'
+      || (github.event_name == 'workflow_dispatch' && inputs.deploy)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
