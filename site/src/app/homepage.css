@@ -17,7 +17,11 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.07);
 }
 
-.dark {
+/* Tokens must be re-declared on `.curvine-homepage` itself: the light block
+ * above pins them on the wrapper, which would otherwise beat the values
+ * inherited from `html.dark` (declaration on the element beats inheritance). */
+.dark,
+.dark .curvine-homepage {
   --page-bg: #0a0a0b;
   --ink: #fafafa;
   --muted: #a1a1aa;
