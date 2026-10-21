@@ -56,10 +56,10 @@ sh build/build.sh -p core  # 只编译 server、client、cli
 更多 make 目标可运行 `make` 或 `make help` 查看。简要说明（以仓库为准）：
 - **环境**：`make check-env` — 检查构建依赖
 - **构建**：`make build` / `make all` — 编译（输出在 `build/dist`）；`make dist` — 编译并打 tar.gz 到项目根目录；`make dist-only` — 仅对已有 `build/dist` 打包
-- **部分构建**：`make build ARGS='-p core'`（server+client+cli）、`make build ARGS='-p core -p fuse'`、`make build ARGS='-p object'`（S3 网关）、`make build ARGS='-d'`（debug）；`make build-hdfs` 用于 HDFS 支持；`make build ARGS='--skip-java-sdk'` 可跳过 Java SDK
+- **部分构建**：`make build ARGS='-p core'`（server+client+cli）、`make build ARGS='-p core -p fuse'`、`make build ARGS='-p web'`、`make build ARGS='-d'`（debug）；`make build-hdfs` 用于 HDFS 支持；`make build ARGS='--skip-java-sdk'` 可跳过 Java SDK
 - **Docker**：`make docker-build` — 构建**运行时**镜像；`make docker-build-compile` — 构建编译用镜像（交互）；`make docker-compile` — 在容器内编译，输出到本地 `build/dist`
 - **CSI**：`make curvine-csi` — 构建 curvine-csi 镜像
-- **示例**：`make build ARGS='-p core'`、`make build ARGS='-p server -p client'`、`make build ARGS='-p object'`（S3 网关）、`RELEASE_VERSION=v1.0.0 make dist`
+- **示例**：`make build ARGS='-p core'`、`make build ARGS='-p server -p client'`、`make build ARGS='-p web'`、`RELEASE_VERSION=v1.0.0 make dist`
 :::
 
 
@@ -148,6 +148,7 @@ Curvine 底层存储支持对接 OSS、HDFS、S3、MinIO 等多种后端。默�
 | `opendal-hdfs` | 通过 OpenDAL 对接原生 HDFS |
 | `opendal-webhdfs` | 通过 OpenDAL 对接 WebHDFS |
 | `opendal-s3` | 通过 OpenDAL 对接 S3 |
+| `opendal-gcs` | 通过 OpenDAL 对接 Google Cloud Storage |
 | `opendal-azblob` | 通过 OpenDAL 对接 Azure Blob |
 
 

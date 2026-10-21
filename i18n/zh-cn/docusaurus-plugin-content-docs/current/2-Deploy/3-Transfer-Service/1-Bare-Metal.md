@@ -20,8 +20,9 @@ store_url = "sqlite:///var/lib/curvine-transfer/transfer.db"
 hostname = "transfer-1.example.com"
 rpc_port = 9010
 web_port = 9011
-endpoints = ["transfer-1.example.com:9010"]
 ```
+
+当 `endpoints` 为空时，Curvine 会公布 `hostname:rpc_port`。只有当客户端必须通过其他地址访问（例如经过负载均衡）时，才需要显式设置 `endpoints`。
 
 使用运行服务的同一个操作系统用户创建 Store 目录。SQLite 数据库必须位于持久化本地盘
 或块存储上；不要放在共享文件系统上，也不要再启动第二个进程访问该数据库。

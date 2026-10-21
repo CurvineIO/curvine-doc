@@ -4,7 +4,7 @@ sidebar_position: 0
 
 # Kubernetes 部署
 
-Chart：`curvine/curvine`，版本 `0.3.2-alpha`。
+Chart：`curvine/curvine`，版本 `0.5.2-alpha`。
 
 ## 前置条件
 
@@ -29,8 +29,7 @@ Helm release `curvine` 部署于 namespace `curvine`：
 
 ## Transfer 服务
 
-Transfer 是用于独立调度 Load 和 Export 的可选服务。当前 Helm Chart 不会创建该服务，
-并且部署它不需要修改正在运行的 Master 或 Worker 配置。应在集群健康后单独部署，参见
+Transfer 是用于独立调度 Load 和 Export 的可选服务。仅当 `transfer.enabled=true` 时，Chart 才会创建 `curvine-transfer` Deployment 和 Service；在此之前，Master 提供旧的 Load API。启用 Transfer 不需要修改 Master 或 Worker 配置。若要在 Chart 之外部署 Transfer，参见
 [Kubernetes 部署 Transfer](../../3-Transfer-Service/2-Kubernetes.md)。
 
 ## 部署
@@ -46,7 +45,7 @@ helm repo update
 
 ```bash
 helm upgrade --install curvine curvine/curvine \
-  --version 0.3.2-alpha \
+  --version 0.5.2-alpha \
   -n curvine \
   --create-namespace \
   --wait --timeout 10m
@@ -108,7 +107,7 @@ curvine-master-0.curvine-master.curvine.svc.cluster.local:8995,curvine-master-1.
 
 ```bash
 helm upgrade curvine curvine/curvine \
-  --version 0.3.2-alpha \
+  --version 0.5.2-alpha \
   -n curvine \
   --reuse-values \
   --set worker.replicas=3
@@ -134,7 +133,7 @@ kubectl delete namespace curvine
 
 ## 配置参考
 
-Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvine --version 0.3.2-alpha` 一致。
+Chart 版本 `0.5.2-alpha`。下表默认值与 `helm show values curvine/curvine --version 0.5.2-alpha` 一致。
 
 ### 全局
 
@@ -231,10 +230,6 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 | `worker.replicas` | `1` | Worker 副本数 |
 | `worker.rpcPort` | `8997` | RPC 端口 |
 | `worker.webPort` | `9001` | Web UI 端口 |
-| `worker.s3Gateway.enabled` | `false` | 启用 S3 网关 |
-| `worker.s3Gateway.listen` | `0.0.0.0:9900` | S3 网关监听地址 |
-| `worker.s3Gateway.enableDistributedAuth` | `true` | S3 分布式认证 |
-| `worker.s3Gateway.service.type` | `ClusterIP` | S3 Service 类型 |
 | `worker.hostNetwork` | `false` | 使用 host 网络 |
 | `worker.dnsPolicy` | `ClusterFirst` | DNS 策略 |
 | `worker.usePodIPAsHostname` | `false` | 使用 Pod IP 作为 worker 主机名 |
@@ -255,6 +250,12 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 | `worker.nodeSelector` | `{}` | 节点选择器 |
 | `worker.tolerations` | `[]` | 容忍度 |
 | `worker.affinity` | `{}` | 亲和规则 |
+
+:::note
+Chart 沿用了旧的 Web 端口：Master Web `9000`、Master `web1` `9001`、Worker Web `9001`。单机代码默认值为 Master `9001`、Worker `9002`；请始终以生成的 ConfigMap 中的实际端口为准。
+
+旧版本 Chart 提供 `worker.s3Gateway.*` 参数块。当前 Curvine 服务端已不包含 S3 网关，这些参数不会生效。
+:::
 
 ### Service
 
@@ -324,5 +325,5 @@ helm upgrade curvine curvine/curvine -n curvine --reuse-values \
 完整参数：
 
 ```bash
-helm show values curvine/curvine --version 0.3.2-alpha
+helm show values curvine/curvine --version 0.5.2-alpha
 ```

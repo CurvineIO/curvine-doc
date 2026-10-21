@@ -4,10 +4,36 @@ sidebar_position: 2
 
 # Deploy Transfer on Kubernetes
 
-Deploy Transfer separately from the Master and Worker workloads. The current
-Curvine Helm chart does not create this service, so use a dedicated manifest.
-The SQLite manifest below is intentionally a single replica with a dedicated
-RWO volume.
+Transfer runs separately from the Master and Worker workloads. The Curvine Helm
+chart creates it when `transfer.enabled=true`, so a chart-managed deployment is
+the normal path. The dedicated manifests below are an alternative for
+installations that do not use the chart or that need to customize the workload.
+The SQLite manifest is intentionally a single replica with a dedicated RWO
+volume.
+
+## Helm Chart
+
+```yaml title="transfer-values.yaml"
+transfer:
+  enabled: true
+  storeUrl: "mysql://transfer_user:password@mysql.curvine.svc:3306/curvine_transfer"
+  replicas: 1
+```
+
+```bash
+helm upgrade --install curvine curvine/curvine \
+  --version 0.5.2-alpha \
+  -n curvine \
+  -f transfer-values.yaml \
+  --wait --timeout 10m
+```
+
+The chart creates the `curvine-transfer` Deployment and Service, writes its
+Service FQDN to `[transfer].hostname`, and derives the client endpoint from that
+hostname and `transfer.rpcPort`. Leave `endpoints` unset. An empty
+`transfer.storeUrl` uses the single-Pod SQLite default with a chart-managed PVC.
+See [Kubernetes Deployment](../2-Deploy-Curvine-Cluster/3-Distributed-Mode/01-k8s-Deployment.md)
+for the full value list.
 
 ## Prerequisites
 
@@ -148,12 +174,15 @@ kubectl -n curvine exec deployment/curvine-transfer -- curl --fail http://127.0.
 
 ## Configure Clients
 
-For clients inside the Kubernetes cluster, use the Service DNS name:
+For clients inside the Kubernetes cluster, use the Service DNS name. With an
+empty `endpoints` list, the client derives the endpoint from `hostname` and
+`rpc_port`:
 
 ```toml
 [transfer]
 enabled = true
-endpoints = ["curvine-transfer.curvine.svc.cluster.local:9010"]
+hostname = "curvine-transfer.curvine.svc.cluster.local"
+rpc_port = 9010
 ```
 
 For a client outside the cluster, publish an address that it can reach. A

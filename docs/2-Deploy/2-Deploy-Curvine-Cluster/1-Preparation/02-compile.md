@@ -54,7 +54,7 @@ More make targets: run `make` or `make help`. Summary:
 
 - **Environment:** `make check-env` — Check build dependencies (also run automatically by `make build`).
 - **Building:** `make build` / `make all` — Build; output in `build/dist`. `make dist` — Build and create tar.gz in project root. `make dist-only` — Package existing `build/dist` only.
-- **Partial builds:** `make build ARGS='-p core'` (server+client+cli), `make build ARGS='-p core -p fuse'`, `make build ARGS='-p object'` (S3 gateway), `make build ARGS='-d'` (debug). Use `make build-hdfs` for HDFS support (native + WebHDFS); `make build ARGS='--skip-java-sdk'` to skip Java SDK.
+- **Partial builds:** `make build ARGS='-p core'` (server+client+cli), `make build ARGS='-p core -p fuse'`, `make build ARGS='-p web'`, `make build ARGS='-d'` (debug). Use `make build-hdfs` for HDFS support (native + WebHDFS); `make build ARGS='--skip-java-sdk'` to skip Java SDK.
 - **Docker:** `make docker-build` — Build **runtime** image from source. `make docker-build-compile` — Build compilation image (interactive). `make docker-compile` — Compile in container, output to local `build/dist`.
 - **CSI:** `make curvine-csi` — Build curvine-csi Docker image.
 - **Example:** `RELEASE_VERSION=v1.0.0 make dist` — Build and package with a version tag.
@@ -134,16 +134,22 @@ Therefore, for Docker-compiled artifacts, we strongly recommend running them on 
 
 ## UFS Module Support
 
-Curvine supports multiple storage backends including OSS, HDFS, S3, MinIO, and more. By default, these are integrated via OpenDAL. Curvine also provides optimized implementations for OSS and HDFS. You can compile with specific modules using `make all --ufs oss-hdfs`.
+Curvine supports multiple storage backends including OSS, HDFS, S3, MinIO, and more. By default, these are integrated via OpenDAL. Curvine also provides optimized implementations for OSS and HDFS. Select backends with `--ufs` when building:
+
+```bash
+make build ARGS='--ufs opendal-s3'
+```
 
 Supported parameters:
 | Parameter       | Description                                |
 |-----------------|---------------------------------------------|
-| oss-hdfs        | Use JindoSDK for Alibaba Cloud             |
-| opendal-oss     | Use OpenDAL for OSS object storage         |
-| opendal-hdfs    | Run in native mode                         |
 | opendal-s3      | Use OpenDAL for S3 object storage          |
+| opendal-oss     | Use OpenDAL for OSS object storage         |
+| opendal-gcs     | Use OpenDAL for Google Cloud Storage       |
 | opendal-azblob  | Use OpenDAL for Azure Blob                 |
+| opendal-webhdfs | Use OpenDAL WebHDFS                        |
+| opendal-hdfs    | Use the native HDFS client (includes JNI)  |
+| oss-hdfs        | Use JindoSDK for Alibaba Cloud OSS-HDFS    |
 
 
 :::warning
@@ -151,10 +157,10 @@ When compiling the `oss-hdfs` module, you need to set JindoSDK environment varia
 ```bash
 export JINDOSDK_HOME=/opt/jindosdk-6.10.3
 export LD_LIBRARY_PATH="${JINDOSDK_HOME}/lib/native:${LD_LIBRARY_PATH}"
-make all --ufs oss-hdfs
+make build ARGS='--ufs oss-hdfs'
 ```
 :::
 
-To compile multiple UFS modules simultaneously, specify `--ufs` multiple times, e.g. `make all --ufs oss-hdfs --ufs opendal-oss`
+To compile multiple UFS modules simultaneously, specify `--ufs` multiple times, e.g. `make build ARGS='--ufs oss-hdfs --ufs opendal-oss'`.
 
 Note that both OSS accelerated buckets and standard object storage buckets use the `oss://test-bucket` format. When mounting OSS storage, you need to specify the appropriate module. For detailed mount usage, see the CLI mount section.

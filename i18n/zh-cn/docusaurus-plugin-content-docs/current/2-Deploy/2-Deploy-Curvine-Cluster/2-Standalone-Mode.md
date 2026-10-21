@@ -21,7 +21,8 @@ cd build/dist
 2. 杀掉旧的 Curvine 进程
 3. 启动 `curvine-master`
 4. 启动 `curvine-worker`
-5. 启动 `curvine-fuse`
+5. 当 `[transfer].enabled = true` 时启动 `curvine-transfer`
+6. 启动 `curvine-fuse`
 
 它不会额外启动独立的 `webui` 进程；Web 页面通过服务自身的 Web 端口和打包在 `webui/` 下的静态资源提供。
 
@@ -53,16 +54,17 @@ ls -la /curvine-fuse
 
 ## Web 入口
 
-- Master Web：`http://<host>:9000`
-- Worker Web：`http://<host>:9001`
+- Master Web：`http://<host>:9001`
+- Worker Web：`http://<host>:9002`
+- FUSE Web：`http://<host>:9003`
 
 :::tip
-如果你在 Docker 中运行，请使用 `--network host`，或者至少映射 `8995`、`8996`、`8997`、`9000`、`9001`；如果还需要访问 FUSE Web 端口，则再加上 `9002`。
+如果你在 Docker 中运行，请使用 `--network host`，或者至少映射 `8995`、`8996`、`8997`、`9001`、`9002`、`9003`。
 :::
 
 ## 另一个本地脚本
 
-发行包还包含 `bin/local-cluster.sh`，它只管理 Master 与 Worker：
+发行包还包含 `bin/local-cluster.sh`，它管理服务端进程，并在启用时启动 Transfer，但不会挂载 FUSE：
 
 ```bash
 ./bin/local-cluster.sh start

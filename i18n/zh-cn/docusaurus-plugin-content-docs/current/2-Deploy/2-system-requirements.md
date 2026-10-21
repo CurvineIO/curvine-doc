@@ -6,7 +6,7 @@ sidebar_position: 1
 
 本页汇总构建和运行 Curvine 的基础要求。如需完整的、按步骤的环境初始化（含各操作系统安装命令），请参考[环境初始化](./2-Deploy-Curvine-Cluster/1-Preparation/01-prerequisites.md)。
 
-- Rust 1.86+
+- Rust 1.98（由 `rust-toolchain.toml` 固定；`build/check-env.sh` 最低接受 1.86）
 - Linux 或 macOS（Windows 支持有限）
 - FUSE 库（用于文件系统功能）
 

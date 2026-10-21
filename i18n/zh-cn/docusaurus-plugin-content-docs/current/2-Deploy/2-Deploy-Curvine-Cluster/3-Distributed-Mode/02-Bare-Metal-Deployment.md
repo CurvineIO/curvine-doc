@@ -53,7 +53,7 @@ flowchart TB
 [物理机部署 Transfer](../../3-Transfer-Service/1-Bare-Metal.md)。
 
 :::info
-**FUSE 不参与集群启动。** Curvine 集群由 Master 与 Worker 组成。FUSE 与 CLI、SDK、S3 网关一样，只是多种访问方式之一，仅在应用需要本地挂载点时才有必要启用。
+**FUSE 不参与集群启动。** Curvine 集群由 Master 与 Worker 组成。FUSE 与 CLI、SDK 一样，只是多种访问方式之一，仅在应用需要本地挂载点时才有必要启用。
 :::
 
 ---

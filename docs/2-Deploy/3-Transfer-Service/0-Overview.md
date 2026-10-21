@@ -29,8 +29,8 @@ running Master or Worker configuration merely to deploy Transfer.
 | Component | Required change | Notes |
 | --- | --- | --- |
 | Transfer service | Set `transfer.enabled = true`, a persistent `store_url`, and a reachable endpoint. | The service configuration must also contain the existing cluster's Master addresses. |
-| CLI or SDK client | Set `transfer.enabled = true` and `transfer.endpoints`. | `cv load`, `cv export`, and compatible status/cancel commands then use Transfer automatically. |
-| Master | None. Keep Transfer disabled during staged rollout. | Enabling it makes the Master reject the legacy Load and Export RPCs. |
+| CLI or SDK client | Set `transfer.enabled = true` and a reachable endpoint (`endpoints`, or `hostname` plus `rpc_port`). | `cv load`, `cv export`, and compatible status/cancel commands then use Transfer automatically. |
+| Master | None. | The Master does not need a configuration change; clients that disable Transfer keep using the legacy Load and Export RPCs. |
 | Worker | None. | Workers need a version that supports Transfer tasks. Report endpoints are included in each task. |
 
 The client configuration contains no database URL. The store belongs only to
@@ -68,12 +68,14 @@ Clients need only the routing settings:
 ```toml
 [transfer]
 enabled = true
-endpoints = ["transfer-1.example.com:9010"]
+hostname = "transfer-1.example.com"
+rpc_port = 9010
 ```
 
 If `endpoints` is omitted, Curvine derives one endpoint from
-`hostname:rpc_port`. Explicit endpoints are recommended for Kubernetes and for
-any address that differs from the bind address.
+`hostname:rpc_port`. Prefer this form in Kubernetes, where the chart writes the
+Service FQDN to `hostname`. Set `endpoints` explicitly only when clients reach
+the service through a different address, such as a load balancer.
 
 ## Deploy and Verify
 

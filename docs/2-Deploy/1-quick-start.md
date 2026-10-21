@@ -31,6 +31,7 @@ export CURVINE_MASTER_HOSTNAME=localhost
 
 - `curvine-master`
 - `curvine-worker`
+- `curvine-transfer` (only when `[transfer].enabled = true`)
 - `curvine-fuse`
 
 The Web UI is not started as a separate process. Static UI assets are bundled in `webui/` and served on the service web ports.
@@ -78,8 +79,9 @@ Use `cv` for the full Curvine-native command set. Use `dfs` only when you specif
 
 After startup, the main web endpoints are:
 
-- Master: `http://<host>:9000`
-- Worker: `http://<host>:9001`
+- Master: `http://<host>:9001`
+- Worker: `http://<host>:9002`
+- FUSE: `http://<host>:9003`
 
 ## About Benchmark Scripts
 

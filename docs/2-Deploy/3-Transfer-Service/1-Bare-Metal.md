@@ -22,8 +22,11 @@ store_url = "sqlite:///var/lib/curvine-transfer/transfer.db"
 hostname = "transfer-1.example.com"
 rpc_port = 9010
 web_port = 9011
-endpoints = ["transfer-1.example.com:9010"]
 ```
+
+With an empty `endpoints` list, Curvine advertises `hostname:rpc_port`. Set
+`endpoints` explicitly only when clients must use a different address, for
+example behind a load balancer.
 
 Create the store directory with the same operating-system user that runs the
 service. The SQLite database must live on persistent local or block storage.

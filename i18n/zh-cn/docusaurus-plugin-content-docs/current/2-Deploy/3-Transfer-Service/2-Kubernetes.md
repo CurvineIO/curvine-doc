@@ -4,8 +4,31 @@ sidebar_position: 2
 
 # Kubernetes 部署 Transfer
 
-Transfer 与 Master、Worker 独立部署。当前 Curvine Helm Chart 不会创建该服务，因此应
-使用单独的清单。下方 SQLite 清单固定为单副本，并使用专用 RWO 卷。
+Transfer 与 Master、Worker 工作负载分开运行。Curvine Helm Chart 在
+`transfer.enabled=true` 时会创建该服务，因此通常应使用 Chart 部署。下方独立清单适用于
+不使用 Chart 或需要自定义工作负载的场景。SQLite 清单固定为单副本，并使用专用 RWO 卷。
+
+## Helm Chart
+
+```yaml title="transfer-values.yaml"
+transfer:
+  enabled: true
+  storeUrl: "mysql://transfer_user:password@mysql.curvine.svc:3306/curvine_transfer"
+  replicas: 1
+```
+
+```bash
+helm upgrade --install curvine curvine/curvine \
+  --version 0.5.2-alpha \
+  -n curvine \
+  -f transfer-values.yaml \
+  --wait --timeout 10m
+```
+
+Chart 会创建 `curvine-transfer` Deployment 和 Service，将其 Service FQDN 写入
+`[transfer].hostname`，并根据该 hostname 与 `transfer.rpcPort` 推导客户端端点。请保持
+`endpoints` 未设置。`transfer.storeUrl` 为空时使用单 Pod SQLite 默认配置，并由 Chart
+管理 PVC。完整参数见 [Kubernetes 部署](../2-Deploy-Curvine-Cluster/3-Distributed-Mode/01-k8s-Deployment.md)。
 
 ## 前置条件
 
@@ -143,12 +166,13 @@ kubectl -n curvine exec deployment/curvine-transfer -- curl --fail http://127.0.
 
 ## 配置客户端
 
-集群内客户端使用 Service DNS：
+集群内客户端使用 Service DNS。当 `endpoints` 为空时，客户端会根据 `hostname` 与 `rpc_port` 推导端点：
 
 ```toml
 [transfer]
 enabled = true
-endpoints = ["curvine-transfer.curvine.svc.cluster.local:9010"]
+hostname = "curvine-transfer.curvine.svc.cluster.local"
+rpc_port = 9010
 ```
 
 集群外客户端必须使用自身可访问的地址；`.svc.cluster.local` 仅在集群网络内可用。
