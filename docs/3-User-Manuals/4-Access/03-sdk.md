@@ -1,6 +1,6 @@
 # SDK Access
 
-Curvine provides multi-language SDKs so applications can access the Curvine filesystem via RPC (metadata from Master, block data from Workers) without using FUSE or the S3 gateway.
+Curvine provides multi-language SDKs so applications can access the Curvine filesystem via RPC (metadata from Master, block data from Workers) without using FUSE.
 
 ## Overview
 
@@ -20,7 +20,7 @@ For build and usage, see the [Development Guide](../../6-Contribute/01-developme
 
 ## Java SDK
 
-- **Hadoop FileSystem**: Configure `fs.cv.impl` and `fs.cv.master_addrs` in `core-site.xml` or `curvine-site.xml` so that `FileSystem.get(URI.create("curvine:///path"), conf)` uses Curvine. See [Deployment Preparation](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/03-deployment-setup.md#environment-script-and-main-config) for `fs.cv.master_addrs`.
+- **Hadoop FileSystem**: Configure `fs.cv.impl` and `fs.cv.default.master_addrs` in `core-site.xml` or `curvine-site.xml` so that `FileSystem.get(URI.create("curvine:///path"), conf)` uses Curvine. See [Deployment Preparation](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/03-deployment-setup.md#environment-script-and-main-config) for `fs.cv.default.master_addrs`.
 - **Java API**: Use the Curvine Java SDK from curvine-libsdk for direct RPC access when not using the Hadoop FileSystem interface.
 
 Compatible with Hadoop, Spark, Flink, and other JVM-based frameworks that support custom FileSystem implementations.
@@ -33,7 +33,7 @@ For installation and examples, see the Curvine source repository and [Developmen
 
 ## Common Configuration
 
-- **Master address**: Set `client.master_addrs` in the cluster config (e.g. `curvine-cluster.toml`) or pass the equivalent in each SDK (e.g. Java `fs.cv.master_addrs`). Format: `host1:8995,host2:8995`.
-- **Config file**: Most SDKs accept a config file path (e.g. `conf/curvine-cluster.toml`). The same file is used by the CLI (`cv`), FUSE, and S3 gateway.
+- **Master address**: Set `client.master_addrs` in the cluster config (e.g. `curvine-cluster.toml`) or pass the equivalent in each SDK (e.g. Java `fs.cv.default.master_addrs`). Format: `host1:8995,host2:8995`.
+- **Config file**: Most SDKs accept a config file path (e.g. `conf/curvine-cluster.toml`). The same file is used by the CLI (`cv`) and FUSE.
 
 For UFS (unified file system) access, mount UFS paths with `cv mount`; then SDK operations on the corresponding Curvine paths will follow the same semantics as [Data Orchestration](../1-Key-Features/01-ufs.md).

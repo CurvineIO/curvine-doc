@@ -2,12 +2,17 @@
 本章介绍Curvine的可观测监控指标，用于监控集群状态、性能和资源使用情况。
 
 ### 指标收集
-master,worker,fuse,s3 gateway会通过http接口暴露监控指标，可以在prometheus采集这些指标，然后通过grafana可视化这些指标。
+master、worker、fuse 以及可选的 transfer 服务会通过各自的 HTTP Web 端口暴露监控指标，可以在 Prometheus 中采集这些指标，然后通过 Grafana 可视化。
 
-- master指标：http://URL_ADDRESS:9000/metrics    
-- worker指标：http://URL_ADDRESS:9001/metrics
-- fuse指标：http://URL_ADDRESS:9002/metrics   
-- s3 gateway指标：http://URL_ADDRESS:9003/metrics   
+- master 指标：`http://<master-host>:9001/metrics`
+- worker 指标：`http://<worker-host>:9002/metrics`
+- fuse 指标：`http://<fuse-host>:9003/metrics`
+- transfer 指标：`http://<transfer-host>:9011/metrics`
+- MDS 指标（启用时）：`http://<mds-host>:9004/metrics`
+
+:::note
+以上为单机代码默认端口。Helm Chart 仍沿用旧的 Web 端口，请以生成的 ConfigMap 中的实际端口为准。
+:::
 
 ## Master 指标
 

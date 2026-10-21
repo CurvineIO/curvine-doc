@@ -392,10 +392,10 @@ Mounted paths automatically use Curvine cache; unmounted paths fall through to n
 
 | Component | Endpoint | Port |
 |-----------|----------|------|
-| Master | `http://<host>:9000/metrics` | 9000 |
-| Worker | `http://<host>:9001/metrics` | 9001 |
-| FUSE | `http://<host>:9002/metrics` | 9002 |
-| S3 Gateway | `http://<host>:9003/metrics` | 9003 |
+| Master | `http://<host>:9001/metrics` | 9001 |
+| Worker | `http://<host>:9002/metrics` | 9002 |
+| FUSE | `http://<host>:9003/metrics` | 9003 |
+| Transfer (optional) | `http://<host>:9011/metrics` | 9011 |
 
 ### 8.2 Key Metrics to Alert On
 
@@ -414,49 +414,42 @@ Mounted paths automatically use Curvine cache; unmounted paths fall through to n
 scrape_configs:
   - job_name: 'curvine-master'
     static_configs:
-      - targets: ['master1:9000', 'master2:9000', 'master3:9000']
+      - targets: ['master1:9001', 'master2:9001', 'master3:9001']
   - job_name: 'curvine-worker'
     static_configs:
-      - targets: ['worker1:9001', 'worker2:9001', 'worker3:9001']
+      - targets: ['worker1:9002', 'worker2:9002', 'worker3:9002']
   - job_name: 'curvine-fuse'
     static_configs:
-      - targets: ['app1:9002', 'app2:9002']
+      - targets: ['app1:9003', 'app2:9003']
 ```
 
 ### 8.4 Web UI
 
-- Master UI: `http://<master-host>:9000` — cluster overview, file browser, worker status, configuration.
-- Worker UI: `http://<worker-host>:9001` — node-level storage and block statistics.
+- Master UI: `http://<master-host>:9001` — cluster overview, file browser, worker status, configuration.
+- Worker UI: `http://<worker-host>:9002` — node-level storage and block statistics.
 
 ---
 
-## 9. S3 Gateway Best Practices
+## 9. Transfer Service Best Practices
 
-### 9.1 High-Availability Deployment
+The S3 gateway is not part of the current Curvine server. Use the optional
+Transfer service for independent Load and Export scheduling instead.
 
-- Deploy 3+ gateway instances behind a load balancer (Nginx or HAProxy).
-- Use distributed authentication for credential consistency:
+### 9.1 High Availability
 
-```toml
-[s3_gateway]
-enable_distributed_auth = true
-credentials_path = "/system/auth/credentials.jsonl"
-```
+- Use a shared MySQL `store_url` before running more than one Transfer replica.
+- The default SQLite store is suitable for a single Transfer instance only.
+- Keep `transfer.replicas = 1` when SQLite is in use.
 
-### 9.2 Performance Tuning
+### 9.2 Capacity and Retention
 
-```toml
-[s3_gateway]
-get_chunk_size_mb = 2.0              # Larger chunks for high-throughput reads
-put_memory_buffer_threshold = 4194304  # 4MB buffer for small PUTs
-put_max_memory_buffer = 33554432       # 32MB max buffer
-```
-
-### 9.3 Health Checks
+- Tune `max_running_transfers` to match available UFS bandwidth.
+- Set `terminal_retention` according to how long completed jobs must remain queryable.
+- Monitor the Transfer `/metrics` endpoint and the `cv transfer list` backlog.
 
 ```bash
-# Configure LB health checks against:
-curl http://<gateway-host>:9900/healthz
+curl http://<transfer-host>:9011/metrics
+cv transfer list --state running
 ```
 
 ---
@@ -480,13 +473,7 @@ curl http://<gateway-host>:9900/healthz
 
 ## 11. Security Recommendations
 
-- Rotate S3 credentials regularly; use IAM roles where possible.
-- Restrict S3 gateway access with credential management:
-
-```bash
-bin/curvine-s3-gateway.sh credential generate --description "Service A key"
-```
-
+- Rotate UFS credentials regularly; use IAM roles where possible.
 - Use network policies (K8s) or firewall rules to restrict access to Master RPC (8995) and Worker RPC (8997) ports.
 - Enable audit logging (`audit_logging_enabled = true`) for compliance-sensitive environments.
 - In multi-tenant environments, isolate namespaces by using separate Curvine paths per team with quota controls.

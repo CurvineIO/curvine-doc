@@ -22,7 +22,9 @@ The current top-level commands in source are:
 Usage: cv [OPTIONS] <COMMAND>
 
 Commands:
+  bench
   fs
+  fsck
   report
   load
   export
@@ -456,6 +458,44 @@ version, capabilities) as JSON — see
 cv --version-json
 curvine-master --version-json
 curvine-worker --version-json
+```
+---
+
+### 12. `bench`: built-in benchmark
+
+**Usage:** `cv bench [OPTIONS]` and `cv bench prefill [OPTIONS]`
+
+`bench` runs metadata and throughput suites against a `cv://` path (client mode)
+or `file://` path (FUSE mode). `cv bench prefill` creates a reusable working set
+for mixed workloads. Common options include `--path`, `--profile basic|deep`,
+`--mode auto|client|fuse`, `-p/--threads`, `--workload`, `--block-size`,
+`--big-file-size`, and `--big-file-count`. Run `cv bench --help` for the full
+option list.
+
+```bash
+cv bench --path cv://default/bench --profile basic
+cv bench prefill --path cv://default/bench/ws --files 100000 --file-size 0
+```
+
+---
+
+### 13. `fsck`: block replica health
+
+**Usage:** `cv fsck <PATH> [OPTIONS]`
+
+| Option | Description |
+|--------|-------------|
+| `<PATH>` | File or directory to inspect. |
+| `--detail` | Show per-file and per-block details for directories. |
+| `--list-page-size <N>` | Directory entries per listing RPC (default `256`, range `1-4096`). |
+
+`fsck` compares the replicas recorded for each block with the replicas currently
+available and reports under-replicated blocks and read errors. A warning line is
+printed when the scan finds problems.
+
+```bash
+cv fsck /data
+cv fsck /data/file.txt --detail
 ```
 
 ---

@@ -1,6 +1,6 @@
 # FUSE 模式访问
 
-除 SDK、S3 网关和 CLI 外，Curvine 提供 **FUSE（用户态文件系统）**，使应用无需修改代码即可将 Curvine 文件系统当作本地目录访问。挂载点下的操作会转换为 Curvine RPC 与数据访问。
+除 SDK 和 CLI 外，Curvine 提供 **FUSE（用户态文件系统）**，使应用无需修改代码即可将 Curvine 文件系统当作本地目录访问。挂载点下的操作会转换为 Curvine RPC 与数据访问。
 
 在云原生场景下，可通过卷挂载使用 FUSE；Curvine 还提供 [CSI 驱动](../5-K8S-CSI-Driver/01-Setup.md) 用于 Kubernetes。
 

@@ -1,6 +1,6 @@
 # FUSE Mode Access
 
-In addition to the SDK, S3 gateway, and CLI, Curvine provides **FUSE (Filesystem in Userspace)** so that applications can access the Curvine filesystem as a local directory **without code changes**. Operations under the mount point are translated into Curvine RPC and data access.
+In addition to the SDK and CLI, Curvine provides **FUSE (Filesystem in Userspace)** so that applications can access the Curvine filesystem as a local directory **without code changes**. Operations under the mount point are translated into Curvine RPC and data access.
 
 In cloud-native environments, FUSE can be used via volume mounts; Curvine also provides a [CSI driver](../5-K8S-CSI-Driver/01-Setup.md) for Kubernetes.
 
