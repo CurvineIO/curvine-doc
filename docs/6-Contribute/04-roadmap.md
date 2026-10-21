@@ -14,9 +14,10 @@ The old in-tree 2025 milestone table is not aligned with the current reference s
 
 | Area | Current repo surface |
 |------|----------------------|
-| Core runtime and RPC | `orpc/`, `curvine-common/`, `curvine-server/`, `curvine-client/` |
+| Core runtime and RPC | `crates/core/`, `crates/common/`, `curvine-server/`, `crates/client/` |
 | FUSE and CLI | `curvine-fuse/`, `curvine-cli/` |
-| Storage backends and data access | `curvine-ufs/`, `curvine-s3-gateway/`, `curvine-libsdk/` |
+| Storage backends and data access | `curvine-ufs/`, `crates/adapters/`, `curvine-libsdk/` |
+| Metadata, HA, and Transfer | `crates/metadata/`, `curvine-mds/`, `crates/server/curvine-data-transfer/` |
 | Web and management surfaces | `curvine-web/` |
 | Tests, benchmarks, and regression tooling | `curvine-tests/`, `build/tests/`, `curvine-tests/benchmark/` |
 | Kubernetes and packaging assets | `curvine-csi/`, `curvine-docker/` |

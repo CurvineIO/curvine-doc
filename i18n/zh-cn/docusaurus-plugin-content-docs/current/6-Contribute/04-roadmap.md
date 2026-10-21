@@ -14,9 +14,10 @@
 
 | 方向 | 当前仓库位置 |
 |------|--------------|
-| 核心运行时与 RPC | `orpc/`、`curvine-common/`、`curvine-server/`、`curvine-client/` |
+| 核心运行时与 RPC | `crates/core/`、`crates/common/`、`curvine-server/`、`crates/client/` |
 | FUSE 与命令行工具 | `curvine-fuse/`、`curvine-cli/` |
-| 存储后端与数据访问 | `curvine-ufs/`、`curvine-s3-gateway/`、`curvine-libsdk/` |
+| 存储后端与数据访问 | `curvine-ufs/`、`crates/adapters/`、`curvine-libsdk/` |
+| 元数据、高可用与 Transfer | `crates/metadata/`、`curvine-mds/`、`crates/server/curvine-data-transfer/` |
 | Web 与管理面 | `curvine-web/` |
 | 测试、压测与回归工具 | `curvine-tests/`、`build/tests/`、`curvine-tests/benchmark/` |
 | Kubernetes 与打包资源 | `curvine-csi/`、`curvine-docker/` |

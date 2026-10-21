@@ -17,12 +17,15 @@ build/dist/conf/curvine-cluster.toml
 源码中的示例文件位于 `etc/curvine-cluster.toml`。其中常见配置段包括：
 
 - `[master]`
+- `[mds]`
 - `[journal]`
 - `[worker]`
 - `[client]`
+- `[transfer]`
 - `[fuse]`
+- `[discovery]`
+- `[fault_injection]`
 - `[log]`
-- `[s3_gateway]`
 - `[cli]`
 
 脚本中涉及的运行时环境变量包括：

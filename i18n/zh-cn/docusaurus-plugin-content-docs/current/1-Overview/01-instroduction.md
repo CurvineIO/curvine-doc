@@ -7,7 +7,7 @@ Curvine 是一个使用 Rust 编写的高性能分布式缓存系统，采用 Ap
 
 Curvine 采用经典的 Master / Worker 架构。Master 负责元数据与集群协调，Worker 负责数据块存储与读写服务；元数据一致性与高可用通过 Raft 保证。
 
-Curvine 面向 AI、分析型计算和数据基础设施场景，当前 `main` 分支提供的主要接入方式包括 Rust CLI、FUSE、Java / Python SDK 绑定以及 S3 兼容访问。
+Curvine 面向 AI、分析型计算和数据基础设施场景，当前 `main` 分支提供的主要接入方式包括 Rust CLI、FUSE 和 Java / Python SDK 绑定。
 
 
 ## 核心特性
@@ -15,7 +15,7 @@ Curvine 面向 AI、分析型计算和数据基础设施场景，当前 `main` �
 - **云原生集成**：支持 CSI 与 Kubernetes 部署场景
 - **多级缓存**：支持内存、SSD、HDD 多层缓存策略
 - **POSIX 兼容访问**：通过 FUSE 将缓存数据以本地文件系统方式暴露给现有应用
-- **兼容 S3 / HDFS 生态**：提供 S3 网关与 Hadoop / SDK 接入路径
+- **兼容 HDFS 生态**：提供 Hadoop FileSystem 与 SDK 接入路径
 - **高性能**：基于异步 I/O 与零拷贝导向的数据路径，面向低延迟和高吞吐负载
 - **Raft 元数据高可用**：通过 Raft 保证 Master 元数据一致性
 - **内建可观测性**：暴露监控与指标，便于集群运维
@@ -204,15 +204,16 @@ Curvine 为高性能、高并发以及海量数据缓存设计，可以在很多
 
 Curvine 采用模块化代码组织。当前 `main` 分支的主要组件包括：
 
-- **orpc**：高性能异步 RPC 与运行时基础设施
-- **curvine-common**：共享配置、协议、元数据与通用工具
-- **curvine-server**：Master / Worker 服务端实现
-- **curvine-client**：Rust 客户端库，负责元数据与块 I/O
+- **crates/core**：运行时、RPC、网络、I/O、内存分配、指标与故障注入基础能力
+- **crates/common**：共享配置、协议、元数据、文件系统、存储与 UFS API
+- **crates/metadata**：基于 Raft 的元数据复制
+- **curvine-server**：Master、Worker 与 MDS 服务端实现（`--service master`、`worker` 或 `mds`）
+- **crates/server**：独立处理 Load / Export 作业的 Transfer 服务
+- **crates/client**：Rust 客户端核心、统一文件系统、传输作业客户端与压测运行器
 - **curvine-fuse**：提供 POSIX 访问的 FUSE 守护进程
 - **curvine-libsdk**：基于原生客户端封装的 Java / Python SDK 绑定
-- **curvine-ufs**：S3、HDFS、WebHDFS 等 UFS 后端实现
+- **curvine-ufs** 与 **crates/adapters**：UFS 后端与存储适配器（OpenDAL、OSS-HDFS、HDFS JNI、RocksDB、本地与 SPDK 存储）
 - **curvine-cli**：原生命令行工具 `cv`
-- **curvine-s3-gateway**：S3 兼容 HTTP 网关
 - **curvine-web**：Web UI 静态资源与服务端 Web 支持
 - **curvine-csi**：面向 Kubernetes 的 CSI 驱动
 - **curvine-tests**：集成测试、回归工具与基准测试工具

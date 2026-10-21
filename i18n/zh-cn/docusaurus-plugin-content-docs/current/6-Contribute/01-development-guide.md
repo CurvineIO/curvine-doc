@@ -14,26 +14,29 @@ Curvine 仓库同时包含 Cargo workspace，以及若干用于打包、部署�
 
 `Cargo.toml` 中声明的 workspace members 如下：
 
-| Crate | 职责 |
+| Crate / 目录 | 职责 |
 |-------|------|
-| `orpc` | 提供异步 RPC、运行时、日志与网络基础能力。 |
-| `curvine-common` | 共享配置、协议类型、元数据辅助逻辑和集群默认值。 |
-| `curvine-server` | Master / Worker 服务端二进制（`--service master` 或 `--service worker`）。 |
-| `curvine-client` | Rust 客户端、块 I/O 路径与 UFS 访问逻辑。 |
-| `curvine-libsdk` | SDK 绑定与 Java 打包。 |
-| `curvine-tests` | 集成测试、压测二进制与回归测试工具。 |
+| `crates/core/` | 运行时、RPC、网络、I/O、内存分配、指标与故障注入相关 crate。 |
+| `crates/common/` | 配置、协议、模型、文件系统、存储与 UFS API 相关 crate。 |
+| `crates/metadata/curvine-raft` | Raft 日志与元数据复制。 |
+| `crates/adapters/` | RocksDB、本地与 SPDK 存储、OpenDAL 与 OSS-HDFS UFS 后端、HDFS JNI 与服务发现。 |
+| `crates/server/curvine-data-transfer` | 独立处理 Load / Export 作业的 Transfer 服务。 |
+| `curvine-server` | 服务端二进制（`--service master`、`worker`、`mds` 或 `transfer`）。 |
+| `curvine-master`、`curvine-worker`、`curvine-mds` | 各服务入口 crate。 |
+| `crates/client/` | 客户端核心、统一文件系统、传输作业客户端与压测运行器。 |
+| `crates/sdk/`、`curvine-libsdk` | Rust、Java、Python SDK crate 与打包。 |
 | `curvine-fuse` | FUSE 守护进程。 |
 | `curvine-web` | Web UI 与管理 API。 |
-| `curvine-ufs` | UFS 后端与存储集成。 |
+| `curvine-ufs` | UFS 集成 crate。 |
 | `curvine-cli` | `cv` 命令行工具。 |
-| `curvine-s3-gateway` | S3 兼容对象网关。 |
+| `curvine-tests` | 集成测试、压测二进制与回归测试工具。 |
 
 ### 其他顶层目录
 
 | 路径 | 用途 |
 |------|------|
 | `build/` | 构建、打包、启动、压测与测试脚本。 |
-| `build/bin/` | 运行时包装脚本，例如 `curvine-master.sh`、`curvine-worker.sh`、`curvine-fuse.sh`、`cv`、`local-cluster.sh`。 |
+| `build/bin/` | 运行时包装脚本，例如 `curvine-master.sh`、`curvine-worker.sh`、`curvine-mds.sh`、`curvine-transfer.sh`、`curvine-fuse.sh`、`cv`、`local-cluster.sh`。 |
 | `build/tests/` | 压测与回归辅助脚本，例如 `curvine-bench.sh`、`meta-bench.sh`、`java-bench.sh`、`fio-test.sh`。 |
 | `curvine-csi/` | 基于 Go 的 CSI 驱动源码与镜像构建资源。 |
 | `curvine-docker/` | Docker 构建与部署资源。 |
@@ -46,7 +49,7 @@ Curvine 仓库同时包含 Cargo workspace，以及若干用于打包、部署�
 
 按参考仓库中的 `rust-toolchain.toml`、`README.md` 与 `README_zh.md`：
 
-- Rust `1.92.0`，并安装 `rustfmt`、`clippy`、`rust-analyzer`
+- Rust `1.98`（由 `rust-toolchain.toml` 固定；`build/check-env.sh` 接受 1.86 及以上），并安装 `rustfmt`、`clippy`、`rust-analyzer`
 - Protobuf `3.x`
 - LLVM `12+`
 - libfuse2 或 libfuse3 开发包
@@ -87,7 +90,7 @@ make all
 make build ARGS='-p core'
 make build ARGS='-p server -p client'
 make build ARGS='-p core -p fuse'
-make build ARGS='-p object'
+make build ARGS='-p web'
 make build ARGS='-p tests'
 make build ARGS='-d'
 make build ARGS='--skip-java-sdk'
@@ -96,7 +99,7 @@ make build-hdfs
 
 参考 `build/build.sh`，常用参数包括：
 
-- `-p, --package`：`core`、`server`、`client`、`cli`、`web`、`fuse`、`java`、`python`、`tests`、`object`、`all`
+- `-p, --package`：`core`、`server`、`client`、`cli`、`web`、`fuse`、`java`、`python`、`rust-sdk`、`tests`、`all`
 - `-u, --ufs`：`opendal-s3`、`opendal-oss`、`opendal-azblob`、`opendal-gcs`、`opendal-hdfs`、`opendal-webhdfs`、`oss-hdfs`
 - `-d, --debug`：生成 debug 产物
 - `--skip-java-sdk`：跳过 Java SDK 打包
