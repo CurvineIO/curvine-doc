@@ -51,12 +51,12 @@ make dist
 
 环境脚本会导出这些关键变量：
 
-- `CURVINE_MASTER_HOSTNAME`：默认取本机 hostname
-- `CURVINE_WORKER_HOSTNAME`：Linux 下默认取 `hostname -I` 返回结果中的最后一个 IP
-- `CURVINE_CLIENT_HOSTNAME`：默认取本机 hostname
+- `CURVINE_MASTER_HOSTNAME`：默认 `localhost`
+- `CURVINE_WORKER_HOSTNAME`：默认 `localhost`
+- `CURVINE_CLIENT_HOSTNAME`：默认 `localhost`
 - `CURVINE_CONF_FILE`：默认指向 `conf/curvine-cluster.toml`
 
-在多网卡、容器、多机部署场景中，建议显式设置这些值，而不要完全依赖自动探测：
+这些默认值来自 `etc/curvine-env.sh`，只适合单机本地使用。在多网卡、容器、多机部署场景中，请显式设置这些值，而不要依赖默认值；也可以在 `curvine-cluster.toml` 中设置 `net_interface`，让每个节点自行解析本机 IPv4，参见[配置参考](../3-Distributed-Mode/03-conf.md#net_interface)。
 
 ```bash
 export CURVINE_MASTER_HOSTNAME=master1
@@ -97,7 +97,7 @@ journal_addrs = [
 ]
 
 # 配置raft 日志存储目录
-journal_dir = "testing/journal"  
+journal_dir = "data/journal"
 
 [worker]
 # 预留空间，默认为0
@@ -133,10 +133,10 @@ file_name = "curvine.log"
 `journal_addrs` 中每条记录的 hostname，必须和对应节点在应用 `CURVINE_MASTER_HOSTNAME` 覆盖后的实际 Master hostname 一致，否则该 Master 无法加入 Raft 组。
 :::
 
-如果需要使用 Java Hadoop 客户端，还需要同步更新 `conf/curvine-site.xml` 中的 `fs.cv.master_addrs`：
+如果需要使用 Java Hadoop 客户端，还需要同步更新 `conf/curvine-site.xml` 中的 `fs.cv.default.master_addrs`：
 ```xml
 <property>
-    <name>fs.cv.master_addrs</name>
+    <name>fs.cv.default.master_addrs</name>
     <value>master1:8995,master2:8995,master3:8995</value>
 </property>
 ```
