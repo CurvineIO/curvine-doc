@@ -54,12 +54,12 @@ After unpacking the installation package, the key files are:
 
 The environment script exports these important variables:
 
-- `CURVINE_MASTER_HOSTNAME`: defaults to local hostname
-- `CURVINE_WORKER_HOSTNAME`: defaults to the last IP returned by `hostname -I` on Linux
-- `CURVINE_CLIENT_HOSTNAME`: defaults to local hostname
+- `CURVINE_MASTER_HOSTNAME`: defaults to `localhost`
+- `CURVINE_WORKER_HOSTNAME`: defaults to `localhost`
+- `CURVINE_CLIENT_HOSTNAME`: defaults to `localhost`
 - `CURVINE_CONF_FILE`: points to `conf/curvine-cluster.toml`
 
-In multi-NIC, container, or multi-node deployments, you should usually set these explicitly instead of relying on autodetection.
+The defaults come from `etc/curvine-env.sh` and are only suitable for single-node local use. In multi-NIC, container, or multi-node deployments, set these explicitly instead of relying on the defaults. Alternatively, set `net_interface` in `curvine-cluster.toml` to let each node resolve its own IPv4; see the [Configuration Reference](../3-Distributed-Mode/03-conf.md#net_interface).
 
 ```bash
 export CURVINE_MASTER_HOSTNAME=master1
@@ -100,7 +100,7 @@ journal_addrs = [
 ]
 
 # Configure raft log storage directory
-journal_dir = "testing/journal"
+journal_dir = "data/journal"
 
 [worker]
 # Reserved space, default is 0
@@ -137,7 +137,7 @@ Each hostname in `journal_addrs` must match the effective master hostname on tha
 If you need the Java Hadoop client path, update `conf/curvine-site.xml` as well:
 ```xml
 <property>
-    <name>fs.cv.master_addrs</name>
+    <name>fs.cv.default.master_addrs</name>
     <value>master1:8995,master2:8995,master3:8995</value>
 </property>
 ```
