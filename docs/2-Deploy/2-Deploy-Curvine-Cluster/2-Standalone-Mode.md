@@ -21,7 +21,8 @@ cd build/dist
 2. Kill any previous Curvine processes.
 3. Start `curvine-master`.
 4. Start `curvine-worker`.
-5. Start `curvine-fuse`.
+5. Start `curvine-transfer` when `[transfer].enabled = true`.
+6. Start `curvine-fuse`.
 
 It does not start a separate `webui` process. Web pages are served on the service web ports using the bundled `webui/` assets.
 
@@ -53,16 +54,17 @@ ls -la /curvine-fuse
 
 ## Web Endpoints
 
-- Master web endpoint: `http://<host>:9000`
-- Worker web endpoint: `http://<host>:9001`
+- Master web endpoint: `http://<host>:9001`
+- Worker web endpoint: `http://<host>:9002`
+- FUSE web endpoint: `http://<host>:9003`
 
 :::tip
-If you run inside Docker, use `--network host` or map at least `8995`, `8996`, `8997`, `9000`, and `9001`. If you need browser access to the FUSE web endpoint as well, include `9002`.
+If you run inside Docker, use `--network host` or map at least `8995`, `8996`, `8997`, `9001`, `9002`, and `9003`.
 :::
 
 ## Alternative Helper Script
 
-The distribution also includes `bin/local-cluster.sh`, which manages only Master and Worker:
+The distribution also includes `bin/local-cluster.sh`, which manages the server-side processes and starts Transfer when enabled, but does not mount FUSE:
 
 ```bash
 ./bin/local-cluster.sh start

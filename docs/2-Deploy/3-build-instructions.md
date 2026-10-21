@@ -11,7 +11,7 @@ This project requires the following dependencies. Please ensure they are install
 ## Prerequisites
 
 - **GCC**: version 10 or later ([Installation Guide](https://gcc.gnu.org/install/))
-- **Rust**: version 1.86 or later ([Installation Guide](https://www.rust-lang.org/tools/install))
+- **Rust**: version 1.98 (pinned by `rust-toolchain.toml`; `build/check-env.sh` accepts 1.86 or later) ([Installation Guide](https://www.rust-lang.org/tools/install))
 - **Protobuf**: version 3.x
 - **Maven**: version 3.8 or later ([Install Guide](https://maven.apache.org/install.html))
 - **LLVM**: version 12 or later ([Installation Guide](https://llvm.org/docs/GettingStarted.html))
@@ -67,11 +67,11 @@ bash build/build.sh -p server --spdk-rdma --spdk-dir /opt/spdk
 Building Docker images:
 
 ```bash
-# or use curvine-compile:latest docker images to build
+# Build the runtime image from source
 make docker-build
 
-# or use curvine-compile:build-cached docker images to build, this image already cached most dependency crates
-make docker-build-cached
+# Compile inside the cached compile image; output goes to build/dist
+make docker-compile
 ```
 
 After successful compilation, target file will be generated in the `build/dist` directory. This file is the Curvine installation package that can be used for deployment or building images.
@@ -115,7 +115,7 @@ bin/cv fs ls /
 Access Web UI:
 
 ```
-http://your-hostname:9000
+http://your-hostname:9001
 ```
 
 Curvine uses TOML-formatted configuration files. An example configuration is located at `conf/curvine-cluster.toml`. The main configuration items include:

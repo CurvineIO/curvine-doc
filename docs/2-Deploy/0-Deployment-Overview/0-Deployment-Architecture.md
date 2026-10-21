@@ -15,7 +15,7 @@ flowchart TD
     subgraph Client_Applications
         App1[Application 1<br/>FUSE mount]
         App2[Application 2<br/>Hadoop HDFS API]
-        App3[Application 3<br/>S3 SDK]
+        App3[Application 3<br/>CLI / SDK]
     end
 
     subgraph Cluster_Layer
@@ -86,7 +86,7 @@ flowchart TD
 
 **FUSE Interface**: Provides POSIX file system interface, mounting distributed cache as local file system
 
-**S3 Gateway**: Provides S3-compatible object storage interface, supporting S3 API
+**Transfer Service (optional)**: Runs Load and Export jobs outside the Master process; see [Transfer Service](../3-Transfer-Service/0-Overview.md).
 
 **Client Library**: Provides multi-language APIs, communicating with Master and Worker nodes via RPC
 

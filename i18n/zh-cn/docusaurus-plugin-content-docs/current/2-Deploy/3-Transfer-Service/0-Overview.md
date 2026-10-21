@@ -27,8 +27,8 @@ flowchart LR
 | 组件 | 必需变更 | 说明 |
 | --- | --- | --- |
 | Transfer 服务 | 配置 `transfer.enabled = true`、持久化 `store_url` 和可访问 endpoint。 | 服务配置还必须包含现有集群的 Master 地址。 |
-| CLI 或 SDK 客户端 | 配置 `transfer.enabled = true` 和 `transfer.endpoints`。 | `cv load`、`cv export` 及兼容的查询/取消命令会自动使用 Transfer。 |
-| Master | 无。灰度期间保持 Transfer 未启用。 | 启用后 Master 会拒绝旧 Load 和 Export RPC。 |
+| CLI 或 SDK 客户端 | 配置 `transfer.enabled = true` 以及可访问的端点（`endpoints`，或 `hostname` 与 `rpc_port`）。 | `cv load`、`cv export` 及兼容的查询/取消命令会自动使用 Transfer。 |
+| Master | 无。 | Master 无需修改配置；未启用 Transfer 的客户端继续使用旧 Load 和 Export RPC。 |
 | Worker | 无。 | Worker 只需使用支持 Transfer task 的版本；回报 endpoint 随任务下发。 |
 
 客户端配置中不需要数据库 URL。状态存储只属于 Transfer 服务端。
@@ -64,11 +64,13 @@ endpoints = ["transfer-1.example.com:9010"]
 ```toml
 [transfer]
 enabled = true
-endpoints = ["transfer-1.example.com:9010"]
+hostname = "transfer-1.example.com"
+rpc_port = 9010
 ```
 
-未配置 `endpoints` 时，Curvine 使用 `hostname:rpc_port` 推导一个地址。Kubernetes
-或监听地址与访问地址不同的场景应显式配置 endpoint。
+未配置 `endpoints` 时，Curvine 使用 `hostname:rpc_port` 推导一个地址。在 Kubernetes
+中优先使用这种形式，Chart 会把 Service FQDN 写入 `hostname`。仅当客户端通过其他地址
+（例如负载均衡）访问服务时，才需要显式设置 `endpoints`。
 
 ## 部署与验证
 

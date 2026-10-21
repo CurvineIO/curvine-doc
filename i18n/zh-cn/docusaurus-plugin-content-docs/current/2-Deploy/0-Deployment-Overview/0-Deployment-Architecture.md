@@ -14,7 +14,7 @@ flowchart TD
     subgraph 客户端应用
         App1[应用程序1<br/>FUSE挂载]
         App2[应用程序2<br/>Hadoop HDFS API]
-        App3[应用程序3<br/>S3 SDK]
+        App3[应用程序3<br/>CLI / SDK]
     end
 
     subgraph 集群层
@@ -81,7 +81,7 @@ flowchart TD
 
 **FUSE接口**：提供POSIX文件系统接口，将分布式缓存挂载为本地文件系统
 
-**S3 Gateway**：提供S3兼容的对象存储接口，支持S3 API
+**Transfer 服务（可选）**：在 Master 进程之外运行 Load 与 Export 任务，参见 [Transfer 服务](../3-Transfer-Service/0-Overview.md)。
 
 **客户端库**：提供多语言API，通过RPC与Master节和Worker节点通信
 
