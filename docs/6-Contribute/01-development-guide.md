@@ -14,26 +14,29 @@ The repository contains a Cargo workspace plus several top-level directories use
 
 `Cargo.toml` lists these workspace members:
 
-| Crate | Role |
-|-------|------|
-| `orpc` | Async RPC, runtime, logging, and network primitives shared across the project. |
-| `curvine-common` | Shared config, protocol types, metadata helpers, and cluster defaults. |
-| `curvine-server` | Master and Worker server binary (`--service master` or `--service worker`). |
-| `curvine-client` | Rust client, block I/O path, and UFS-facing client logic. |
-| `curvine-libsdk` | SDK bindings and Java packaging. |
-| `curvine-tests` | Integration tests, benchmark binary, and regression tooling. |
+| Crate / Directory | Role |
+|-------------------|------|
+| `crates/core/` | Runtime, RPC, networking, I/O, allocation, metrics, and fault-injection crates. |
+| `crates/common/` | Configuration, protocol, model, filesystem, storage, and UFS API crates. |
+| `crates/metadata/curvine-raft` | Raft journal and metadata replication. |
+| `crates/adapters/` | RocksDB, local and SPDK storage, OpenDAL and OSS-HDFS UFS backends, HDFS JNI, and service discovery. |
+| `crates/server/curvine-data-transfer` | Standalone Load and Export Transfer service. |
+| `curvine-server` | Server binary (`--service master`, `worker`, `mds`, or `transfer`). |
+| `curvine-master`, `curvine-worker`, `curvine-mds` | Service entry crates. |
+| `crates/client/` | Client core, unified filesystem, transfer job client, and benchmark runner. |
+| `crates/sdk/`, `curvine-libsdk` | Rust, Java, and Python SDK crates and packaging. |
 | `curvine-fuse` | FUSE daemon. |
 | `curvine-web` | Web UI and management API. |
-| `curvine-ufs` | UFS backends and storage integrations. |
+| `curvine-ufs` | UFS integration crate. |
 | `curvine-cli` | `cv` command-line client. |
-| `curvine-s3-gateway` | S3-compatible object gateway. |
+| `curvine-tests` | Integration tests, benchmark binary, and regression tooling. |
 
 ### Other top-level directories
 
 | Path | Purpose |
 |------|---------|
 | `build/` | Build, packaging, launch, benchmark, and test scripts. |
-| `build/bin/` | Runtime wrappers such as `curvine-master.sh`, `curvine-worker.sh`, `curvine-fuse.sh`, `cv`, and `local-cluster.sh`. |
+| `build/bin/` | Runtime wrappers such as `curvine-master.sh`, `curvine-worker.sh`, `curvine-mds.sh`, `curvine-transfer.sh`, `curvine-fuse.sh`, `cv`, and `local-cluster.sh`. |
 | `build/tests/` | Benchmark and regression helpers such as `curvine-bench.sh`, `meta-bench.sh`, `java-bench.sh`, and `fio-test.sh`. |
 | `curvine-csi/` | Go-based CSI driver sources and image build assets. |
 | `curvine-docker/` | Docker build and deployment assets. |
@@ -46,7 +49,7 @@ The repository contains a Cargo workspace plus several top-level directories use
 
 Align with `rust-toolchain.toml`, `README.md`, and `README_zh.md` in the reference repository:
 
-- Rust `1.92.0` with `rustfmt`, `clippy`, and `rust-analyzer`
+- Rust `1.98` (pinned by `rust-toolchain.toml`; `build/check-env.sh` accepts 1.86 or later), with `rustfmt`, `clippy`, and `rust-analyzer`
 - Protobuf `3.x`
 - LLVM `12+`
 - libfuse2 or libfuse3 development packages
@@ -87,7 +90,7 @@ make all
 make build ARGS='-p core'
 make build ARGS='-p server -p client'
 make build ARGS='-p core -p fuse'
-make build ARGS='-p object'
+make build ARGS='-p web'
 make build ARGS='-p tests'
 make build ARGS='-d'
 make build ARGS='--skip-java-sdk'
@@ -96,7 +99,7 @@ make build-hdfs
 
 Useful `build/build.sh` options from the reference script:
 
-- `-p, --package`: `core`, `server`, `client`, `cli`, `web`, `fuse`, `java`, `python`, `tests`, `object`, or `all`
+- `-p, --package`: `core`, `server`, `client`, `cli`, `web`, `fuse`, `java`, `python`, `rust-sdk`, `tests`, or `all`
 - `-u, --ufs`: `opendal-s3`, `opendal-oss`, `opendal-azblob`, `opendal-gcs`, `opendal-hdfs`, `opendal-webhdfs`, or `oss-hdfs`
 - `-d, --debug`: build debug artifacts instead of release
 - `--skip-java-sdk`: skip Java SDK packaging

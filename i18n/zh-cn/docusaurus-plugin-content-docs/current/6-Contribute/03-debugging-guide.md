@@ -17,12 +17,15 @@ build/dist/conf/curvine-cluster.toml
 源码中的示例文件位于 `etc/curvine-cluster.toml`。其中常见配置段包括：
 
 - `[master]`
+- `[mds]`
 - `[journal]`
 - `[worker]`
 - `[client]`
+- `[transfer]`
 - `[fuse]`
+- `[discovery]`
+- `[fault_injection]`
 - `[log]`
-- `[s3_gateway]`
 - `[cli]`
 
 脚本中涉及的运行时环境变量包括：
@@ -89,25 +92,29 @@ log = { level = "warn", log_dir = "stdout", file_name = "cli.log" }
 | Master | `bin/curvine-master.sh start` | `lib/curvine-server --service master --conf $CURVINE_CONF_FILE` |
 | Worker | `bin/curvine-worker.sh start` | `lib/curvine-server --service worker --conf $CURVINE_CONF_FILE` |
 | FUSE | `bin/curvine-fuse.sh start` | `lib/curvine-fuse ... --conf $CURVINE_CONF_FILE` |
-| 本地集群 | `bin/local-cluster.sh start` | 依次通过包装脚本启动 Master 与 Worker |
-| S3 网关 | `bin/curvine-s3-gateway.sh start` | `lib/curvine-s3-gateway` |
+| MDS | `bin/curvine-mds.sh start` | `lib/curvine-server --service mds --conf $CURVINE_CONF_FILE` |
+| Transfer | `bin/curvine-transfer.sh start` | `lib/curvine-server --service transfer --conf $CURVINE_CONF_FILE` |
+| 本地集群 | `bin/local-cluster.sh start` | 依次通过包装脚本启动 Master 与 Worker，启用时同时启动 Transfer |
 | CLI | `bin/cv ...` | `lib/curvine-cli` |
 
 `bin/curvine-fuse.sh` 默认挂载点为 `/curvine-fuse`，也支持通过 `--mnt-path` 传入自定义挂载点。
 
 ## 默认端口
 
-这些默认值来自 `curvine-common/src/conf/cluster_conf.rs` 与示例配置：
+这些默认值来自 `crates/common/curvine-config/src/cluster_conf.rs` 与示例配置：
 
 | 服务 | 默认端口 | 来源 |
 |------|----------|------|
 | Master RPC | `8995` | `DEFAULT_MASTER_PORT` |
 | Raft / journal | `8996` | `DEFAULT_RAFT_PORT` |
 | Worker RPC | `8997` | `DEFAULT_WORKER_PORT` |
-| Master Web / metrics | `9000` | `DEFAULT_MASTER_WEB_PORT` |
-| Worker Web / metrics | `9001` | `DEFAULT_WORKER_WEB_PORT` |
-| FUSE Web / metrics | `9002` | `DEFAULT_FUSE_WEB_PORT` |
-| S3 网关监听 | `9900` | 示例配置中的 `[s3_gateway].listen` |
+| Master Web / metrics | `9001` | `DEFAULT_MASTER_WEB_PORT` |
+| Worker Web / metrics | `9002` | `DEFAULT_WORKER_WEB_PORT` |
+| FUSE Web / metrics | `9003` | `DEFAULT_FUSE_WEB_PORT` |
+| MDS RPC | `8998` | `[mds].rpc_port` |
+| MDS Web / metrics | `9004` | `[mds].web_port` |
+| Transfer RPC | `9010` | `[transfer].rpc_port` |
+| Transfer Web / metrics | `9011` | `[transfer].web_port` |
 
 ## 常见调试流程
 
@@ -162,8 +169,8 @@ bin/cv node
 ### 指标与性能分析
 
 ```bash
-curl http://<master>:9000/metrics
-curl http://<worker>:9001/metrics
+curl http://<master>:9001/metrics
+curl http://<worker>:9002/metrics
 ```
 
 然后结合 `htop`、`iostat -x 1`、`sar -n DEV 1`、`perf record -g` 等系统工具继续分析。
