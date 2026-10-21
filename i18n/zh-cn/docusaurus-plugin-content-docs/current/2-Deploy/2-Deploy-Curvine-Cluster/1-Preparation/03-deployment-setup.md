@@ -97,7 +97,7 @@ journal_addrs = [
 ]
 
 # 配置raft 日志存储目录
-journal_dir = "data/journal"  
+journal_dir = "data/journal"
 
 [worker]
 # 预留空间，默认为0
