@@ -1,4 +1,8 @@
-# S3 对象存储网关
+# S3 对象存储网关（旧版）
+
+:::warning
+当前 Curvine 服务端**已不包含 S3 网关**：发行包中没有 `curvine-s3-gateway` 二进制或 `bin/curvine-s3-gateway.sh` 脚本，`[s3_gateway]` 配置也不会生效。本页仅用于旧版本参考。当前部署请使用 FUSE、CLI/SDK 或 `cv mount`。
+:::
 
 ## 概述
 

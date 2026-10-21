@@ -2,7 +2,7 @@
 
 Prerequisite: curvine cluster installed via Helm in namespace `curvine`.
 
-Chart: `curvine/curvine-csi`, version `0.3.2-alpha`. Release namespace: `curvine-system`.
+Chart: `curvine/curvine-csi`, version `0.5.2-alpha`. Release namespace: `curvine-system`.
 
 ## Architecture
 
@@ -20,7 +20,7 @@ helm repo add curvine https://curvineio.github.io/helm-charts
 helm repo update
 
 helm upgrade --install curvine-csi curvine/curvine-csi \
-  --version 0.3.2-alpha \
+  --version 0.5.2-alpha \
   -n curvine-system \
   --create-namespace \
   --wait --timeout 8m
@@ -33,7 +33,7 @@ kubectl get pods -n curvine-system
 
 ```bash
 helm upgrade --install curvine-csi curvine/curvine-csi \
-  --version 0.3.2-alpha \
+  --version 0.5.2-alpha \
   -n curvine-system \
   --create-namespace \
   --set node.mountMode=standalone \
@@ -199,7 +199,7 @@ kubectl logs app-pod -n curvine
 
 ## Configuration Reference
 
-Chart version `0.3.2-alpha`. Defaults below match `helm show values curvine/curvine-csi --version 0.3.2-alpha`.
+Chart version `0.5.2-alpha`. Defaults below match `helm show values curvine/curvine-csi --version 0.5.2-alpha`.
 
 ### Image
 
@@ -228,16 +228,9 @@ Chart version `0.3.2-alpha`. Defaults below match `helm show values curvine/curv
 | `controller.container.env.CSI_ENDPOINT` | `unix:///csi/csi.sock` | CSI socket |
 | `controller.container.ports.healthz` | `9909` | Health check port |
 | `controller.container.securityContext.privileged` | `true` | Privileged mode |
-| `controller.sidecars.provisioner.image` | `quay.io/k8scsi/csi-provisioner:v1.6.0` | Provisioner sidecar |
+| `controller.sidecars.provisioner.image` | `registry.k8s.io/sig-storage/csi-provisioner:v5.0.1` | Provisioner sidecar |
 | `controller.sidecars.attacher.image` | `registry.k8s.io/sig-storage/csi-attacher:v4.5.0` | Attacher sidecar |
 | `controller.sidecars.livenessProbe.image` | `registry.k8s.io/sig-storage/livenessprobe:v2.11.0` | Liveness probe sidecar |
-
-If provisioner or registrar sidecars fail with `ImagePullBackOff`, override with `registry.k8s.io/sig-storage` images:
-
-```bash
---set controller.sidecars.provisioner.image=registry.k8s.io/sig-storage/csi-provisioner:v5.0.1 \
---set node.sidecars.nodeDriverRegistrar.image=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
-```
 
 ### Node
 
@@ -257,7 +250,7 @@ If provisioner or registrar sidecars fail with `ImagePullBackOff`, override with
 | `node.container.resources.requests.memory` | `512Mi` | Memory request (`embedded` mode) |
 | `node.container.resources.limits.cpu` | `2` | CPU limit (`embedded` mode) |
 | `node.container.resources.limits.memory` | `2Gi` | Memory limit (`embedded` mode) |
-| `node.sidecars.nodeDriverRegistrar.image` | `quay.io/k8scsi/csi-node-driver-registrar:v2.1.0` | Registrar sidecar |
+| `node.sidecars.nodeDriverRegistrar.image` | `registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0` | Registrar sidecar |
 | `node.sidecars.livenessProbe.image` | `registry.k8s.io/sig-storage/livenessprobe:v2.11.0` | Liveness probe sidecar |
 | `node.hostPaths.pluginDir.path` | `/var/lib/kubelet/csi-plugins/csi.curvine.io/` | CSI plugin directory |
 | `node.hostPaths.kubeletDir.path` | `/var/lib/kubelet` | Kubelet directory |
@@ -309,7 +302,7 @@ helm upgrade curvine-csi curvine/curvine-csi -n curvine-system --reuse-values \
 Full parameter list:
 
 ```bash
-helm show values curvine/curvine-csi --version 0.3.2-alpha
+helm show values curvine/curvine-csi --version 0.5.2-alpha
 ```
 
 ## Troubleshooting

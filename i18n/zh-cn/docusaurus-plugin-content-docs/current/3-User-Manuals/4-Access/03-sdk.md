@@ -1,6 +1,6 @@
 # SDK 访问
 
-Curvine 提供多语言 SDK，使应用可通过 RPC 访问 Curvine 文件系统（元数据访问 Master，块数据访问 Worker），而无需使用 FUSE 或 S3 网关。
+Curvine 提供多语言 SDK，使应用可通过 RPC 访问 Curvine 文件系统（元数据访问 Master，块数据访问 Worker），而无需使用 FUSE。
 
 ## 概览
 
@@ -20,7 +20,7 @@ Curvine 提供多语言 SDK，使应用可通过 RPC 访问 Curvine 文件系统
 
 ## Java SDK
 
-- **Hadoop FileSystem**：在 `core-site.xml` 或 `curvine-site.xml` 中配置 `fs.cv.impl` 与 `fs.cv.master_addrs`，使 `FileSystem.get(URI.create("curvine:///path"), conf)` 使用 Curvine。`fs.cv.master_addrs` 配置见 [部署准备](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/03-deployment-setup.md#环境脚本与主配置)。
+- **Hadoop FileSystem**：在 `core-site.xml` 或 `curvine-site.xml` 中配置 `fs.cv.impl` 与 `fs.cv.default.master_addrs`，使 `FileSystem.get(URI.create("curvine:///path"), conf)` 使用 Curvine。`fs.cv.default.master_addrs` 配置见 [部署准备](../../2-Deploy/2-Deploy-Curvine-Cluster/1-Preparation/03-deployment-setup.md#环境脚本与主配置)。
 - **Java API**：在不使用 Hadoop FileSystem 时，可使用 curvine-libsdk 的 Java SDK 直接通过 RPC 访问。
 
 兼容 Hadoop、Spark、Flink 等支持自定义 FileSystem 的 JVM 框架。
@@ -33,7 +33,7 @@ Python SDK（来自 curvine-libsdk）提供读写文件、列举目录等原生 
 
 ## 通用配置
 
-- **Master 地址**：在集群配置（如 `curvine-cluster.toml`）中设置 `client.master_addrs`，或在各 SDK 中传入等价配置（如 Java 的 `fs.cv.master_addrs`）。格式：`host1:8995,host2:8995`。
-- **配置文件**：多数 SDK 支持传入配置文件路径（如 `conf/curvine-cluster.toml`），与 CLI（`cv`）、FUSE、S3 网关共用同一配置。
+- **Master 地址**：在集群配置（如 `curvine-cluster.toml`）中设置 `client.master_addrs`，或在各 SDK 中传入等价配置（如 Java 的 `fs.cv.default.master_addrs`）。格式：`host1:8995,host2:8995`。
+- **配置文件**：多数 SDK 支持传入配置文件路径（如 `conf/curvine-cluster.toml`），与 CLI（`cv`）、FUSE 共用同一配置。
 
 若需 UFS（统一文件系统）访问，请先用 `cv mount` 挂载 UFS 路径；随后在对应 Curvine 路径上的 SDK 操作语义与 [数据编排](../1-Key-Features/01-ufs.md) 一致。
