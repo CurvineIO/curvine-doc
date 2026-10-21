@@ -4,7 +4,7 @@ This chapter provides an in-depth introduction to Curvine's technical architectu
 
 ## Architecture Overview
 
-Curvine adopts a layered distributed architecture design that ensures clear component responsibilities with excellent scalability and high availability. The entire architecture is primarily divided into three layers: **control layer** (Master), **storage layer** (Workers), and **access layer** (clients: FUSE, SDK, CLI, S3 gateway), which collaborate to complete data storage, processing, and management tasks.
+Curvine adopts a layered distributed architecture design that ensures clear component responsibilities with excellent scalability and high availability. The entire architecture is primarily divided into three layers: **control layer** (Master), **storage layer** (Workers), and **access layer** (clients: FUSE, SDK, CLI), which collaborate to complete data storage, processing, and management tasks.
 
 Curvine consists of three main server-side roles plus clients and UFS:
 
@@ -14,7 +14,6 @@ Curvine consists of three main server-side roles plus clients and UFS:
 
 - **FUSE Mount**: POSIX-compatible mount via libfuse/3 (curvine-fuse)
 - **HDFS & SDK**: Java / Python / libsdk interfaces
-- **S3 Gateway**: S3-compatible API (curvine-s3-gateway)
 - **CSI Driver**: Kubernetes volume driver (curvine-csi)
 - **CLI (`cv`)**: Admin tools for fs ops, report, and cluster management
 

@@ -8,7 +8,7 @@ This document describes the core components and data flow of Curvine as implemen
 
 ## Overview
 
-Curvine is a distributed file cache layer. The **Master** manages metadata and block placement; **Workers** store block data and serve read/write; **Clients** (FUSE, SDK, CLI, S3 gateway) talk to Master for metadata and to Workers for data. Metadata is replicated via **Raft** for high availability.
+Curvine is a distributed file cache layer. The **Master** manages metadata and block placement; **Workers** store block data and serve read/write; **Clients** (FUSE, SDK, CLI) talk to Master for metadata and to Workers for data. Metadata is replicated via **Raft** for high availability.
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
@@ -16,7 +16,6 @@ flowchart LR
     subgraph Client_Layer["Client layer"]
         FUSE[FUSE]
         SDK["SDK / CLI"]
-        S3["S3 Gateway"]
     end
 
     subgraph Master_Layer["Master (Raft group)"]
@@ -32,7 +31,6 @@ flowchart LR
 
     FUSE --> Leader
     SDK --> Leader
-    S3 --> Leader
     FUSE --> W1
     SDK --> W2
     Leader --> W1
@@ -41,7 +39,7 @@ flowchart LR
     classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
     classDef masterStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
     classDef workerStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
-    class FUSE,SDK,S3 appStyle
+    class FUSE,SDK appStyle
     class Leader,Follower masterStyle
     class W1,W2 workerStyle
 ```
@@ -95,7 +93,7 @@ Workers store **block data** and serve block read/write RPC. They do not hold fi
 
 ## Client
 
-The client is any component that uses the Curvine file system: **FUSE**, **Rust/Java/Python SDK**, **CLI** (`cv`), or **S3 gateway**. It always talks to the **Master** for metadata and to **Workers** for block data.
+The client is any component that uses the Curvine file system: **FUSE**, **Rust/Java/Python SDK**, or **CLI** (`cv`). It always talks to the **Master** for metadata and to **Workers** for block data.
 
 ### Read path
 

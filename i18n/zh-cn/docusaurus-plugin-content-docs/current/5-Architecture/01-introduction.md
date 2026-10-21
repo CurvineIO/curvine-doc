@@ -8,7 +8,7 @@ sidebar_position: 1
 
 ## 概述
 
-Curvine 是分布式文件缓存层。**Master** 负责元数据与块调度；**Worker** 存储块数据并响应读写；**Client**（FUSE、SDK、CLI、S3 网关）向 Master 请求元数据、向 Worker 请求数据。元数据通过 **Raft** 复制以实现高可用。
+Curvine 是分布式文件缓存层。**Master** 负责元数据与块调度；**Worker** 存储块数据并响应读写；**Client**（FUSE、SDK、CLI）向 Master 请求元数据、向 Worker 请求数据。元数据通过 **Raft** 复制以实现高可用。
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff', 'primaryColor': '#4a9eff', 'primaryTextColor': '#1a202c', 'primaryBorderColor': '#3182ce', 'lineColor': '#4a5568', 'secondaryColor': '#805ad5', 'tertiaryColor': '#38a169', 'mainBkg': '#ffffff', 'nodeBorder': '#4a5568', 'clusterBkg': '#f8f9fa', 'clusterBorder': '#dee2e6', 'titleColor': '#1a202c'}}}%%
@@ -16,7 +16,6 @@ flowchart LR
     subgraph Client_Layer["客户端层"]
         FUSE[FUSE]
         SDK["SDK / CLI"]
-        S3["S3 网关"]
     end
 
     subgraph Master_Layer["Master (Raft 组)"]
@@ -32,7 +31,6 @@ flowchart LR
 
     FUSE --> Leader
     SDK --> Leader
-    S3 --> Leader
     FUSE --> W1
     SDK --> W2
     Leader --> W1
@@ -41,7 +39,7 @@ flowchart LR
     classDef appStyle fill:#ed8936,stroke:#c05621,color:#fff,stroke-width:2px
     classDef masterStyle fill:#4a9eff,stroke:#2b6cb0,color:#fff,stroke-width:2px
     classDef workerStyle fill:#805ad5,stroke:#553c9a,color:#fff,stroke-width:2px
-    class FUSE,SDK,S3 appStyle
+    class FUSE,SDK appStyle
     class Leader,Follower masterStyle
     class W1,W2 workerStyle
 ```
@@ -95,7 +93,7 @@ Worker 负责 **块数据** 的存储与块读写 RPC。不保存文件系统元
 
 ## Client
 
-Client 指使用 Curvine 文件系统的任何一方：**FUSE**、**Rust/Java/Python SDK**、**CLI**（`cv`）或 **S3 网关**。它们都向 **Master** 要元数据、向 **Worker** 要块数据。
+Client 指使用 Curvine 文件系统的任何一方：**FUSE**、**Rust/Java/Python SDK** 或 **CLI**（`cv`）。它们都向 **Master** 要元数据、向 **Worker** 要块数据。
 
 ### 读路径
 

@@ -4,7 +4,7 @@
 
 ## 整体架构概述
 
-Curvine 采用分层设计的分布式架构，各组件职责明确，具备良好的可扩展性和高可用性。整个架构主要分为三层：**控制层**（Master）、**存储层**（Worker）、**接入层**（客户端：FUSE、SDK、CLI、S3 网关），共同完成数据的存储、处理和管理。
+Curvine 采用分层设计的分布式架构，各组件职责明确，具备良好的可扩展性和高可用性。整个架构主要分为三层：**控制层**（Master）、**存储层**（Worker）、**接入层**（客户端：FUSE、SDK、CLI），共同完成数据的存储、处理和管理。
 
 Curvine 由三个主要服务器端角色加上客户端和 UFS 组成：
 
@@ -14,7 +14,6 @@ Curvine 由三个主要服务器端角色加上客户端和 UFS 组成：
 
 - **FUSE 挂载**：通过 libfuse/3 的 POSIX 兼容挂载 (curvine-fuse)
 - **HDFS & SDK**：Java / Python / libsdk 接口
-- **S3 网关**：S3 兼容 API (curvine-s3-gateway)
 - **CSI 驱动**：Kubernetes 卷驱动 (curvine-csi)
 - **CLI (`cv`)**：文件系统操作、报告和集群管理的管理工具
 

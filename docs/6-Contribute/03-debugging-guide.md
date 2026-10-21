@@ -89,25 +89,29 @@ For deeper debugging, raise the relevant section to `debug` or `trace`.
 | Master | `bin/curvine-master.sh start` | `lib/curvine-server --service master --conf $CURVINE_CONF_FILE` |
 | Worker | `bin/curvine-worker.sh start` | `lib/curvine-server --service worker --conf $CURVINE_CONF_FILE` |
 | FUSE | `bin/curvine-fuse.sh start` | `lib/curvine-fuse ... --conf $CURVINE_CONF_FILE` |
-| Local cluster | `bin/local-cluster.sh start` | starts Master then Worker through the wrappers |
-| S3 gateway | `bin/curvine-s3-gateway.sh start` | `lib/curvine-s3-gateway` |
+| MDS | `bin/curvine-mds.sh start` | `lib/curvine-server --service mds --conf $CURVINE_CONF_FILE` |
+| Transfer | `bin/curvine-transfer.sh start` | `lib/curvine-server --service transfer --conf $CURVINE_CONF_FILE` |
+| Local cluster | `bin/local-cluster.sh start` | starts Master and Worker through the wrappers, plus Transfer when enabled |
 | CLI | `bin/cv ...` | `lib/curvine-cli` |
 
 `bin/curvine-fuse.sh` defaults to mount path `/curvine-fuse`, but accepts `--mnt-path` and passes the rest of the arguments through.
 
 ## Default Ports
 
-These defaults come from `curvine-common/src/conf/cluster_conf.rs` and the sample config:
+These defaults come from `crates/common/curvine-config/src/cluster_conf.rs` and the sample config:
 
 | Service | Default port | Source |
 |---------|--------------|--------|
 | Master RPC | `8995` | `DEFAULT_MASTER_PORT` |
 | Raft / journal | `8996` | `DEFAULT_RAFT_PORT` |
 | Worker RPC | `8997` | `DEFAULT_WORKER_PORT` |
-| Master web / metrics | `9000` | `DEFAULT_MASTER_WEB_PORT` |
-| Worker web / metrics | `9001` | `DEFAULT_WORKER_WEB_PORT` |
-| FUSE web / metrics | `9002` | `DEFAULT_FUSE_WEB_PORT` |
-| S3 gateway listen | `9900` | `[s3_gateway].listen` sample config |
+| Master web / metrics | `9001` | `DEFAULT_MASTER_WEB_PORT` |
+| Worker web / metrics | `9002` | `DEFAULT_WORKER_WEB_PORT` |
+| FUSE web / metrics | `9003` | `DEFAULT_FUSE_WEB_PORT` |
+| MDS RPC | `8998` | `[mds].rpc_port` |
+| MDS web / metrics | `9004` | `[mds].web_port` |
+| Transfer RPC | `9010` | `[transfer].rpc_port` |
+| Transfer web / metrics | `9011` | `[transfer].web_port` |
 
 ## Common Debugging Flows
 
@@ -162,8 +166,8 @@ bin/cv node
 ### Metrics and performance inspection
 
 ```bash
-curl http://<master>:9000/metrics
-curl http://<worker>:9001/metrics
+curl http://<master>:9001/metrics
+curl http://<worker>:9002/metrics
 ```
 
 Then inspect the host with tools such as `htop`, `iostat -x 1`, `sar -n DEV 1`, or `perf record -g`.
