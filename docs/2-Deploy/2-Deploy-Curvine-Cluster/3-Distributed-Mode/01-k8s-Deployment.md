@@ -4,7 +4,7 @@ sidebar_position: 0
 
 # Kubernetes Deployment
 
-Chart: `curvine/curvine`, version `0.3.2-alpha`.
+Chart: `curvine/curvine`, version `0.5.2-alpha`.
 
 ## Prerequisites
 
@@ -29,10 +29,12 @@ Helm release `curvine` is deployed in namespace `curvine`:
 
 ## Transfer Service
 
-Transfer is an optional service for independent Load and Export scheduling. It
-is not created by the current Helm chart and does not require changing the
-running Master or Worker configuration. Deploy it separately after the cluster
-is healthy; see [Deploy Transfer on Kubernetes](../../3-Transfer-Service/2-Kubernetes.md).
+Transfer is an optional service for independent Load and Export scheduling. The
+chart creates the `curvine-transfer` Deployment and Service only when
+`transfer.enabled=true`; before that, the Master exposes the legacy Load API.
+Enabling Transfer does not require changing Master or Worker configuration. To
+deploy Transfer outside the chart, see
+[Deploy Transfer on Kubernetes](../../3-Transfer-Service/2-Kubernetes.md).
 
 ## Deployment
 
@@ -47,7 +49,7 @@ helm repo update
 
 ```bash
 helm upgrade --install curvine curvine/curvine \
-  --version 0.3.2-alpha \
+  --version 0.5.2-alpha \
   -n curvine \
   --create-namespace \
   --wait --timeout 10m
@@ -124,7 +126,7 @@ curvine-master-0.curvine-master.curvine.svc.cluster.local:8995,curvine-master-1.
 
 ```bash
 helm upgrade curvine curvine/curvine \
-  --version 0.3.2-alpha \
+  --version 0.5.2-alpha \
   -n curvine \
   --reuse-values \
   --set worker.replicas=3
@@ -150,7 +152,7 @@ kubectl delete namespace curvine
 
 ## Configuration Reference
 
-Chart version `0.3.2-alpha`. Defaults below match `helm show values curvine/curvine --version 0.3.2-alpha`.
+Chart version `0.5.2-alpha`. Defaults below match `helm show values curvine/curvine --version 0.5.2-alpha`.
 
 ### Global
 
@@ -232,10 +234,6 @@ Set `openKruise.enabled=true` to install the kruise subchart and switch master/w
 | `worker.replicas` | `1` | Worker replica count |
 | `worker.rpcPort` | `8997` | RPC port |
 | `worker.webPort` | `9001` | Web UI port |
-| `worker.s3Gateway.enabled` | `false` | Enable S3 gateway |
-| `worker.s3Gateway.listen` | `0.0.0.0:9900` | S3 gateway listen address |
-| `worker.s3Gateway.enableDistributedAuth` | `true` | Distributed auth for S3 |
-| `worker.s3Gateway.service.type` | `ClusterIP` | S3 service type |
 | `worker.hostNetwork` | `false` | Use host network |
 | `worker.dnsPolicy` | `ClusterFirst` | DNS policy |
 | `worker.usePodIPAsHostname` | `false` | Use Pod IP as worker hostname |
@@ -256,6 +254,15 @@ Set `openKruise.enabled=true` to install the kruise subchart and switch master/w
 | `worker.nodeSelector` | `{}` | Node selector |
 | `worker.tolerations` | `[]` | Tolerations |
 | `worker.affinity` | `{}` | Affinity rules |
+
+:::note
+The chart pins legacy web ports: Master web `9000`, Master `web1` `9001`, and
+Worker web `9001`. Standalone code defaults are Master `9001` and Worker
+`9002`; always read the effective ports from the generated ConfigMap.
+
+Older chart versions expose a `worker.s3Gateway.*` values block. The current
+Curvine server has no S3 gateway, so these values are ignored.
+:::
 
 ### Transfer
 
@@ -340,5 +347,5 @@ helm upgrade curvine curvine/curvine -n curvine --reuse-values \
 Full parameter list:
 
 ```bash
-helm show values curvine/curvine --version 0.3.2-alpha
+helm show values curvine/curvine --version 0.5.2-alpha
 ```

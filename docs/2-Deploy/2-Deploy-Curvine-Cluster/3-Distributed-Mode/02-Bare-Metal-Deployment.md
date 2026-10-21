@@ -54,7 +54,7 @@ Master Raft group and does not require a Master or Worker configuration change.
 See [Deploy Transfer on Bare Metal](../../3-Transfer-Service/1-Bare-Metal.md).
 
 :::info
-**FUSE is not part of cluster startup.** The Curvine cluster is formed by Master and Worker nodes. FUSE is one of several access methods (along with CLI, SDK, S3 gateway) and is only needed when applications require a local mount point.
+**FUSE is not part of cluster startup.** The Curvine cluster is formed by Master and Worker nodes. FUSE is one of several access methods (along with CLI and SDK) and is only needed when applications require a local mount point.
 :::
 
 ---

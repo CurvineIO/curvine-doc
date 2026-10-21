@@ -31,6 +31,7 @@ export CURVINE_MASTER_HOSTNAME=localhost
 
 - `curvine-master`
 - `curvine-worker`
+- `curvine-transfer`（仅当 `[transfer].enabled = true`）
 - `curvine-fuse`
 
 这里的 Web UI 不是独立进程；静态页面资源打包在 `webui/` 中，通过服务自身的 Web 端口提供访问。
@@ -78,8 +79,9 @@ bin/dfs fs -mkdir -p /compat-demo
 
 启动后，常用 Web 入口为：
 
-- Master：`http://<host>:9000`
-- Worker：`http://<host>:9001`
+- Master：`http://<host>:9001`
+- Worker：`http://<host>:9002`
+- FUSE：`http://<host>:9003`
 
 ## 关于压测脚本
 

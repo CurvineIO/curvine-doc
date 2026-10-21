@@ -8,7 +8,7 @@ sidebar_position: 0
 
 **依赖环境**
 - ​**GCC**: version 10 or later ([GCC Installation](https://gcc.gnu.org/install/))
-- ​**Rust**: version 1.86 or later ([Installation Guide](https://www.rust-lang.org/tools/install))
+- **Rust**：1.98（由 `rust-toolchain.toml` 固定；`build/check-env.sh` 接受 1.86 及以上） ([Installation Guide](https://www.rust-lang.org/tools/install))
 - ​**Protobuf**: version 3.x+ [(Install Guide)](https://github.com/protocolbuffers/protobuf/releases/download/v27.2/protoc-27.2-linux-x86_64.zip)
 - ​**Maven**: version 3.8 or later ([Install Guide](https://maven.apache.org/install.html))
 - ​**LLVM**: version 12 or later ([Installation Guide](https://llvm.org/docs/GettingStarted.html))
@@ -83,7 +83,7 @@ source ~/.cargo/env
 rustc --version
 cargo --version
 
-# 确保 Rust 版本为 1.86 或更高
+# 确保 Rust 版本与 rust-toolchain.toml 一致（1.98）
 rustup update
 ```
 
@@ -397,7 +397,7 @@ source ~/.cargo/env
 rustc --version
 cargo --version
 
-# 确保 Rust 版本为 1.86 或更高
+# 确保 Rust 版本与 rust-toolchain.toml 一致（1.98）
 rustup update
 ```
 
@@ -704,7 +704,7 @@ source ~/.cargo/env
 rustc --version
 cargo --version
 
-# 确保 Rust 版本为 1.86 或更高
+# 确保 Rust 版本与 rust-toolchain.toml 一致（1.98）
 rustup update
 ```
 

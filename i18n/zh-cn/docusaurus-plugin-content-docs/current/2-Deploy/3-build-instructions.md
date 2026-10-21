@@ -11,7 +11,7 @@ sidebar_position: 2
 ## 先决条件
 
 - **GCC**：10 或更高版本（[安装指南](https://gcc.gnu.org/install/)）
-- **Rust**：1.86 或更高版本（[安装指南](https://www.rust-lang.org/tools/install)）
+- **Rust**：1.98（由 `rust-toolchain.toml` 固定；`build/check-env.sh` 接受 1.86 及以上）（[安装指南](https://www.rust-lang.org/tools/install)）
 - **Protobuf**：3.x 版本
 - **Maven**：3.8 或更高版本（[安装指南](https://maven.apache.org/install.html)）
 - **LLVM**：12 或更高版本（[安装指南](https://llvm.org/docs/GettingStarted.html)）
@@ -67,11 +67,11 @@ bash build/build.sh -p server --spdk-rdma --spdk-dir /opt/spdk
 构建镜像：
 
 ```bash
-# 使用 curvine-compile:latest docker 镜像编译
+# 从源码构建运行时镜像
 make docker-build
 
-# 使用 curvine-compile:build-cached docker 镜像编译，该镜像已缓存大部分依赖 crate
-make docker-build-cached
+# 在已缓存依赖的编译镜像中编译，产物输出到 build/dist
+make docker-compile
 ```
 
 编译成功后，目标文件将生成在 `build/dist` 目录中。该文件是可用于部署或构建镜像的 Curvine 安装包。
@@ -115,7 +115,7 @@ bin/cv fs ls /
 访问 Web 界面：
 
 ```
-http://your-hostname:9000
+http://your-hostname:9001
 ```
 
 Curvine 使用 TOML 格式的配置文件。示例配置位于 `conf/curvine-cluster.toml`，主要配置项包括：
