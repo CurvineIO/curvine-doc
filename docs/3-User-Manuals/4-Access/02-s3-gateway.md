@@ -1,4 +1,12 @@
-# S3 Object Storage Gateway
+# S3 Object Storage Gateway (Legacy)
+
+:::warning
+The S3 gateway is **not part of the current Curvine server**. There is no
+`curvine-s3-gateway` binary or `bin/curvine-s3-gateway.sh` script in current
+releases, and `[s3_gateway]` configuration is ignored. This page is retained for
+older releases only. Use FUSE, the CLI/SDK, or `cv mount` for current
+deployments.
+:::
 
 ## Overview
 

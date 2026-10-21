@@ -2,7 +2,7 @@
 
 前提：已通过 Helm 部署 curvine cluster（namespace `curvine`）。
 
-Chart：`curvine/curvine-csi`，版本 `0.3.2-alpha`。Release namespace：`curvine-system`。
+Chart：`curvine/curvine-csi`，版本 `0.5.2-alpha`。Release namespace：`curvine-system`。
 
 ## 架构说明
 
@@ -20,7 +20,7 @@ helm repo add curvine https://curvineio.github.io/helm-charts
 helm repo update
 
 helm upgrade --install curvine-csi curvine/curvine-csi \
-  --version 0.3.2-alpha \
+  --version 0.5.2-alpha \
   -n curvine-system \
   --create-namespace \
   --wait --timeout 8m
@@ -33,7 +33,7 @@ kubectl get pods -n curvine-system
 
 ```bash
 helm upgrade --install curvine-csi curvine/curvine-csi \
-  --version 0.3.2-alpha \
+  --version 0.5.2-alpha \
   -n curvine-system \
   --create-namespace \
   --set node.mountMode=standalone \
@@ -199,7 +199,7 @@ kubectl logs app-pod -n curvine
 
 ## 配置参考
 
-Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvine-csi --version 0.3.2-alpha` 一致。
+Chart 版本 `0.5.2-alpha`。下表默认值与 `helm show values curvine/curvine-csi --version 0.5.2-alpha` 一致。
 
 ### 镜像
 
@@ -228,16 +228,9 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 | `controller.container.env.CSI_ENDPOINT` | `unix:///csi/csi.sock` | CSI 套接字 |
 | `controller.container.ports.healthz` | `9909` | 健康检查端口 |
 | `controller.container.securityContext.privileged` | `true` | 特权模式 |
-| `controller.sidecars.provisioner.image` | `quay.io/k8scsi/csi-provisioner:v1.6.0` | Provisioner sidecar |
+| `controller.sidecars.provisioner.image` | `registry.k8s.io/sig-storage/csi-provisioner:v5.0.1` | Provisioner sidecar |
 | `controller.sidecars.attacher.image` | `registry.k8s.io/sig-storage/csi-attacher:v4.5.0` | Attacher sidecar |
 | `controller.sidecars.livenessProbe.image` | `registry.k8s.io/sig-storage/livenessprobe:v2.11.0` | 存活探针 sidecar |
-
-若 provisioner 或 registrar sidecar 出现 `ImagePullBackOff`，可改用 `registry.k8s.io/sig-storage` 镜像：
-
-```bash
---set controller.sidecars.provisioner.image=registry.k8s.io/sig-storage/csi-provisioner:v5.0.1 \
---set node.sidecars.nodeDriverRegistrar.image=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
-```
 
 ### Node
 
@@ -257,7 +250,7 @@ Chart 版本 `0.3.2-alpha`。下表默认值与 `helm show values curvine/curvin
 | `node.container.resources.requests.memory` | `512Mi` | 内存 request（`embedded` 模式） |
 | `node.container.resources.limits.cpu` | `2` | CPU limit（`embedded` 模式） |
 | `node.container.resources.limits.memory` | `2Gi` | 内存 limit（`embedded` 模式） |
-| `node.sidecars.nodeDriverRegistrar.image` | `quay.io/k8scsi/csi-node-driver-registrar:v2.1.0` | Registrar sidecar |
+| `node.sidecars.nodeDriverRegistrar.image` | `registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0` | Registrar sidecar |
 | `node.sidecars.livenessProbe.image` | `registry.k8s.io/sig-storage/livenessprobe:v2.11.0` | 存活探针 sidecar |
 | `node.hostPaths.pluginDir.path` | `/var/lib/kubelet/csi-plugins/csi.curvine.io/` | CSI 插件目录 |
 | `node.hostPaths.kubeletDir.path` | `/var/lib/kubelet` | Kubelet 目录 |
@@ -309,7 +302,7 @@ helm upgrade curvine-csi curvine/curvine-csi -n curvine-system --reuse-values \
 完整参数：
 
 ```bash
-helm show values curvine/curvine-csi --version 0.3.2-alpha
+helm show values curvine/curvine-csi --version 0.5.2-alpha
 ```
 
 ## 故障排查

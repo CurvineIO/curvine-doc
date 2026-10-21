@@ -48,7 +48,7 @@ Core configuration parameters:
 | --- | --- | --- |
 | `attr_timeout` | 1 second | File attribute cache time, accelerating `getattr` operations. |
 | `entry_timeout` | 1 second | File/directory type cache time, accelerating `lookup` operations. |
-| `negative_timeout` | 1 second | Cache time for failed queries of nonexistent files, avoiding repeated invalid requests. |
+| `negative_timeout` | 0 seconds (disabled) | Cache time for failed queries of nonexistent files, avoiding repeated invalid requests. |
 
 Cache meaning:
 

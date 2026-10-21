@@ -22,7 +22,9 @@ cv --help
 Usage: cv [OPTIONS] <COMMAND>
 
 Commands:
+  bench
   fs
+  fsck
   report
   load
   export
@@ -444,6 +446,37 @@ curvine-worker --version-json
 ```
 
 详细说明请参阅[版本管理与兼容性](04-version-management.md)。
+---
+
+### 12. `bench`：内置基准测试
+
+**用法：** `cv bench [OPTIONS]`、`cv bench prefill [OPTIONS]`
+
+`bench` 可对 `cv://` 路径（client 模式）或 `file://` 路径（FUSE 模式）运行元数据与吞吐量测试套件。`cv bench prefill` 用于为混合负载预置可复用的工作集。常用参数包括 `--path`、`--profile basic|deep`、`--mode auto|client|fuse`、`-p/--threads`、`--workload`、`--block-size`、`--big-file-size` 和 `--big-file-count`。完整参数请运行 `cv bench --help`。
+
+```bash
+cv bench --path cv://default/bench --profile basic
+cv bench prefill --path cv://default/bench/ws --files 100000 --file-size 0
+```
+
+---
+
+### 13. `fsck`：块副本健康检查
+
+**用法：** `cv fsck <PATH> [OPTIONS]`
+
+| 参数 | 说明 |
+|------|------|
+| `<PATH>` | 要检查的文件或目录。 |
+| `--detail` | 对目录输出每个文件与块的详细信息。 |
+| `--list-page-size <N>` | 每次列目录 RPC 返回的条目数（默认 `256`，范围 `1-4096`）。 |
+
+`fsck` 会将每个块记录的副本与当前可用副本进行对比，报告副本不足的块和读取错误。扫描发现问题时会输出告警行。
+
+```bash
+cv fsck /data
+cv fsck /data/file.txt --detail
+```
 
 ---
 
