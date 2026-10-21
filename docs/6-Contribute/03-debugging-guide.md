@@ -17,12 +17,15 @@ build/dist/conf/curvine-cluster.toml
 The sample source file lives at `etc/curvine-cluster.toml`. Relevant sections in that file include:
 
 - `[master]`
+- `[mds]`
 - `[journal]`
 - `[worker]`
 - `[client]`
+- `[transfer]`
 - `[fuse]`
+- `[discovery]`
+- `[fault_injection]`
 - `[log]`
-- `[s3_gateway]`
 - `[cli]`
 
 Runtime overrides referenced by the scripts include:

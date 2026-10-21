@@ -8,7 +8,7 @@ Curvine is a high-performance distributed cache system written in Rust and relea
 
 Curvine uses a classic Master/Worker architecture. Master nodes manage metadata and cluster coordination, while Worker nodes store and serve data blocks. Metadata consistency and high availability are provided through Raft.
 
-Curvine exposes multiple access paths for analytics, AI, and data infrastructure workloads, including the Rust CLI, FUSE, Java/Python SDK bindings, and S3-compatible access.
+Curvine exposes multiple access paths for analytics, AI, and data infrastructure workloads, including the Rust CLI, FUSE, and Java/Python SDK bindings.
 
 ## Core Features
 
@@ -16,7 +16,7 @@ Curvine exposes multiple access paths for analytics, AI, and data infrastructure
 - **Cloud-native integration**: Supports CSI-based deployment and Kubernetes-oriented packaging workflows
 - **Multi-tier cache**: Supports memory, SSD, and HDD cache strategies
 - **POSIX-compatible access**: Provides a FUSE layer so existing applications can access cached data as a local file system
-- **S3 and HDFS ecosystem compatibility**: Offers S3-compatible gateway access and Hadoop/SDK integration paths
+- **HDFS ecosystem compatibility**: Offers Hadoop FileSystem integration and SDK access paths
 - **High performance**: Uses asynchronous I/O and zero-copy-oriented data paths for low-latency, high-throughput workloads
 - **Raft-based metadata HA**: Uses Raft to keep metadata consistent across Master nodes
 - **Built-in observability**: Exposes monitoring and metrics for cluster components
@@ -209,15 +209,16 @@ Curvine is designed for high-performance, high-concurrency, and massive data cac
 
 Curvine adopts a modular codebase. The main components in the current `main` branch are:
 
-- **orpc**: High-performance async RPC and runtime infrastructure
-- **curvine-common**: Shared configuration, protocol, metadata, and utility types
-- **curvine-server**: Master and Worker server implementations
-- **curvine-client**: Rust client library for metadata and block I/O
+- **crates/core**: Runtime, RPC, networking, I/O, allocation, metrics, and fault-injection primitives
+- **crates/common**: Shared configuration, protocol, metadata, filesystem, storage, and UFS APIs
+- **crates/metadata**: Raft-based metadata replication
+- **curvine-server**: Master, Worker, and MDS server implementations (`--service master`, `worker`, or `mds`)
+- **crates/server**: Standalone Transfer service for Load and Export jobs
+- **crates/client**: Rust client core, unified filesystem, transfer job client, and benchmark runner
 - **curvine-fuse**: FUSE daemon for POSIX-style access
 - **curvine-libsdk**: Java and Python SDK bindings built on top of the native client
-- **curvine-ufs**: UFS backend implementations for S3, HDFS, WebHDFS, and related providers
+- **curvine-ufs** and **crates/adapters**: UFS backends and storage adapters (OpenDAL, OSS-HDFS, HDFS JNI, RocksDB, local and SPDK storage)
 - **curvine-cli**: Native CLI (`cv`) for cluster, mount, fs, and load operations
-- **curvine-s3-gateway**: S3-compatible HTTP gateway
 - **curvine-web**: Web UI assets and server-side web support
 - **curvine-csi**: CSI driver for Kubernetes storage integration
 - **curvine-tests**: Integration tests, regression tooling, and benchmark utilities
