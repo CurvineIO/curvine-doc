@@ -142,7 +142,7 @@ blocked_versions = ["0.2.5"]
 
 ## 可观测性
 
-master 在 Prometheus 端点（`http://<master>:9000/metrics`）暴露兼容性指标，完整指标表见[监控指标](03-monitoring.md)。
+master 在 Prometheus 端点（`http://<master>:9001/metrics`）暴露兼容性指标，完整指标表见[监控指标](03-monitoring.md)。
 
 | 指标 | 类型 | 标签 | 说明 |
 |---|---|---|---|

@@ -169,7 +169,7 @@ silently disabled until the whole data path upgrades.
 ## Observability
 
 The master exposes compatibility metrics on the Prometheus endpoint
-(`http://<master>:9000/metrics`). See the [Monitoring Metrics](03-monitoring.md)
+(`http://<master>:9001/metrics`). See the [Monitoring Metrics](03-monitoring.md)
 page for the full metric table.
 
 | Metric | Type | Labels | Description |
