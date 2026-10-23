@@ -91,6 +91,18 @@
     "message": "Provides hot data caching and shuffle acceleration for big data offline computing, significantly improving data processing efficiency.",
     "description": "Big data computing use case description"
   },
+  "homepage.adopters.title": {
+    "message": "Who's Using Curvine",
+    "description": "Adopters section title"
+  },
+  "homepage.adopters.subtitle": {
+    "message": "Organizations and projects using Curvine in production for AI-native and cloud-native storage workloads.",
+    "description": "Adopters section subtitle"
+  },
+  "homepage.adopters.cta": {
+    "message": "Using Curvine? Add your organization to {adoptersLink} and show your logo here.",
+    "description": "Adopters section call to action"
+  },
   "homepage.performance.title": {
     "message": "Exceptional Performance",
     "description": "Performance section title"
