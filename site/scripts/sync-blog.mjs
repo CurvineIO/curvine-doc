@@ -9,6 +9,9 @@
  *   blog/2025-02-11-foo/index.md + img.png
  *     -> content/blog/2025-02-11-foo.mdx
  *     -> public/blog/2025-02-11-foo/img.png
+ *
+ * Translations keep their images in a `zh-cn/` subdirectory. Reusing filenames
+ * such as `cover.png` must not overwrite the English image.
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -86,15 +89,17 @@ function findTitle(lines, mask) {
  *   <img src={require("./a.png").default} />  ->  ![alt](/blog/<slug>/a.png)
  *   ![...](./a.png)                            ->  ![...](/blog/<slug>/a.png)
  */
-function rewriteImages(body, slug) {
+function rewriteImages(body, slug, assetDir) {
+  const assetUrl = (file) => `/blog/${slug}/${assetDir ? `${assetDir}/` : ''}${file}`;
+
   let out = body.replace(
     /<img\s+src=\{require\((['"])(.+?)\1\)\.default\}\s*(?:alt=(['"])(.*?)\3)?[^>]*>/g,
-    (_, __, src, ___, alt = '') => `![${alt}](/blog/${slug}/${path.posix.basename(src)})`,
+    (_, __, src, ___, alt = '') => `![${alt}](${assetUrl(path.posix.basename(src))})`,
   );
 
   out = out.replace(
     /!\[([^\]]*)\]\(\.\/([^)\s]+)\)/g,
-    (full, alt, src) => `![${alt}](/blog/${slug}/${src})`,
+    (full, alt, src) => `![${alt}](${assetUrl(src)})`,
   );
 
   return out;
@@ -150,7 +155,7 @@ async function main() {
       const zhFiles = await fs.readdir(path.join(SRC_ZH, dir)).catch(() => []);
       for (const file of zhFiles) {
         if (!/\.(png|jpe?g|gif|svg|webp|avif)$/i.test(file)) continue;
-        const dest = path.join(PUBLIC_BLOG, slug, file);
+        const dest = path.join(PUBLIC_BLOG, slug, LOCALE, file);
         await fs.mkdir(path.dirname(dest), { recursive: true });
         await fs.copyFile(path.join(SRC_ZH, dir, file), dest);
       }
@@ -164,11 +169,11 @@ async function main() {
       return explicit ?? `${date.replace(/-/g, '/')}/${slug}`;
     };
 
-    const en = convert(raw, { slug, date, blogSlug: blogSlugFor(raw) });
+    const en = convert(raw, { slug, date, blogSlug: blogSlugFor(raw), assetDir: '' });
     await fs.writeFile(path.join(OUT, `${dir}.mdx`), en);
 
     if (zhRaw) {
-      const zh = convert(zhRaw, { slug, date, blogSlug: blogSlugFor(zhRaw) });
+      const zh = convert(zhRaw, { slug, date, blogSlug: blogSlugFor(zhRaw), assetDir: LOCALE });
       await fs.writeFile(path.join(OUT, `${dir}.${LOCALE}.mdx`), zh);
       stats.translated++;
     }
@@ -178,7 +183,7 @@ async function main() {
   console.log(`blog: ${stats.posts} posts (${stats.translated} translated)`);
 }
 
-function convert(raw, { slug, date, blogSlug }) {
+function convert(raw, { slug, date, blogSlug, assetDir }) {
   const { data, body } = splitFrontmatter(raw);
 
   // Frontmatter title, or the first h1, or the slug.
@@ -193,7 +198,7 @@ function convert(raw, { slug, date, blogSlug }) {
 
   let content = lines.join('\n');
   content = content.replace(/<!--\s*truncate\s*-->/g, '');
-  content = rewriteImages(content, slug);
+  content = rewriteImages(content, slug, assetDir);
   content = stripCenteredWrappers(content);
   content = rewriteDocusaurusOnly(content);
 
@@ -212,7 +217,7 @@ function convert(raw, { slug, date, blogSlug }) {
   // the first image in the post body.
   // `firstImage` already returns a rewritten `/blog/<slug>/...` URL because it
   // runs after `rewriteImages`; frontmatter images need the same treatment.
-  const cover = data.image ? rewriteCover(data.image, slug) : firstImage(content);
+  const cover = data.image ? rewriteCover(data.image, slug, assetDir) : firstImage(content);
   if (cover) fm.push(`image: ${JSON.stringify(cover)}`);
   fm.push('---', '');
 
@@ -220,9 +225,9 @@ function convert(raw, { slug, date, blogSlug }) {
 }
 
 /** `./cover.png` -> `/blog/<slug>/cover.png`, absolute URLs are kept. */
-function rewriteCover(image, slug) {
+function rewriteCover(image, slug, assetDir) {
   if (/^(https?:|\/)/.test(image)) return image;
-  return `/blog/${slug}/${path.posix.basename(image)}`;
+  return `/blog/${slug}/${assetDir ? `${assetDir}/` : ''}${path.posix.basename(image)}`;
 }
 
 /**
