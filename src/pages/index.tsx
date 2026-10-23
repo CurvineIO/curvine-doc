@@ -4,6 +4,7 @@ import Link from "@docusaurus/Link";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Translate, {translate} from "@docusaurus/Translate";
 import "./index.css";
+import {ADOPTERS} from "./../data/adopters";
 
 function HomePage() {
   const {siteConfig, i18n} = useDocusaurusContext();
@@ -227,6 +228,61 @@ function HomePage() {
               <p><Translate id="homepage.usecases.bigdata.description" description="Big data computing use case description">Provides hot data caching and shuffle acceleration for big data offline computing, significantly improving data processing efficiency.</Translate></p>
             </article>
           </div>
+        </div>
+      </section>
+
+      <section className="adopters section-band" id="adopters">
+        <div className="container">
+          <div className="section-title">
+            <h2>
+              <Translate id="homepage.adopters.title" description="Adopters section title">
+                {'Who\'s Using Curvine'}
+              </Translate>
+            </h2>
+            <p>
+              <Translate id="homepage.adopters.subtitle" description="Adopters section subtitle">
+                Organizations and projects using Curvine in production for AI-native and cloud-native storage workloads.
+              </Translate>
+            </p>
+          </div>
+          <div className="adopter-cards">
+            {ADOPTERS.map((adopter) => {
+              const content = adopter.logo ? (
+                <img
+                  className="adopter-logo"
+                  src={adopter.logo}
+                  alt={adopter.name}
+                  title={adopter.name}
+                  loading="lazy"
+                />
+              ) : (
+                <span className="adopter-logo adopter-logo-placeholder" title={adopter.name}>
+                  {adopter.name}
+                </span>
+              );
+              return (
+                <article className="adopter-card" key={adopter.name}>
+                  {adopter.website ? (
+                    <a href={adopter.website} target="_blank" rel="noopener noreferrer">{content}</a>
+                  ) : (
+                    content
+                  )}
+                </article>
+              );
+            })}
+          </div>
+          <p className="adopter-cta">
+            <Translate
+              id="homepage.adopters.cta"
+              description="Adopters section call to action"
+              values={{
+                adoptersLink: (
+                  <Link to="https://github.com/CurvineIO/curvine/blob/main/ADOPTERS.md">ADOPTERS.md</Link>
+                ),
+              }}>
+              {'Using Curvine? Add your organization to {adoptersLink} and show your logo here.'}
+            </Translate>
+          </p>
         </div>
       </section>
 
