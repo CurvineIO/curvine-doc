@@ -446,6 +446,18 @@
     "message": "为大数据离线计算提供热数据缓存、shuffle加速等，显著提升数据处理效率。",
     "description": "Big data computing use case description"
   },
+  "homepage.adopters.title": {
+    "message": "他们都在使用 Curvine",
+    "description": "Adopters section title"
+  },
+  "homepage.adopters.subtitle": {
+    "message": "在生产环境中使用 Curvine 进行 AI 原生与云原生存储的企业和项目。",
+    "description": "Adopters section subtitle"
+  },
+  "homepage.adopters.cta": {
+    "message": "在使用 Curvine？将你的组织添加到 {adoptersLink}，在这里展示你的 Logo。",
+    "description": "Adopters section call to action"
+  },
   "homepage.performance.title": {
     "message": "性能指标",
     "description": "Performance section title"
