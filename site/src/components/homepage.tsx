@@ -4,6 +4,28 @@ import { HomepageIcon } from '@/components/homepage-icons';
 import { ScenarioGallery, type ScenarioSlide } from '@/components/scenario-gallery';
 
 /**
+ * Adopters of Curvine, rendered in the "Who's Using Curvine" section.
+ *
+ * SOURCE OF TRUTH: the `ADOPTERS.md` file in the CurvineIO/curvine repository.
+ * When a new adopter PR is merged there, mirror the entry here:
+ *   1. Add the logo file to `public/img/adopters/<org-name>.svg` (or .png)
+ *   2. Append an entry to ADOPTERS below
+ * Organizations without a logo yet are rendered with a text placeholder.
+ */
+type Adopter = {
+  name: string;
+  logo?: string;
+  website?: string;
+};
+
+const ADOPTERS: Adopter[] = [
+  {
+    name: 'OPPO',
+    logo: '/img/adopters/oppo.svg',
+  },
+];
+
+/**
  * The original Docusaurus home page, ported to React.
  *
  * The markup and the class names are kept 1:1 with the old
@@ -223,6 +245,62 @@ export function Homepage({ locale }: { locale: 'en' | 'zh-cn' }) {
             </p>
           </div>
           <ScenarioGallery slides={useCaseSlides} />
+        </div>
+      </section>
+
+      <section className="adopters section-band" id="adopters">
+        <div className="container">
+          <div className="section-title">
+            <h2>{t("Who's Using Curvine", '他们都在使用 Curvine')}</h2>
+            <p>
+              {t(
+                'Organizations and projects using Curvine in production for AI-native and cloud-native storage workloads.',
+                '在生产环境中使用 Curvine 进行 AI 原生与云原生存储的企业和项目。',
+              )}
+            </p>
+          </div>
+          <div className="adopter-cards">
+            {ADOPTERS.map((adopter) => {
+              const content = adopter.logo ? (
+                <img
+                  className="adopter-logo"
+                  src={adopter.logo}
+                  alt={adopter.name}
+                  title={adopter.name}
+                  loading="lazy"
+                />
+              ) : (
+                <span className="adopter-logo adopter-logo-placeholder" title={adopter.name}>
+                  {adopter.name}
+                </span>
+              );
+              return (
+                <article className="adopter-card" key={adopter.name}>
+                  {adopter.website ? (
+                    <a href={adopter.website} target="_blank" rel="noopener noreferrer">
+                      {content}
+                    </a>
+                  ) : (
+                    content
+                  )}
+                </article>
+              );
+            })}
+          </div>
+          <p className="adopter-cta">
+            {t(
+              'Using Curvine? Add your organization to ',
+              '在使用 Curvine？将你的组织添加到 ',
+            )}
+            <a
+              href="https://github.com/CurvineIO/curvine/blob/main/ADOPTERS.md"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ADOPTERS.md
+            </a>
+            {t(' and show your logo here.', '，在这里展示你的 Logo。')}
+          </p>
         </div>
       </section>
 
