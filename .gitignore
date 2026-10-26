@@ -22,4 +22,12 @@ yarn-error.log*
 .vscode
 .idea
 .cursorrules
+.cursor/*
+!.cursor/skills
+.claude/*
+!.claude/skills
 memory-bank/
+
+# Agent skills: only cv-* are tracked in repo; other local skills stay untracked
+.agents/skills/*
+!.agents/skills/cv-*/
