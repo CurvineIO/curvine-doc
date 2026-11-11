@@ -6,8 +6,8 @@
  * The original Markdown is kept verbatim apart from the changes that are
  * required for Fumadocs to build the same navigation tree and the same URLs:
  *
- *   docs/1-Overview/01-instroduction.md
- *     -> content/docs/Overview/instroduction.mdx      -> /docs/Overview/instroduction
+ *   docs/1-Overview/01-introduction.md
+ *     -> content/docs/Overview/introduction.mdx       -> /docs/Overview/introduction
  *
  * Because the site is bilingual, every page may be written twice:
  *   content/docs/Overview/foo.mdx      (English, default locale)
@@ -351,7 +351,7 @@ async function main() {
   const tree = await walk(SRC_DOCS, []);
 
   /* 1. Compute the final URL of every Docusaurus source file. */
-  const urlBySrcRel = new Map(); // "1-Overview/01-instroduction.md" -> "/docs/Overview/instroduction"
+  const urlBySrcRel = new Map(); // "1-Overview/01-introduction.md" -> "/docs/Overview/introduction"
   const pageBySrcRel = new Map();
 
   (function assign(nodes, baseSegments) {

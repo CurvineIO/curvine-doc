@@ -132,7 +132,7 @@ export function Homepage({ locale }: { locale: 'en' | 'zh-cn' }) {
                 {t('Get Started', '快速开始')}
               </Link>
               <Link
-                href={zh ? '/zh-cn/docs/Overview/instroduction' : '/docs/Overview/instroduction'}
+                href={zh ? '/zh-cn/docs/Overview/introduction' : '/docs/Overview/introduction'}
                 className="btn btn-secondary"
               >
                 {t('Learn More', '了解更多')}

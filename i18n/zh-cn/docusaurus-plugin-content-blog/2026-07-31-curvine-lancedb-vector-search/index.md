@@ -166,7 +166,7 @@ FileSystem fs = FileSystem.get(URI.create("cv://master:8995"), conf);
 Curvine 已在 GitHub 开源（Apache License 2.0）。除了向量检索加速，它也用于训练数据加速、模型分发、热表加速、大数据 Shuffle 加速与多云缓存等场景。欢迎试用、提 Issue、贡献代码：
 
 - **项目地址：** [github.com/CurvineIO/curvine](https://github.com/CurvineIO/curvine)
-- **官方文档：** [curvineio.github.io](https://curvineio.github.io/docs/Overview/instroduction)
+- **官方文档：** [curvineio.github.io](https://curvineio.github.io/docs/Overview/introduction)
 - **快速入门：** [部署 Curvine](https://curvineio.github.io/docs/Deploy/quick-start)
 
 > **测试说明：** 本文数据来自阿里云环境实测，LanceDB 0.34.0，`dbpedia-entities-openai-1M` 数据集，每组 10000 次查询，单进程。测试为单 Master + 单 Worker 最小集群。不同硬件规格、数据规模与并发条件下结果会有差异，建议以自身业务负载复测为准。

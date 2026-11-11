@@ -19,7 +19,7 @@ Full reference for how the Curvine documentation site is built. The live site (c
 ## Content flow
 
 ```
-docs/1-Overview/01-instroduction.md   ─┐
+docs/1-Overview/01-introduction.md    ─┐
 i18n/zh-cn/.../current/...            ─┤  npm run sync (in site/)
 blog/2025-07-15-what-is-curvine/index.md  ├→  site/content/*.mdx  →  Fumadocs pages
 i18n/zh-cn/.../blog/...               ─┘
