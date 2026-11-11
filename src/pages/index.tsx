@@ -183,7 +183,7 @@ function HomePage() {
                 </h3>
                 <p>
                   <Translate id="homepage.features.memory.description" description="Memory efficiency feature description">
-                    Advanced memory management with intelligent caching strategies and automatic garbage collection.
+                    Written in Rust with no garbage collector, plus automatic hot-data promotion and eviction across memory, SSD, and HDD tiers.
                   </Translate>
                 </p>
               </div>

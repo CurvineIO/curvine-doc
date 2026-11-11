@@ -223,8 +223,8 @@ export function Homepage({ locale }: { locale: 'en' | 'zh-cn' }) {
                 <h3>{t('Memory Efficiency', '内存效率')}</h3>
                 <p>
                   {t(
-                    'Advanced memory management with intelligent caching strategies and automatic garbage collection.',
-                    '先进的内存管理，配合智能缓存策略与自动垃圾回收。',
+                    'Written in Rust with no garbage collector, plus automatic hot-data promotion and eviction across memory, SSD, and HDD tiers.',
+                    '基于 Rust 编写，无垃圾回收停顿，并在内存、SSD 与 HDD 多级缓存间自动提升热数据、淘汰冷数据。',
                   )}
                 </p>
               </div>
