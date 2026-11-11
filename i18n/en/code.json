@@ -48,7 +48,7 @@
     "description": "Memory efficiency feature title"
   },
   "homepage.features.memory.description": {
-    "message": "Advanced memory management with intelligent caching strategies and automatic garbage collection.",
+    "message": "Written in Rust with no garbage collector, plus automatic hot-data promotion and eviction across memory, SSD, and HDD tiers.",
     "description": "Memory efficiency feature description"
   },
   "homepage.usecases.title": {
