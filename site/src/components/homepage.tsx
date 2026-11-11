@@ -121,8 +121,8 @@ export function Homepage({ locale }: { locale: 'en' | 'zh-cn' }) {
               </h1>
               <p>
                 {t(
-                  'Curvine is a high-performance file semantic layer for cloud object storage, integrated with high-speed cache.',
-                  'Curvine 是面向云对象存储的高性能文件语义层，并集成了高速缓存。',
+                  'Curvine gives AI workloads full POSIX on top of object storage, with a multi-tier distributed cache built in Rust.',
+                  'Curvine 在对象存储之上为 AI 负载提供完整的 POSIX 语义，内置用 Rust 构建的多级分布式缓存。',
                 )}
               </p>
             </div>

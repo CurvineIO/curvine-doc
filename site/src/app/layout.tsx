@@ -23,7 +23,8 @@ export const metadata: Metadata = {
     default: 'Curvine',
     template: '%s - Curvine',
   },
-  description: 'High performance distributed caching system',
+  description:
+    'AI-native, cloud-native file system in Rust. Full POSIX on object storage with a multi-tier distributed cache, for AI training, inference, and agents. CNCF Sandbox project.',
   metadataBase: new URL('https://curvineio.github.io'),
   icons: { icon: '/img/curvine_logo.ico' },
 };
