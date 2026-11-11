@@ -168,7 +168,7 @@ The test that did not improve is equally important. Caching is not a universal r
 Curvine is open source under the Apache License 2.0. Beyond accelerating vector retrieval, it is used for training-data acceleration, model distribution, hot-table acceleration, big-data shuffle acceleration, and multi-cloud caching. Try it, open an issue, or contribute:
 
 - **GitHub:** [github.com/CurvineIO/curvine](https://github.com/CurvineIO/curvine)
-- **Documentation:** [curvineio.github.io](https://curvineio.github.io/docs/Overview/instroduction)
+- **Documentation:** [curvineio.github.io](https://curvineio.github.io/docs/Overview/introduction)
 - **Quick Start:** [Deploy Curvine](https://curvineio.github.io/docs/Deploy/quick-start)
 
 > **Benchmark note:** Results were measured on Alibaba Cloud with LanceDB 0.34.0 and the `dbpedia-entities-openai-1M` dataset. Each test group ran 10,000 queries in a single process. The Curvine deployment used a minimal one-Master, one-Worker cluster. Results will vary with hardware, dataset size, and concurrency; validate performance with your own production workload.

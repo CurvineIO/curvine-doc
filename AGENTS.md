@@ -57,7 +57,7 @@ This repository builds **curvineio.github.io** with **Fumadocs** (Next.js App Ro
 ### How content flows
 
 ```
-docs/1-Overview/01-instroduction.md   ─┐
+docs/1-Overview/01-introduction.md    ─┐
 i18n/zh-cn/.../current/...            ─┤  npm run sync (in site/)
 blog/2025-07-15-what-is-curvine/index.md  ├→  site/content/*.mdx  →  Fumadocs pages
 i18n/zh-cn/.../blog/...               ─┘
