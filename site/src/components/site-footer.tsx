@@ -51,7 +51,8 @@ export function FooterIcon({ name }: { name: IconName }) {
 
 /**
  * Site footer, matching the old Docusaurus footer: three link columns
- * (Docs / Community / More) centred on the page, plus the LF Projects notice.
+ * (Docs / Community / More) centred on the page, the CNCF statement and logo,
+ * and the LF Projects notice.
  */
 export function SiteFooter({ locale = 'en' }: { locale?: 'en' | 'zh-cn' }) {
   const columns: {
@@ -163,7 +164,34 @@ export function SiteFooter({ locale = 'en' }: { locale?: 'en' | 'zh-cn' }) {
           ))}
         </div>
 
-        <p className="mx-auto mt-10 max-w-3xl text-center text-xs leading-relaxed text-fd-muted-foreground">
+        <div className="mx-auto mt-10 flex max-w-3xl flex-col items-center gap-3 text-center">
+          <p className="text-sm text-fd-muted-foreground">
+            {locale === 'zh-cn' ? (
+              <>
+                Curvine 是
+                <a className="underline hover:text-fd-primary" href="https://www.cncf.io/">
+                  云原生计算基金会（CNCF）
+                </a>
+                的 Sandbox 项目。
+              </>
+            ) : (
+              <>
+                We are a{' '}
+                <a className="underline hover:text-fd-primary" href="https://www.cncf.io/">
+                  Cloud Native Computing Foundation
+                </a>{' '}
+                sandbox project.
+              </>
+            )}
+          </p>
+          <a href="https://www.cncf.io/projects/curvine/" target="_blank" rel="noreferrer">
+            {/* Official CNCF artwork from github.com/cncf/artwork. */}
+            <img src="/img/cncf-color.svg" alt="Cloud Native Computing Foundation" className="h-8 w-auto dark:hidden" />
+            <img src="/img/cncf-white.svg" alt="Cloud Native Computing Foundation" className="hidden h-8 w-auto dark:block" />
+          </a>
+        </div>
+
+        <p className="mx-auto mt-6 max-w-3xl text-center text-xs leading-relaxed text-fd-muted-foreground">
           Copyright © Curvine a Series of LF Projects, LLC. For website terms of use, trademark
           policy and other project policies please see{' '}
           <a className="underline hover:text-fd-primary" href="https://lfprojects.org/policies/">
