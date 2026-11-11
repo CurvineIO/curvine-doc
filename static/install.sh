@@ -22,8 +22,8 @@ WORKER_LOG_VOLUME="${CURVINE_PROJECT}-worker-logs"
 MASTER_RPC_HOST_PORT="${CURVINE_MASTER_RPC_PORT:-18995}"
 MASTER_JOURNAL_HOST_PORT="${CURVINE_MASTER_JOURNAL_PORT:-18996}"
 WORKER_RPC_HOST_PORT="${CURVINE_WORKER_RPC_PORT:-18997}"
-MASTER_WEB_HOST_PORT="${CURVINE_MASTER_WEB_PORT:-9000}"
-WORKER_WEB_HOST_PORT="${CURVINE_WORKER_WEB_PORT:-9001}"
+MASTER_WEB_HOST_PORT="${CURVINE_MASTER_WEB_PORT:-9001}"
+WORKER_WEB_HOST_PORT="${CURVINE_WORKER_WEB_PORT:-9002}"
 CURVINE_RESET="${CURVINE_RESET:-true}"
 
 info() { printf '[curvine] %s\n' "$*"; }
@@ -68,7 +68,7 @@ cluster_id = "curvine-demo"
 
 [master]
 rpc_port = 8995
-web_port = 9000
+web_port = 9001
 meta_dir = "./data/meta"
 audit_logging_enabled = true
 log = { level = "info", log_dir = "./logs", file_name = "master.log" }
@@ -82,7 +82,7 @@ journal_dir = "./data/journal"
 
 [worker]
 rpc_port = 8997
-web_port = 9001
+web_port = 9002
 dir_reserved = "1GB"
 data_dir = [
     "[SSD]/data/data1",
@@ -219,7 +219,7 @@ main() {
     -e CURVINE_CONF_FILE=/app/curvine/conf/curvine-cluster.toml \
     -p "$MASTER_RPC_HOST_PORT:8995" \
     -p "$MASTER_JOURNAL_HOST_PORT:8996" \
-    -p "$MASTER_WEB_HOST_PORT:9000" \
+    -p "$MASTER_WEB_HOST_PORT:9001" \
     -v "$CURVINE_HOME_DIR/conf:/app/curvine/conf:ro" \
     -v "$MASTER_DATA_VOLUME:/app/curvine/data" \
     -v "$MASTER_LOG_VOLUME:/app/curvine/logs" \
@@ -236,7 +236,7 @@ main() {
     -e CURVINE_CLIENT_HOSTNAME="$MASTER_NAME" \
     -e CURVINE_CONF_FILE=/app/curvine/conf/curvine-cluster.toml \
     -p "$WORKER_RPC_HOST_PORT:8997" \
-    -p "$WORKER_WEB_HOST_PORT:9001" \
+    -p "$WORKER_WEB_HOST_PORT:9002" \
     -v "$CURVINE_HOME_DIR/conf:/app/curvine/conf:ro" \
     -v "$WORKER_DATA_VOLUME:/data/data1" \
     -v "$WORKER_LOG_VOLUME:/app/curvine/logs" \
