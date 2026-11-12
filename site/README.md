@@ -52,11 +52,11 @@ To cut over after the review, make the deploy job run on `push` and delete
 sources and write Fumadocs content:
 
 ```
-docs/1-Overview/01-instroduction.md
-  -> content/docs/Overview/instroduction.mdx                /docs/Overview/instroduction
-  -> content/docs/Overview/instroduction.zh-cn.mdx           /zh-cn/docs/Overview/instroduction
+docs/1-Overview/01-introduction.md
+  -> content/docs/Overview/introduction.mdx                 /docs/Overview/introduction
+  -> content/docs/Overview/introduction.zh-cn.mdx            /zh-cn/docs/Overview/introduction
 
-i18n/zh-cn/.../current/1-Overview/01-instroduction.md        (the Chinese translation)
+i18n/zh-cn/.../current/1-Overview/01-introduction.md         (the Chinese translation)
 ```
 
 What the conversion does:

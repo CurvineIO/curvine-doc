@@ -79,7 +79,7 @@ function HomePage() {
                   Get Started
                 </Translate>
               </Link>
-              <Link to="/docs/Overview/instroduction" className="btn btn-secondary">
+              <Link to="/docs/Overview/introduction" className="btn btn-secondary">
                 <Translate id="homepage.hero.learnMore" description="Learn more button text">
                   Learn More
                 </Translate>
