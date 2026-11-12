@@ -6,6 +6,8 @@ sidebar_position: 0
 
 Chart：`curvine/curvine`，版本 `0.5.2-alpha`。
 
+如需先在笔记本上试用 Chart，请参考 [Kubernetes 快速开始（kind / minikube）](../../1-kubernetes-quick-start.md)。
+
 ## 前置条件
 
 - Kubernetes 1.20+

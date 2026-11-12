@@ -6,6 +6,8 @@ sidebar_position: 0
 
 Chart: `curvine/curvine`, version `0.5.2-alpha`.
 
+To try the charts on a laptop first, see [Kubernetes Quick Start (kind / minikube)](../../1-kubernetes-quick-start.md).
+
 ## Prerequisites
 
 - Kubernetes 1.20+
