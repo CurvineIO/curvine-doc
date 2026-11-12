@@ -7,7 +7,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'Curvine',
   tagline: 'High Speed Distribute Cacheing System',
-  favicon: 'img/curvine_logo.ico',
+  favicon: 'img/favicon.ico',
 
   markdown: {
     mermaid: true,

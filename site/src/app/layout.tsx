@@ -26,7 +26,14 @@ export const metadata: Metadata = {
   description:
     'AI-native, cloud-native file system in Rust. Full POSIX on object storage with a multi-tier distributed cache, for AI training, inference, and agents. CNCF Sandbox project.',
   metadataBase: new URL('https://curvineio.github.io'),
-  icons: { icon: '/img/curvine_logo.ico' },
+  icons: {
+    icon: [
+      { url: '/img/curvine_logo.svg', type: 'image/svg+xml' },
+      { url: '/img/favicon.ico', sizes: '16x16 32x32 48x48 64x64 128x128 256x256' },
+    ],
+    shortcut: '/img/favicon.ico',
+    apple: '/img/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
