@@ -287,7 +287,21 @@ Used in StorageClass `parameters` (dynamic PV) or PV `csi.volumeAttributes` (sta
 | `curvine-path` | Static PV | — | Full path in Curvine filesystem |
 | `path-type` | No | `Directory` | `Directory` or `DirectoryOrCreate` |
 
-Additional keys (for example `io-threads`, `worker-threads`) are forwarded to `curvine-fuse` as CLI flags. The following keys are reserved and must not be set manually: `master-addrs`, `fs-path`, `path-type`, `curvine-path`, `mnt-path`.
+Every other key is forwarded to `curvine-fuse` as a CLI flag, for example
+`io-threads=4` or `worker-threads=8`. Three groups are not forwarded:
+
+- `csi.storage.k8s.io/*` keys are CSI-internal and dropped.
+- `mnt-path` is rejected at provision time; the driver computes the host mount
+  path itself (`/var/lib/kubelet/plugins/kubernetes.io/csi/curvine/<mount-key>/fuse-mount`).
+- `curvine-path`, `author`, and `volume-handle` are owned by the controller and
+  written into the PV `volumeAttributes`; do not set them on a StorageClass.
+
+:::note
+`fs-path` defaults to `/` when omitted, but the shipped example sets it
+(`/test-data`) and that is the safer pattern: everything the driver provisions
+for that StorageClass lands under one directory you can inspect, quota, or
+delete as a unit.
+:::
 
 ### Examples
 
