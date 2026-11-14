@@ -28,14 +28,16 @@ Commands:
   report
   load
   export
-  load-status
-  cancel-load
   transfer
+  load-list
   mount
   umount
   node
+  admin
   version
 ```
+
+`load-status`, `cancel-load`, `transfer-status`, and `cancel-transfer` are still accepted but hidden from `--help`; they remain as compatibility shortcuts for the legacy job API.
 
 All `cv` commands accept these global options:
 
@@ -405,7 +407,29 @@ cv cancel-load <job_id>
 
 ---
 
-### 10. `transfer`: operate Transfer jobs
+### 10. `load-list`: list recent load and export jobs
+
+**Usage:** `cv load-list [OPTIONS]`
+
+| Option | Description |
+|--------|-------------|
+| `--path <PREFIX>` | Match jobs whose source or target path starts with this prefix. |
+| `--mount <CV_PATH>` | Match `fs_mode` jobs under one Curvine mount path. |
+| `--state <STATE>` | Filter by state: `pending`, `loading`, `completed`, `failed`, `canceled`. |
+| `--running-only` | Only show pending/loading jobs. |
+| `--failed-only` | Only failed jobs; with `-v`, only failed task rows are printed. |
+| `--limit <N>` | Maximum jobs returned (default `50`). |
+| `--offset <N>` | Skip N jobs, most recent first, for pagination (default `0`). |
+| `-v, --verbose` | Include task-level detail for each job. |
+| `--include-finished <BOOL>` | Include completed/failed/canceled jobs (default `true`). |
+
+```bash
+cv load-list --running-only
+cv load-list --state failed --limit 20
+cv load-list --mount /bucket/datasets --verbose
+```
+
+### 11. `transfer`: operate Transfer jobs
 
 `cv transfer` is available only when `[transfer] enabled = true`. It is the
 operations command for listing, inspecting, retrying, and paging Transfer jobs;
@@ -437,7 +461,7 @@ Master implementation.
 
 ---
 
-### 11. `version`: show version
+### 12. `version`: show version
 
 **Usage:** `cv version`
 
@@ -461,7 +485,7 @@ curvine-worker --version-json
 ```
 ---
 
-### 12. `bench`: built-in benchmark
+### 13. `bench`: built-in benchmark
 
 **Usage:** `cv bench [OPTIONS]` and `cv bench prefill [OPTIONS]`
 
@@ -479,7 +503,7 @@ cv bench prefill --path cv://default/bench/ws --files 100000 --file-size 0
 
 ---
 
-### 13. `fsck`: block replica health
+### 14. `fsck`: block replica health
 
 **Usage:** `cv fsck <PATH> [OPTIONS]`
 
@@ -497,6 +521,36 @@ printed when the scan finds problems.
 cv fsck /data
 cv fsck /data/file.txt --detail
 ```
+
+---
+
+### 15. `admin config`: inspect and override Master runtime config
+
+**Usage:** `cv admin config <set|get|reset> ...`
+
+Runtime overrides apply to the running Master without editing the config file,
+and they are **not persistent**: a Master restart restores the file-backed
+values.
+
+| Command | Description |
+|---------|-------------|
+| `cv admin config get` | List every registered runtime-config key with its file value, override, and effective value. |
+| `cv admin config get <KEY>` | Show one key. |
+| `cv admin config set <KEY> <VALUE>` | Set an in-memory override and print the previous and effective value. |
+| `cv admin config reset <KEY>` | Drop the override and fall back to the config-file value. |
+
+```bash
+cv admin config get
+```
+
+:::warning
+In the current release the Master registers **no** runtime-adjustable keys
+(`build_master_runtime_registry` returns an empty registry). `cv admin config
+get` therefore prints `(no runtime config entries)`, and `set` / `reset` return
+`unsupported runtime configuration ...; writable: []`. The command surface is in
+place for keys that will be registered later; use the config file plus a
+restart for any change you need today.
+:::
 
 ---
 
