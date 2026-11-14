@@ -3,16 +3,17 @@ This chapter describes the observable monitoring metrics of Curvine, used for mo
 
 ## Metrics Collection
 
-Master, Worker, FUSE, and the optional Transfer service expose monitoring metrics through their HTTP web ports. These metrics can be collected by Prometheus and visualized through Grafana.
+Master, Worker, FUSE, the web console, and the optional Transfer service expose monitoring metrics through their HTTP ports. These metrics can be collected by Prometheus and visualized through Grafana or the built-in dashboards of `curvine-web`.
 
-- Master metrics: `http://<master-host>:9001/metrics`
+- Master metrics: `http://<master-host>:9010/metrics`
 - Worker metrics: `http://<worker-host>:9002/metrics`
 - FUSE metrics: `http://<fuse-host>:9003/metrics`
+- Web console / built-in metrics: `http://<web-host>:9000`
 - Transfer metrics: `http://<transfer-host>:9011/metrics`
 - MDS metrics (when enabled): `http://<mds-host>:9004/metrics`
 
 :::note
-These are the standalone code defaults. The Helm chart pins older web ports; read the effective ports from the generated ConfigMap.
+The Master `web_port` (`9010`) is a metrics-only listener; the admin UI lives in the separate `curvine-web` process on port `9000`. These are the standalone code defaults. The Helm chart pins older web ports; read the effective ports from the generated ConfigMap.
 :::
 
 ## Master Metrics

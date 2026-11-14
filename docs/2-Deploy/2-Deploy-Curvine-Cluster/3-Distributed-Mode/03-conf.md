@@ -63,11 +63,9 @@ The current `ClusterConf` contains these sections:
 | `[cli]` | CLI log settings |
 | `[discovery]` | etcd-based service discovery (disabled by default) |
 | `[fault_injection]` | Test-only fault HTTP control plane |
+| `[web]`, `[web.observability]` | Standalone `curvine-web` admin console and its observability stack |
+| `[s3_gateway]` | Standalone `curvine-s3-gateway` service |
 | `[master.compatibility]`, `[worker.compatibility]` | Version compatibility policy |
-
-:::warning
-The `[s3_gateway]` section and `worker.enable_s3_gateway` no longer exist in the current code. The S3-compatible gateway is not part of the current server. Remove these keys from older configurations; they are ignored (with a warning) if present.
-:::
 
 ## Cluster-Level Flags
 
@@ -87,7 +85,7 @@ The `[s3_gateway]` section and `worker.enable_s3_gateway` no longer exist in the
 | --- | --- | --- |
 | `hostname` | `localhost` | Master hostname; overridden by `net_interface` or `CURVINE_MASTER_HOSTNAME` |
 | `rpc_port` | `8995` | Master RPC port |
-| `web_port` | `9001` | Master web UI / REST port |
+| `web_port` | `9010` | Master **metrics** listener (`/metrics` only, no UI). The admin console is the standalone `curvine-web` process on `[web].port` |
 | `io_threads` | `32` | Master RPC I/O threads |
 | `worker_threads` | `max(32, 2 × CPU)` | Master RPC worker threads |
 | `actor_threads` | `4` | Actor runtime threads |
@@ -378,6 +376,79 @@ Notes:
 - `direct_io` and `write_back_cache` cannot both be enabled; startup rejects the combination.
 - `fuse_opts` supports the VFS pairs `ro`/`rw`, `nodev`/`dev`, `nosuid`/`suid`, `noexec`/`exec`, `noatime`/`atime`, `sync`/`async`, plus `dirsync`, `allow_other`, `default_permissions`, and `big_write`. The legacy libfuse options `auto_unmount`, `allow_root`, and `max_write` are not supported by the direct mount backend.
 - Duration values accept strings (`"1s"`, `"500ms"`, `"1h"`) or bare integers interpreted as milliseconds. The older `*_ms` keys remain aliases.
+
+## `[web]`
+
+`curvine-web` is a standalone process (binary `curvine-web`, started with `bin/curvine-web.sh start`). It serves the admin console — overview, file browser, worker list, configuration and monitoring dashboards. It is not started by `curvine-server` and is not part of the local cluster helper script; start it explicitly when you need the UI.
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `hostname` | `localhost` | Bind hostname for the admin console |
+| `port` | `9000` | HTTP port of the admin console |
+
+:::tip
+`[master].web_port` (`9010`) is a metrics-only listener. Visiting it in a browser returns Prometheus text output, not the admin UI. Use `[web].port` (`9000`) for the UI.
+:::
+
+### `[web.observability]`
+
+The admin console embeds its own collector and time-series store, so dashboards work without Prometheus. Switch `mode` to `prometheus` or `auto` to query an existing Prometheus server instead.
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `enabled` | `true` | Enable the observability stack |
+| `mode` | `builtin` | `builtin`, `prometheus`, or `auto` |
+| `scrape_interval` | `60s` | Scrape interval of the built-in collector |
+| `scrape_timeout` | `3s` | Per-target scrape timeout |
+| `retention` | `24h` | In-memory retention window |
+| `max_concurrent_scrapes` | `32` | Concurrent scrape limit |
+| `max_concurrent_dashboard_queries` | `8` | Concurrent range queries per dashboard refresh |
+| `max_series` | `100000` | Series cardinality cap |
+| `max_samples_per_series` | `10000` | Samples retained per series |
+
+#### `[web.observability.fuse]`
+
+FUSE metrics scraping is opt-in. With `enabled = true` and empty `targets`, the collector scrapes `127.0.0.1:{fuse.web_port}`.
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `enabled` | `false` | Discover and scrape FUSE `/metrics` endpoints |
+| `targets` | `[]` | `host:port` or full `http://host:port/metrics` URLs |
+
+#### `[web.observability.prometheus]`
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `url` | empty | Prometheus base URL, for example `http://prometheus:9090` |
+| `query_timeout` | `5s` | Timeout for Prometheus query APIs |
+| `fallback_builtin` | `true` | With `mode = "auto"`, fall back to the built-in collector when Prometheus is unhealthy |
+| `target_cache_ttl` | `30s` | TTL for caching `/api/v1/targets` responses |
+
+When `mode = "prometheus"`, also add the target labels described in `etc/prometheus-curvine.yml` so the dashboards can attribute metrics to the right role.
+
+## `[s3_gateway]`
+
+The S3-compatible gateway is a standalone service (binary `curvine-s3-gateway`, started with `bin/curvine-s3-gateway.sh start`). It is read by the gateway process only; Master and Worker ignore this section. See [S3 Object Storage Gateway](../../../3-User-Manuals/4-Access/02-s3-gateway.md) for the supported API surface.
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `listen` | `0.0.0.0:9900` | S3 HTTP listen address |
+| `region` | `us-east-1` | Region reported by `GetBucketLocation` and used for SigV4 scoping |
+| `put_temp_dir` | `/tmp/curvine-temp` | Temporary directory for PUT staging (multipart and simple) |
+| `put_memory_buffer_threshold` | `1048576` | Size below which a PUT is buffered in memory instead of spilling to `put_temp_dir` |
+| `put_max_memory_buffer` | `16777216` | Maximum in-memory buffer size |
+| `access_key` / `secret_key` | empty | Static credentials when the gateway does not use the distributed credential store |
+| `enable_distributed_auth` | `false` | Load credentials from Curvine instead of static keys |
+| `credentials_path` | empty | Curvine path holding the credential file |
+| `cache_refresh_interval_secs` | `30` | Credential cache refresh interval |
+| `get_chunk_size_mb` | `1.0` | Read chunk size in MB (`0.5`, `1`, or `2`) |
+| `web_port` | `9003` | Gateway health / metrics HTTP port |
+
+`worker.enable_s3_gateway` (default `false`) selects where multipart staging lives: `false` keeps upload parts on the gateway host's local filesystem, `true` uses Curvine DFS so several gateway instances can serve the same upload.
+
+:::note
+`worker.enable_s3_gateway` is read by the gateway process, not by the Worker. You can set it in the gateway's own config file; it does not require restarting Workers.
+:::
 
 ## `[log]`, `[cli]`, `[job]`
 

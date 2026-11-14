@@ -2,6 +2,28 @@
 
 Curvine 提供了直观易用的Web管理界面，用户可以通过浏览器实时监控集群状态、管理文件系统、查看工作节点信息以及配置系统参数。Web界面为集群运维和日常管理提供了可视化的操作平台，无需复杂的命令行操作即可完成大部分管理任务。
 
+## 启动控制台
+
+控制台是独立的 `curvine-web` 进程，不属于 Master 服务。Master 自身的 `web_port`（`9010`）只提供 `/metrics`。
+
+```bash
+bin/curvine-web.sh start     # 在 http://<host>:9000 提供控制台
+bin/curvine-web.sh stop
+bin/curvine-web.sh restart
+```
+
+`curvine-web.sh` 只支持 `start`、`stop`、`restart`（没有 `status`）；查看进程请用 `ps`，或直接请求 `http://<host>:9000`。
+
+相关配置：
+
+```toml
+[web]
+hostname = "localhost"
+port = 9000
+```
+
+监控页面背后的指标采集器与 Prometheus 集成由 `[web.observability]` 控制，详见[配置参考](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md)。
+
 ## Overview - 集群概览
 
 Overview页面提供了Curvine集群的整体运行状态概览，是集群监控的核心仪表板。

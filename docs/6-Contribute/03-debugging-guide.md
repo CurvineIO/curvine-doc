@@ -108,8 +108,9 @@ These defaults come from `crates/common/curvine-config/src/cluster_conf.rs` and 
 | Master RPC | `8995` | `DEFAULT_MASTER_PORT` |
 | Raft / journal | `8996` | `DEFAULT_RAFT_PORT` |
 | Worker RPC | `8997` | `DEFAULT_WORKER_PORT` |
-| Master web / metrics | `9001` | `DEFAULT_MASTER_WEB_PORT` |
+| Master web / metrics | `9010` | `DEFAULT_MASTER_WEB_PORT` |
 | Worker web / metrics | `9002` | `DEFAULT_WORKER_WEB_PORT` |
+| Web console (curvine-web) | `9000` | `[web].port` |
 | FUSE web / metrics | `9003` | `DEFAULT_FUSE_WEB_PORT` |
 | MDS RPC | `8998` | `[mds].rpc_port` |
 | MDS web / metrics | `9004` | `[mds].web_port` |
@@ -169,7 +170,7 @@ bin/cv node
 ### Metrics and performance inspection
 
 ```bash
-curl http://<master>:9001/metrics
+curl http://<master>:9010/metrics
 curl http://<worker>:9002/metrics
 ```
 

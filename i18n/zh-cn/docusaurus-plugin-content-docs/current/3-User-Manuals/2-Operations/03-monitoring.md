@@ -4,7 +4,7 @@
 ### 指标收集
 master、worker、fuse 以及可选的 transfer 服务会通过各自的 HTTP Web 端口暴露监控指标，可以在 Prometheus 中采集这些指标，然后通过 Grafana 可视化。
 
-- master 指标：`http://<master-host>:9001/metrics`
+- master 指标：`http://<master-host>:9010/metrics`
 - worker 指标：`http://<worker-host>:9002/metrics`
 - fuse 指标：`http://<fuse-host>:9003/metrics`
 - transfer 指标：`http://<transfer-host>:9011/metrics`

@@ -2,6 +2,29 @@
 
 Curvine provides an intuitive and user-friendly web management interface that allows users to monitor cluster status in real-time, manage file systems, view worker node information, and configure system parameters through a web browser. The web interface serves as a visual operations platform for cluster operations and daily management, enabling most administrative tasks to be completed without complex command-line operations.
 
+## Starting the Console
+
+The console is the standalone `curvine-web` process, not part of the Master server. The Master's own `web_port` (`9010`) serves `/metrics` only.
+
+```bash
+bin/curvine-web.sh start     # serve the console on http://<host>:9000
+bin/curvine-web.sh stop
+bin/curvine-web.sh restart
+```
+
+`curvine-web.sh` supports `start`, `stop`, and `restart` (there is no `status`
+action); check the process with `ps` or by requesting `http://<host>:9000`.
+
+Relevant configuration:
+
+```toml
+[web]
+hostname = "localhost"
+port = 9000
+```
+
+See [Configuration Reference](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md) for `[web.observability]`, which controls the built-in metrics collector and the Prometheus integration behind the monitoring pages.
+
 ## Overview - Cluster Overview
 
 The Overview page provides a comprehensive view of the Curvine cluster's overall operational status and serves as the core dashboard for cluster monitoring.

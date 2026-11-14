@@ -77,9 +77,16 @@ bin/dfs fs -mkdir -p /compat-demo
 
 ## Web UI
 
+管理控制台是独立进程，不属于 Master。需要界面时单独启动：
+
+```bash
+bin/curvine-web.sh start
+```
+
 启动后，常用 Web 入口为：
 
-- Master：`http://<host>:9001`
+- 管理控制台（`curvine-web`）：`http://<host>:9000` —— 集群总览、文件浏览、Worker、监控
+- Master 指标：`http://<host>:9010/metrics` —— 仅 Prometheus 文本输出，无 UI
 - Worker：`http://<host>:9002`
 - FUSE：`http://<host>:9003`
 

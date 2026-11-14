@@ -61,11 +61,9 @@ Curvine 常见的配置输入包括：
 | `[cli]` | CLI 日志配置 |
 | `[discovery]` | 基于 etcd 的服务发现（默认关闭） |
 | `[fault_injection]` | 仅测试使用的故障 HTTP 控制面 |
+| `[web]`、`[web.observability]` | 独立 `curvine-web` 管理控制台及其可观测性组件 |
+| `[s3_gateway]` | 独立 `curvine-s3-gateway` 服务 |
 | `[master.compatibility]`、`[worker.compatibility]` | 版本兼容策略 |
-
-:::warning
-当前代码中已不存在 `[s3_gateway]` 段落和 `worker.enable_s3_gateway`。S3 兼容网关不属于当前服务端。请从旧配置中删除这些键；即使保留也只会被忽略并产生警告。
-:::
 
 ## 顶层字段
 
@@ -85,7 +83,7 @@ Curvine 常见的配置输入包括：
 | --- | --- | --- |
 | `hostname` | `localhost` | Master hostname；可被 `net_interface` 或 `CURVINE_MASTER_HOSTNAME` 覆盖 |
 | `rpc_port` | `8995` | Master RPC 端口 |
-| `web_port` | `9001` | Master Web UI / REST 端口 |
+| `web_port` | `9010` | Master **指标**监听端口（仅 `/metrics`，无 UI）。管理控制台是独立的 `curvine-web` 进程，监听 `[web].port` |
 | `io_threads` | `32` | Master RPC I/O 线程数 |
 | `worker_threads` | `max(32, 2 × CPU)` | Master RPC worker 线程数 |
 | `actor_threads` | `4` | Actor 运行时线程数 |
@@ -376,6 +374,79 @@ data_dir = [
 - `direct_io` 与 `write_back_cache` 不能同时启用，启动时会被拒绝。
 - `fuse_opts` 支持 VFS 选项对 `ro`/`rw`、`nodev`/`dev`、`nosuid`/`suid`、`noexec`/`exec`、`noatime`/`atime`、`sync`/`async`，以及 `dirsync`、`allow_other`、`default_permissions`、`big_write`。旧版 libfuse 选项 `auto_unmount`、`allow_root`、`max_write` 不受直接挂载后端支持。
 - 时长值支持字符串（`"1s"`、`"500ms"`、`"1h"`）或按毫秒解释的裸整数。旧的 `*_ms` 键仍作为别名接受。
+
+## `[web]`
+
+`curvine-web` 是一个独立进程（二进制 `curvine-web`，通过 `bin/curvine-web.sh start` 启动），提供管理控制台：集群总览、文件浏览、Worker 列表、配置与监控大盘。它不由 `curvine-server` 启动，也不在本地集群辅助脚本的启动列表中；需要 UI 时请单独启动。
+
+| 字段 | 默认值 | 含义 |
+| --- | --- | --- |
+| `hostname` | `localhost` | 管理控制台监听主机名 |
+| `port` | `9000` | 管理控制台 HTTP 端口 |
+
+:::tip
+`[master].web_port`（`9010`）只是一个指标监听端口，用浏览器打开它只会得到 Prometheus 文本输出，不是管理界面。UI 请访问 `[web].port`（`9000`）。
+:::
+
+### `[web.observability]`
+
+管理控制台内嵌了自己的采集器和时序库，因此不依赖 Prometheus 也能看大盘。把 `mode` 改成 `prometheus` 或 `auto` 可改为查询已有的 Prometheus。
+
+| 字段 | 默认值 | 含义 |
+| --- | --- | --- |
+| `enabled` | `true` | 是否启用可观测性组件 |
+| `mode` | `builtin` | `builtin`、`prometheus` 或 `auto` |
+| `scrape_interval` | `60s` | 内置采集器的抓取间隔 |
+| `scrape_timeout` | `3s` | 单目标抓取超时 |
+| `retention` | `24h` | 内存时序库保留窗口 |
+| `max_concurrent_scrapes` | `32` | 并发抓取上限 |
+| `max_concurrent_dashboard_queries` | `8` | 单次大盘刷新的并发范围查询上限 |
+| `max_series` | `100000` | 序列基数上限 |
+| `max_samples_per_series` | `10000` | 每个序列保留的样本数 |
+
+#### `[web.observability.fuse]`
+
+FUSE 指标抓取默认关闭。`enabled = true` 且 `targets` 为空时，采集器会抓取 `127.0.0.1:{fuse.web_port}`。
+
+| 字段 | 默认值 | 含义 |
+| --- | --- | --- |
+| `enabled` | `false` | 是否发现并抓取 FUSE `/metrics` 端点 |
+| `targets` | `[]` | `host:port` 或完整的 `http://host:port/metrics` 地址 |
+
+#### `[web.observability.prometheus]`
+
+| 字段 | 默认值 | 含义 |
+| --- | --- | --- |
+| `url` | 空 | Prometheus 基础地址，例如 `http://prometheus:9090` |
+| `query_timeout` | `5s` | Prometheus 查询 API 超时 |
+| `fallback_builtin` | `true` | `mode = "auto"` 时，Prometheus 不可用则回退到内置采集器 |
+| `target_cache_ttl` | `30s` | `/api/v1/targets` 响应的缓存时长 |
+
+当 `mode = "prometheus"` 时，还需要按 `etc/prometheus-curvine.yml` 中的说明加上目标标签，大盘才能把指标归属到正确的角色。
+
+## `[s3_gateway]`
+
+S3 兼容网关是一个独立服务（二进制 `curvine-s3-gateway`，通过 `bin/curvine-s3-gateway.sh start` 启动）。本段只被网关进程读取，Master 和 Worker 会忽略它。支持的 API 范围见 [S3 对象存储网关](../../../3-User-Manuals/4-Access/02-s3-gateway.md)。
+
+| 字段 | 默认值 | 含义 |
+| --- | --- | --- |
+| `listen` | `0.0.0.0:9900` | S3 HTTP 监听地址 |
+| `region` | `us-east-1` | `GetBucketLocation` 返回的区域，也用于 SigV4 签名范围 |
+| `put_temp_dir` | `/tmp/curvine-temp` | PUT 暂存目录（分片和普通上传共用） |
+| `put_memory_buffer_threshold` | `1048576` | 低于该大小的 PUT 在内存中缓冲，不落 `put_temp_dir` |
+| `put_max_memory_buffer` | `16777216` | 内存缓冲上限 |
+| `access_key` / `secret_key` | 空 | 不使用分布式凭证存储时的静态密钥 |
+| `enable_distributed_auth` | `false` | 从 Curvine 加载凭证，而不是使用静态密钥 |
+| `credentials_path` | 空 | 存放凭证文件的 Curvine 路径 |
+| `cache_refresh_interval_secs` | `30` | 凭证缓存刷新间隔 |
+| `get_chunk_size_mb` | `1.0` | 读块大小（MB），可选 `0.5`、`1`、`2` |
+| `web_port` | `9003` | 网关健康检查 / 指标 HTTP 端口 |
+
+`worker.enable_s3_gateway`（默认 `false`）决定分片上传的暂存位置：`false` 时存放在网关宿主机的本地文件系统，`true` 时使用 Curvine DFS，从而允许多个网关实例共同处理同一次上传。
+
+:::note
+`worker.enable_s3_gateway` 由网关进程读取，Worker 本身不读取该字段。可以只在网关的配置文件里设置，无需重启 Worker。
+:::
 
 ## `[log]`、`[cli]`、`[job]`
 

@@ -203,8 +203,8 @@ Set `openKruise.enabled=true` to install the kruise subchart and switch master/w
 | `master.replicas` | `1` | Must be odd (1, 3, 5, …) |
 | `master.rpcPort` | `8995` | RPC port |
 | `master.journalPort` | `8996` | Journal/Raft port |
-| `master.webPort` | `9000` | Web UI port |
-| `master.web1Port` | `9001` | Additional web port |
+| `master.webPort` | `9000` | Web UI port (admin console) |
+| `master.web1Port` | `9010` | Master metrics port |
 | `master.startupProbe.enabled` | `true` | Startup probe |
 | `master.startupProbe.failureThreshold` | `90` | Allow long Raft replay |
 | `master.storage.meta.enabled` | `true` | Enable metadata PVC |
@@ -258,12 +258,15 @@ Set `openKruise.enabled=true` to install the kruise subchart and switch master/w
 | `worker.affinity` | `{}` | Affinity rules |
 
 :::note
-The chart pins legacy web ports: Master web `9000`, Master `web1` `9001`, and
-Worker web `9001`. Standalone code defaults are Master `9001` and Worker
-`9002`; always read the effective ports from the generated ConfigMap.
+The chart keeps two master web ports: `master.webPort` (`9000`, the admin
+console) and `master.web1Port` (the metrics listener). Standalone code defaults
+are admin console `9000` (`[web].port`), master metrics `9010`
+(`[master].web_port`), and Worker `9002`. Always read the effective ports from
+the generated ConfigMap.
 
-Older chart versions expose a `worker.s3Gateway.*` values block. The current
-Curvine server has no S3 gateway, so these values are ignored.
+Older chart versions expose a `worker.s3Gateway.*` values block. The S3 gateway
+is now a separate `curvine-s3-gateway` service with its own `[s3_gateway]`
+configuration; these chart values are not used by the current server.
 :::
 
 ### Transfer
