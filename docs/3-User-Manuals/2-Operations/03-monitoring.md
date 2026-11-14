@@ -27,15 +27,20 @@ The Master `web_port` (`9010`) is a metrics-only listener; the admin UI lives in
 | capacity | Total storage capacity |
 | available | Available storage space |
 | fs_used | File system used space |
-| used_memory_bytes | Used memory in bytes |
-| rocksdb_used_memory_bytes | RocksDB memory usage |
 | worker_num | Number of workers (classified by status) |
 | rpc_request_total_count | Total RPC request count |
-| rpc_request_total_time | Total RPC request time |
+| rpc_request_time | Accumulated RPC request time |
+| rpc_queue_duration | Time a request waited in the RPC queue |
 | replication_staging_number | Number of blocks waiting for replication |
 | replication_inflight_number | Number of blocks currently being replicated |
 | replication_failure_count | Total cumulative replication failures |
 | operation_duration | Operation duration (classified by type, excluding heartbeats) |
+
+Every service also exposes the standard Prometheus process collector on Linux
+(`process_resident_memory_bytes`, `process_cpu_seconds_total`,
+`process_open_fds`, `process_threads`). Use those for memory and CPU alerting;
+the old `used_memory_bytes` and `rocksdb_used_memory_bytes` gauges no longer
+exist.
 
 ### Compatibility Metrics
 
@@ -94,4 +99,3 @@ increases to catch upgrade conflicts early.
 | total_disks | Total number of storage disks |
 | num_blocks | Total number of blocks |
 | num_blocks_to_delete | Number of blocks pending deletion |
-| used_memory_bytes | Used memory in bytes |

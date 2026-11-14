@@ -25,15 +25,16 @@ master、worker、fuse 以及可选的 transfer 服务会通过各自的 HTTP We
 | capacity | 总存储容量 |
 | available | 可用存储空间 |
 | fs_used | 文件系统已用空间 |
-| used_memory_bytes | 已用内存字节数 |
-| rocksdb_used_memory_bytes | rocksdb 内存占用 |
 | worker_num | worker 数量（按状态分类） |
 | rpc_request_total_count | RPC 总请求计数 |
-| rpc_request_total_time | RPC 总请求时间 |
+| rpc_request_time | RPC 累计请求时间 |
+| rpc_queue_duration | 请求在 RPC 队列中的等待时间 |
 | replication_staging_number | 等待复制的块数量 |
 | replication_inflight_number | 正在进行复制的块数量 |
 | replication_failure_count | 累计复制失败的总次数 |
 | operation_duration | 操作耗时（按类型分类，不包括心跳） |
+
+在 Linux 上，每个服务还会额外暴露标准的 Prometheus 进程采集指标（`process_resident_memory_bytes`、`process_cpu_seconds_total`、`process_open_fds`、`process_threads`）。内存和 CPU 告警请用这些指标；旧的 `used_memory_bytes` 和 `rocksdb_used_memory_bytes` 已不存在。
 
 ### 兼容性指标
 
@@ -91,4 +92,3 @@ master 会对每个 worker 心跳和客户端握手执行兼容性评估，并�
 | total_disks | 存储磁盘数量 |
 | num_blocks | block 总数 |
 | num_blocks_to_delete | 待删除 block 数 |
-| used_memory_bytes | 已用内存字节数 |
