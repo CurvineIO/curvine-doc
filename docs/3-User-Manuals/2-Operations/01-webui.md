@@ -1,6 +1,6 @@
 # Web Management Interface
 
-Curvine provides an intuitive and user-friendly web management interface that allows users to monitor cluster status in real-time, manage file systems, view worker node information, and configure system parameters through a web browser. The web interface serves as a visual operations platform for cluster operations and daily management, enabling most administrative tasks to be completed without complex command-line operations.
+Curvine provides an intuitive and user-friendly web management interface that allows users to monitor cluster status in real-time, browse the file system, inspect worker nodes, follow load and transfer jobs, and read the effective configuration — all from a browser. The web interface serves as a visual operations platform for cluster operations and daily management, so most inspection tasks no longer require the CLI.
 
 ## Starting the Console
 
@@ -24,6 +24,23 @@ port = 9000
 ```
 
 See [Configuration Reference](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md) for `[web.observability]`, which controls the built-in metrics collector and the Prometheus integration behind the monitoring pages.
+
+## Navigation
+
+The sidebar groups the pages exactly as the console does; the breadcrumb reads
+from the same definition.
+
+| Group | Page | Path | What it shows |
+| --- | --- | --- | --- |
+| Overview | Overview | `/overview` | Cluster health, capacity and activity |
+| Filesystem | Browse | `/browse` | Browse paths, inspect status and block placement |
+| Filesystem | Mounts | `/mounts` | UFS mappings and validation state |
+| Runtime | Workers | `/workers` | Worker state, heartbeat and capacity usage |
+| Runtime | Config | `/config` | Read-only cluster configuration |
+| Jobs | Jobs | `/jobs` | Manual load and `fs_mode` auto-export diagnostics |
+| Jobs | Transfers | `/transfers` | Transfer service load/export jobs |
+| Observability | Observability | `/observability` | Built-in collector, targets and charts |
+| Observability | Operations | `/operations` | Alerts, provider diagnostics and scrape coverage |
 
 ## Overview - Cluster Overview
 
@@ -117,7 +134,11 @@ Through the Workers page, administrators can:
 
 ## Configuration - System Configuration
 
-The Configuration page provides detailed configuration information viewing functionality for the Curvine cluster, helping administrators understand and verify system configurations.
+The Configuration page is a **read-only** view of the effective cluster
+configuration. It helps administrators understand and verify what the Master is
+actually running with; changing values still requires editing
+`curvine-cluster.toml` and restarting, or `cv admin config set` once the Master
+registers runtime-adjustable keys.
 
 ![Configuration Page](../img/configuration.png)
 
@@ -162,5 +183,27 @@ Through the Configuration page, administrators can:
 - Record current configuration as a baseline before performance tuning
 - Verify that changes take effect through this page after configuration modifications
 - Optimize thread counts, timeout values, and other parameters in conjunction with performance monitoring data
+
+## Mounts - UFS Mappings
+
+The Mounts page lists every UFS mount (`cv mount`), its path consistency state and
+its last validation result, and lets you trigger a re-check. It is the fastest way
+to see why a `cv load` cannot find its source path.
+
+## Jobs - Load and Export Jobs
+
+The Jobs page shows manual `cv load` / `cv export` jobs with their per-task
+progress. With the standalone Transfer service enabled, live Transfer jobs move to
+the Transfers page; Jobs keeps the legacy Master-side view and `fs_mode`
+auto-export diagnostics.
+
+## Observability and Operations
+
+`/observability` renders charts from the built-in collector, or from Prometheus
+when `[web.observability].mode` is `prometheus` or `auto`. `/operations` is the
+health view on top of that data: open alerts, which provider is active, and how
+much of the scrape target set is actually reporting. When FUSE scraping is off
+(`[web.observability.fuse].enabled = false`), the coverage panel correctly reports
+FUSE targets as missing.
 
 Through the web management interface, Curvine provides users with comprehensive cluster management and monitoring capabilities, greatly simplifying the operational work of distributed cache systems and improving management efficiency and system observability.
