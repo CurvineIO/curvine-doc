@@ -1,6 +1,44 @@
 # Web管理界面
 
-Curvine 提供了直观易用的Web管理界面，用户可以通过浏览器实时监控集群状态、管理文件系统、查看工作节点信息以及配置系统参数。Web界面为集群运维和日常管理提供了可视化的操作平台，无需复杂的命令行操作即可完成大部分管理任务。
+Curvine 提供了直观易用的 Web 管理界面，用户可以通过浏览器实时监控集群状态、浏览文件系统、查看工作节点、跟踪加载与传输任务，并查看生效中的配置。Web 界面为集群运维和日常管理提供了可视化平台，大部分巡检工作不再需要命令行。
+
+## 启动控制台
+
+控制台是独立的 `curvine-web` 进程，不属于 Master 服务。Master 自身的 `web_port`（`9010`）只提供 `/metrics`。
+
+```bash
+bin/curvine-web.sh start     # 在 http://<host>:9000 提供控制台
+bin/curvine-web.sh stop
+bin/curvine-web.sh restart
+```
+
+`curvine-web.sh` 只支持 `start`、`stop`、`restart`（没有 `status`）；查看进程请用 `ps`，或直接请求 `http://<host>:9000`。
+
+相关配置：
+
+```toml
+[web]
+hostname = "localhost"
+port = 9000
+```
+
+监控页面背后的指标采集器与 Prometheus 集成由 `[web.observability]` 控制，详见[配置参考](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md)。
+
+## 导航结构
+
+侧边栏的分组与控制台完全一致，面包屑也读取同一份定义。
+
+| 分组 | 页面 | 路径 | 内容 |
+| --- | --- | --- | --- |
+| Overview | 总览 | `/overview` | 集群健康、容量与活动 |
+| Filesystem | 文件浏览 | `/browse` | 浏览路径、查看状态与块分布 |
+| Filesystem | 挂载 | `/mounts` | UFS 映射与校验状态 |
+| Runtime | Worker | `/workers` | Worker 状态、心跳与容量使用 |
+| Runtime | 配置 | `/config` | 只读集群配置 |
+| Jobs | 任务 | `/jobs` | 手动加载与 `fs_mode` 自动导出诊断 |
+| Jobs | 传输 | `/transfers` | Transfer 加载 / 导出任务 |
+| Observability | 可观测性 | `/observability` | 内置采集器、目标与图表 |
+| Observability | 运维 | `/operations` | 告警、Provider 诊断与采集覆盖 |
 
 ## Overview - 集群概览
 
@@ -94,7 +132,7 @@ Workers页面专门用于监控和管理集群中的工作节点，提供详细�
 
 ## Configuration - 系统配置
 
-Configuration页面提供了Curvine集群的详细配置信息查看功能，帮助管理员了解和验证系统配置。
+Configuration 页面是集群生效配置的**只读**视图，帮助管理员确认 Master 实际运行在什么配置下。要修改参数仍需编辑 `curvine-cluster.toml` 并重启，或在 Master 注册了可运行时调整的键之后使用 `cv admin config set`。
 
 ![Configuration页面](../img/configuration.png)
 
@@ -139,5 +177,17 @@ Configuration页面提供了Curvine集群的详细配置信息查看功能，帮
 - 在进行性能调优前，记录当前配置作为基线
 - 配置变更后，通过此页面验证变更是否生效
 - 结合性能监控数据，优化线程数、超时时间等参数
+
+## Mounts - UFS 映射
+
+Mounts 页面列出所有 UFS 挂载（`cv mount`）、路径一致性状态和最近一次校验结果，并可触发重新检查。当 `cv load` 找不到源路径时，先看这一页最快。
+
+## Jobs - 加载与导出任务
+
+Jobs 页面展示手动的 `cv load` / `cv export` 任务及其每个任务的进度。启用独立 Transfer 服务后，新的 Transfer 任务会出现在 Transfers 页面；Jobs 保留旧版 Master 侧视图和 `fs_mode` 自动导出诊断。
+
+## Observability 与 Operations
+
+`/observability` 用内置采集器渲染图表；当 `[web.observability].mode` 为 `prometheus` 或 `auto` 时改为查询 Prometheus。`/operations` 是在这之上的健康视图：当前告警、激活的 Provider，以及抓取目标中有多大比例真的在上报。关闭 FUSE 抓取（`[web.observability.fuse].enabled = false`）时，覆盖面板会如实把 FUSE 目标标为缺失。
 
 通过Web管理界面，Curvine为用户提供了完整的集群管理和监控能力，大大简化了分布式缓存系统的运维工作，提高了管理效率和系统可观测性。

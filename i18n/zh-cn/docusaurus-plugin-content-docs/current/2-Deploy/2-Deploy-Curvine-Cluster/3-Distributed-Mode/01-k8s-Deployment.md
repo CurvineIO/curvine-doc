@@ -199,8 +199,8 @@ Chart 版本 `0.5.2-alpha`。下表默认值与 `helm show values curvine/curvin
 | `master.replicas` | `1` | 须为奇数（1、3、5…） |
 | `master.rpcPort` | `8995` | RPC 端口 |
 | `master.journalPort` | `8996` | Journal/Raft 端口 |
-| `master.webPort` | `9000` | Web UI 端口 |
-| `master.web1Port` | `9001` | 附加 Web 端口 |
+| `master.webPort` | `9000` | Web UI 端口（管理控制台） |
+| `master.web1Port` | `9001` | Master 指标端口（`[master].web_port`） |
 | `master.startupProbe.enabled` | `true` | 启动探针 |
 | `master.startupProbe.failureThreshold` | `90` | 允许较长 Raft 回放 |
 | `master.storage.meta.enabled` | `true` | 启用元数据 PVC |
@@ -254,9 +254,9 @@ Chart 版本 `0.5.2-alpha`。下表默认值与 `helm show values curvine/curvin
 | `worker.affinity` | `{}` | 亲和规则 |
 
 :::note
-Chart 沿用了旧的 Web 端口：Master Web `9000`、Master `web1` `9001`、Worker Web `9001`。单机代码默认值为 Master `9001`、Worker `9002`；请始终以生成的 ConfigMap 中的实际端口为准。
+Chart 保留了两个 Master Web 端口：`master.webPort`（`9000`，管理控制台，写入 `[web].port`）与 `master.web1Port`（`9001`，Master 指标监听，写入 `[master].web_port`）。单机代码默认值与之不同——管理控制台 `9000`、Master 指标 `9010`、Worker `9002`——请始终以生成的 ConfigMap 中的实际端口为准，不要按默认值推断。
 
-旧版本 Chart 提供 `worker.s3Gateway.*` 参数块。当前 Curvine 服务端已不包含 S3 网关，这些参数不会生效。
+`worker.s3Gateway.*` 是生效的：`enabled: true` 时 Chart 会把 `[s3_gateway]` 和 `worker.enable_s3_gateway` 写进 ConfigMap，并在 `worker.s3Gateway.listen`（默认 `0.0.0.0:9900`）上创建 Service。但 worker 容器仍然只运行 `/entrypoint.sh worker start`，不会帮你启动网关进程——在 Chart 提供之前，请用 sidecar 或单独的 Deployment 运行 `curvine-s3-gateway`。
 :::
 
 ### Service

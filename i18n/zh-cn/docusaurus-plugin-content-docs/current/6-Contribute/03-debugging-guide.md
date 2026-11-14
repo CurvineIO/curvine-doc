@@ -108,7 +108,8 @@ log = { level = "warn", log_dir = "stdout", file_name = "cli.log" }
 | Master RPC | `8995` | `DEFAULT_MASTER_PORT` |
 | Raft / journal | `8996` | `DEFAULT_RAFT_PORT` |
 | Worker RPC | `8997` | `DEFAULT_WORKER_PORT` |
-| Master Web / metrics | `9001` | `DEFAULT_MASTER_WEB_PORT` |
+| Master Web / metrics | `9010` | `DEFAULT_MASTER_WEB_PORT` |
+| Web 控制台（curvine-web） | `9000` | `[web].port` |
 | Worker Web / metrics | `9002` | `DEFAULT_WORKER_WEB_PORT` |
 | FUSE Web / metrics | `9003` | `DEFAULT_FUSE_WEB_PORT` |
 | MDS RPC | `8998` | `[mds].rpc_port` |
@@ -169,7 +170,7 @@ bin/cv node
 ### 指标与性能分析
 
 ```bash
-curl http://<master>:9001/metrics
+curl http://<master>:9010/metrics
 curl http://<worker>:9002/metrics
 ```
 

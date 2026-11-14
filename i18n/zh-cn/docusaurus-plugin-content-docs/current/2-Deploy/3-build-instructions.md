@@ -112,10 +112,10 @@ bin/cv fs mkdir /a
 bin/cv fs ls /
 ```
 
-访问 Web 界面：
+访问管理控制台（先执行 `bin/curvine-web.sh start`）：
 
 ```
-http://your-hostname:9001
+http://your-hostname:9000
 ```
 
 Curvine 使用 TOML 格式的配置文件。示例配置位于 `conf/curvine-cluster.toml`，主要配置项包括：

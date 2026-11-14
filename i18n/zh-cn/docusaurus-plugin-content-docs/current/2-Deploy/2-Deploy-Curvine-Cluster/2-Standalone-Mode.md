@@ -54,12 +54,13 @@ ls -la /curvine-fuse
 
 ## Web 入口
 
-- Master Web：`http://<host>:9001`
+- 管理控制台（`curvine-web`，通过 `bin/curvine-web.sh start` 启动）：`http://<host>:9000`
+- Master 指标端点：`http://<host>:9010/metrics`（仅指标，无 UI）
 - Worker Web：`http://<host>:9002`
 - FUSE Web：`http://<host>:9003`
 
 :::tip
-如果你在 Docker 中运行，请使用 `--network host`，或者至少映射 `8995`、`8996`、`8997`、`9001`、`9002`、`9003`。
+如果你在 Docker 中运行，请使用 `--network host`，或者至少映射 `8995`、`8996`、`8997`、`9000`、`9002`、`9003`、`9010`。
 :::
 
 ## 另一个本地脚本

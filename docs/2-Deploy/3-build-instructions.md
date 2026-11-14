@@ -112,10 +112,10 @@ bin/cv fs mkdir /a
 bin/cv fs ls /
 ```
 
-Access Web UI:
+Access the admin console (`bin/curvine-web.sh start`, then):
 
 ```
-http://your-hostname:9001
+http://your-hostname:9000
 ```
 
 Curvine uses TOML-formatted configuration files. An example configuration is located at `conf/curvine-cluster.toml`. The main configuration items include:

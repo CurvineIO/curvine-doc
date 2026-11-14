@@ -54,12 +54,13 @@ ls -la /curvine-fuse
 
 ## Web Endpoints
 
-- Master web endpoint: `http://<host>:9001`
+- Admin console (`curvine-web`, started with `bin/curvine-web.sh start`): `http://<host>:9000`
+- Master metrics endpoint: `http://<host>:9010/metrics` (metrics only, no UI)
 - Worker web endpoint: `http://<host>:9002`
 - FUSE web endpoint: `http://<host>:9003`
 
 :::tip
-If you run inside Docker, use `--network host` or map at least `8995`, `8996`, `8997`, `9001`, `9002`, and `9003`.
+If you run inside Docker, use `--network host` or map at least `8995`, `8996`, `8997`, `9000`, `9002`, `9003`, and `9010`.
 :::
 
 ## Alternative Helper Script

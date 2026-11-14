@@ -137,7 +137,7 @@ Each hostname in `journal_addrs` must match the effective master hostname on tha
 If you need the Java Hadoop client path, update `conf/curvine-site.xml` as well:
 ```xml
 <property>
-    <name>fs.cv.default.master_addrs</name>
+    <name>fs.cv.master_addrs</name>
     <value>master1:8995,master2:8995,master3:8995</value>
 </property>
 ```

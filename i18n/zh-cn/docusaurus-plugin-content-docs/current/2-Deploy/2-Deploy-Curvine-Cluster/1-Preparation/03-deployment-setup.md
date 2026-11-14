@@ -133,10 +133,10 @@ file_name = "curvine.log"
 `journal_addrs` 中每条记录的 hostname，必须和对应节点在应用 `CURVINE_MASTER_HOSTNAME` 覆盖后的实际 Master hostname 一致，否则该 Master 无法加入 Raft 组。
 :::
 
-如果需要使用 Java Hadoop 客户端，还需要同步更新 `conf/curvine-site.xml` 中的 `fs.cv.default.master_addrs`：
+如果需要使用 Java Hadoop 客户端，还需要同步更新 `conf/curvine-site.xml` 中的 `fs.cv.master_addrs`：
 ```xml
 <property>
-    <name>fs.cv.default.master_addrs</name>
+    <name>fs.cv.master_addrs</name>
     <value>master1:8995,master2:8995,master3:8995</value>
 </property>
 ```

@@ -3,7 +3,7 @@
 The Curvine S3 gateway exposes a Curvine cluster through an S3-compatible HTTP API. Tools that already speak S3 — the AWS CLI, MinIO Client, boto3, or any S3 SDK — can read and write Curvine paths without FUSE or a native Curvine client. The gateway authenticates each request with AWS Signature V2/V4 and translates bucket and key names into Curvine filesystem operations.
 
 :::info
-The gateway is an optional, standalone service. It is not started by `curvine-server` and is not included in the default release package yet. Build it explicitly with `cargo build --release --bin curvine-s3-gateway` and run it alongside a Curvine cluster.
+The gateway is an optional, standalone service. It is not started by `curvine-server`, but it **is** part of the default build and release package: `build.sh` builds `curvine-s3-gateway` with the default `--package all`, and the distribution ships `bin/curvine-s3-gateway.sh` next to the other service scripts.
 :::
 
 ## Overview
@@ -73,13 +73,23 @@ Buckets are regular Curvine directories, and objects are regular files. A bucket
 
 ## Getting Started
 
-### 1. Build the gateway
+### 1. Start the gateway
+
+In a release package, start the gateway with the shipped script:
+
+```bash
+bin/curvine-s3-gateway.sh start      # stop / restart are also supported
+```
+
+When building from source, `build/build.sh` produces the binary in the release
+distribution (the default `--package all` includes it). To build only the
+gateway:
 
 ```bash
 cargo build --release --bin curvine-s3-gateway
 ```
 
-The binary is written to `target/release/curvine-s3-gateway`. Release packages do not ship it yet, so run it from the build output or copy it to the machine that will host the gateway.
+The binary is written to `target/release/curvine-s3-gateway`.
 
 ### 2. Configure the cluster connection
 

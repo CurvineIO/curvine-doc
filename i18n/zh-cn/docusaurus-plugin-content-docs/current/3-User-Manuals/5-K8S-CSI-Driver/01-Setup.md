@@ -287,7 +287,15 @@ FUSE 运行在独立 Pod 中。适用于 CSI node Pod 重启后仍需保持 FUSE
 | `curvine-path` | 静态 PV | — | Curvine 文件系统中的完整路径 |
 | `path-type` | 否 | `Directory` | `Directory` 或 `DirectoryOrCreate` |
 
-其他键（如 `io-threads`、`worker-threads`）会透传给 `curvine-fuse` 作为 CLI 参数。以下键由驱动保留，不可手动设置：`master-addrs`、`fs-path`、`path-type`、`curvine-path`、`mnt-path`。
+其他所有键都会透传给 `curvine-fuse` 作为 CLI 参数，例如 `io-threads=4`、`worker-threads=8`。以下三类不会透传：
+
+- `csi.storage.k8s.io/*` 属于 CSI 内部键，会被丢弃。
+- `mnt-path` 在创建卷时直接报错；宿主机挂载路径由驱动自己计算（`/var/lib/kubelet/plugins/kubernetes.io/csi/curvine/<mount-key>/fuse-mount`）。
+- `curvine-path`、`author`、`volume-handle` 由控制器写入 PV 的 `volumeAttributes`，不要在 StorageClass 上手动设置。
+
+:::note
+`fs-path` 省略时默认为 `/`，但随附的示例显式写了 `/test-data`，这是更安全的做法：该 StorageClass 创建的所有卷都落在同一个目录下，便于整体检查、配额或删除。
+:::
 
 ### 示例
 
