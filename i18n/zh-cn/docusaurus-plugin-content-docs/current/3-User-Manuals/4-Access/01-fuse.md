@@ -104,6 +104,20 @@ tree
 
 完整选项可执行 `bin/curvine-fuse.sh --help`（或在安装目录下 `lib/curvine-fuse --help`）查看。
 
+### 只校验配置，不挂载
+
+`curvine-fuse` 还提供两个辅助子命令，适合在 CI 里或滚动变更挂载前使用：
+
+```bash
+# 只解析配置并校验，配置不合法时以非零码退出
+lib/curvine-fuse validate-config -c /path/to/curvine-cluster.toml
+
+# 以 JSON 列出所有与挂载相关的 CLI 参数（用于保持文档与 CI 一致）
+lib/curvine-fuse list-config-flags --format json
+```
+
+`validate-config` 会加载配置，校验 `fuse.state_dir` 可写（不存在则创建），并对无法识别的 `[fuse]` 键给出告警——这类拼写错误本来会被静默忽略并沿用默认值。配置无法解析或 state 目录不可用时以非零码退出。它不会挂载，也不会检查 Master 是否可达。Curvine CSI 驱动在节点侧准备挂载时就是调用它。
+
 ## FUSE 支持程度
 
 Curvine FUSE 支持：

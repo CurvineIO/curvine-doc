@@ -104,6 +104,26 @@ When starting FUSE, you can pass through options to the underlying `curvine-fuse
 
 Run `bin/curvine-fuse.sh --help` (or `lib/curvine-fuse --help` under the installation directory) to list all options.
 
+### Check configuration without mounting
+
+`curvine-fuse` exposes two helper subcommands that are useful in CI and before a
+rolling mount change:
+
+```bash
+# Parse the config and exit non-zero on an invalid mount setup
+lib/curvine-fuse validate-config -c /path/to/curvine-cluster.toml
+
+# Dump every mount-related CLI flag as JSON (used to keep docs and CI in sync)
+lib/curvine-fuse list-config-flags --format json
+```
+
+`validate-config` loads the config, verifies that `fuse.state_dir` is writable
+(creating it when missing), and warns about unrecognized `[fuse]` keys — the
+kind of typo that would otherwise silently keep a default. It exits non-zero
+when the config cannot be parsed or the state directory is unusable. It does not
+mount, and it does not check Master reachability. The Curvine CSI driver calls it
+during node-side mount setup.
+
 ## FUSE support level
 
 Curvine FUSE supports:

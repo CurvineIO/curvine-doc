@@ -77,9 +77,16 @@ Use `cv` for the full Curvine-native command set. Use `dfs` only when you specif
 
 ## Web UI
 
+The admin console is a standalone process, not part of the master. Start it when you need the UI:
+
+```bash
+bin/curvine-web.sh start
+```
+
 After startup, the main web endpoints are:
 
-- Master: `http://<host>:9001`
+- Admin console (`curvine-web`): `http://<host>:9000` — overview, file browser, workers, monitoring
+- Master metrics: `http://<host>:9010/metrics` — Prometheus text output only, no UI
 - Worker: `http://<host>:9002`
 - FUSE: `http://<host>:9003`
 

@@ -392,9 +392,10 @@ Mounted paths automatically use Curvine cache; unmounted paths fall through to n
 
 | Component | Endpoint | Port |
 |-----------|----------|------|
-| Master | `http://<host>:9001/metrics` | 9001 |
+| Master | `http://<host>:9010/metrics` | 9010 |
 | Worker | `http://<host>:9002/metrics` | 9002 |
 | FUSE | `http://<host>:9003/metrics` | 9003 |
+| Web console (`curvine-web`) | `http://<host>:9000` | 9000 |
 | Transfer (optional) | `http://<host>:9011/metrics` | 9011 |
 
 ### 8.2 Key Metrics to Alert On
@@ -414,7 +415,7 @@ Mounted paths automatically use Curvine cache; unmounted paths fall through to n
 scrape_configs:
   - job_name: 'curvine-master'
     static_configs:
-      - targets: ['master1:9001', 'master2:9001', 'master3:9001']
+      - targets: ['master1:9010', 'master2:9010', 'master3:9010']
   - job_name: 'curvine-worker'
     static_configs:
       - targets: ['worker1:9002', 'worker2:9002', 'worker3:9002']
@@ -425,7 +426,8 @@ scrape_configs:
 
 ### 8.4 Web UI
 
-- Master UI: `http://<master-host>:9001` — cluster overview, file browser, worker status, configuration.
+- Admin console (`curvine-web`, started with `bin/curvine-web.sh start`): `http://<web-host>:9000` — cluster overview, file browser, worker status, configuration, monitoring dashboards.
+- Master `:9010` is metrics-only and has no UI.
 - Worker UI: `http://<worker-host>:9002` — node-level storage and block statistics.
 
 ---

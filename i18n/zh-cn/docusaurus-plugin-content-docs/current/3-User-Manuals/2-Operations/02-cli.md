@@ -28,14 +28,16 @@ Commands:
   report
   load
   export
-  load-status
-  cancel-load
   transfer
+  load-list
   mount
   umount
   node
+  admin
   version
 ```
+
+`load-status`、`cancel-load`、`transfer-status`、`cancel-transfer` 仍然可用，但不再列入 `--help`；它们作为旧版任务 API 的兼容快捷命令保留。
 
 所有 `cv` 命令都支持以下全局参数：
 
@@ -396,7 +398,29 @@ cv cancel-load <job_id>
 
 ---
 
-### 10. `transfer`：运维 Transfer 任务
+### 10. `load-list`：列出最近的 load / export 任务
+
+**用法：** `cv load-list [OPTIONS]`
+
+| 参数 | 说明 |
+|------|------|
+| `--path <PREFIX>` | 匹配源或目标路径以该前缀开头的任务。 |
+| `--mount <CV_PATH>` | 匹配某个 Curvine 挂载点下的 `fs_mode` 任务。 |
+| `--state <STATE>` | 按状态过滤：`pending`、`loading`、`completed`、`failed`、`canceled`。 |
+| `--running-only` | 只显示 pending/loading 的任务。 |
+| `--failed-only` | 只看失败任务；配合 `-v` 时只打印失败的任务行。 |
+| `--limit <N>` | 返回的任务数上限（默认 `50`）。 |
+| `--offset <N>` | 分页偏移，按最近优先跳过 N 条（默认 `0`）。 |
+| `-v, --verbose` | 输出每个任务的任务级明细。 |
+| `--include-finished <BOOL>` | 是否包含已完成/失败/已取消的任务（默认 `true`）。 |
+
+```bash
+cv load-list --running-only
+cv load-list --state failed --limit 20
+cv load-list --mount /bucket/datasets --verbose
+```
+
+### 11. `transfer`：运维 Transfer 任务
 
 `cv transfer` 仅在 `[transfer] enabled = true` 时可用。它用于列举、查看、重试和分页查询 Transfer 任务；日常提交仍使用 `cv load` 或 `cv export`。
 
@@ -424,7 +448,7 @@ cv transfer retry <job_id>
 
 ---
 
-### 11. `version`：查看版本
+### 12. `version`：查看版本
 
 **用法：** `cv version`
 
@@ -448,7 +472,7 @@ curvine-worker --version-json
 详细说明请参阅[版本管理与兼容性](04-version-management.md)。
 ---
 
-### 12. `bench`：内置基准测试
+### 13. `bench`：内置基准测试
 
 **用法：** `cv bench [OPTIONS]`、`cv bench prefill [OPTIONS]`
 
@@ -461,7 +485,7 @@ cv bench prefill --path cv://default/bench/ws --files 100000 --file-size 0
 
 ---
 
-### 13. `fsck`：块副本健康检查
+### 14. `fsck`：块副本健康检查
 
 **用法：** `cv fsck <PATH> [OPTIONS]`
 
@@ -477,6 +501,29 @@ cv bench prefill --path cv://default/bench/ws --files 100000 --file-size 0
 cv fsck /data
 cv fsck /data/file.txt --detail
 ```
+
+---
+
+### 15. `admin config`：查看与覆盖 Master 运行时配置
+
+**用法：** `cv admin config <set|get|reset> ...`
+
+运行时覆盖只作用于正在运行的 Master，不需要改配置文件，而且**不持久**：Master 重启后会恢复为配置文件里的值。
+
+| 命令 | 说明 |
+|------|------|
+| `cv admin config get` | 列出所有已注册的运行时配置键，以及它们的文件值、覆盖值和生效值。 |
+| `cv admin config get <KEY>` | 查看单个键。 |
+| `cv admin config set <KEY> <VALUE>` | 设置内存覆盖，并打印覆盖前与生效后的值。 |
+| `cv admin config reset <KEY>` | 清除覆盖，回落到配置文件中的值。 |
+
+```bash
+cv admin config get
+```
+
+:::warning
+当前版本中 Master **没有注册任何**运行时可调整的键（`build_master_runtime_registry` 返回空注册表）。因此 `cv admin config get` 会输出 `(no runtime config entries)`，`set` / `reset` 会返回 `unsupported runtime configuration ...; writable: []`。命令入口是为后续可注册的键预留的；现阶段需要修改参数请改配置文件并重启。
+:::
 
 ---
 

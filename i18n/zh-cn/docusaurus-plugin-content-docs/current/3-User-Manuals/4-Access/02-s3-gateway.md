@@ -3,7 +3,7 @@
 Curvine S3 网关通过 S3 兼容的 HTTP API 暴露 Curvine 集群。已经支持 S3 协议的工具——AWS CLI、MinIO Client、boto3 或任意 S3 SDK——无需 FUSE 或 Curvine 原生客户端即可读写 Curvine 路径。网关使用 AWS Signature V2/V4 对每个请求进行认证，并将 bucket 和 key 映射为 Curvine 文件系统操作。
 
 :::info
-网关是一个可选的独立服务，不由 `curvine-server` 启动，目前也尚未包含在默认发行包中。请显式构建 `cargo build --release --bin curvine-s3-gateway`，并将其与 Curvine 集群一起运行。
+网关是一个可选的独立服务，不由 `curvine-server` 启动，但**已经包含在默认构建和发行包中**：`build.sh` 的默认 `--package all` 会构建 `curvine-s3-gateway`，发行包中也会带上 `bin/curvine-s3-gateway.sh`。
 :::
 
 ## 概述
@@ -73,13 +73,21 @@ Bucket 就是普通的 Curvine 目录，对象就是普通文件。上传对象�
 
 ## 快速开始
 
-### 1. 构建网关
+### 1. 启动网关
+
+在发行包中，直接用随包的脚本启动：
+
+```bash
+bin/curvine-s3-gateway.sh start      # 同样支持 stop / restart
+```
+
+从源码构建时，`build/build.sh` 会把二进制放进发行目录（默认 `--package all` 已包含它）。只想单独构建网关时：
 
 ```bash
 cargo build --release --bin curvine-s3-gateway
 ```
 
-二进制文件输出到 `target/release/curvine-s3-gateway`。发行包目前尚未包含该二进制，请从构建输出目录运行，或将其复制到网关所在机器。
+二进制文件输出到 `target/release/curvine-s3-gateway`。
 
 ### 2. 配置集群连接
 
@@ -114,6 +122,14 @@ target/release/curvine-s3-gateway credential add \
 以上命令使用配置文件所选的凭据存储。详见 [凭据管理](#凭据管理)。
 
 ### 4. 启动网关
+
+发行包中：
+
+```bash
+bin/curvine-s3-gateway.sh start
+```
+
+从源码构建时：
 
 ```bash
 target/release/curvine-s3-gateway --conf etc/curvine-cluster.toml

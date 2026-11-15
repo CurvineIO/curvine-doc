@@ -203,8 +203,8 @@ Set `openKruise.enabled=true` to install the kruise subchart and switch master/w
 | `master.replicas` | `1` | Must be odd (1, 3, 5, …) |
 | `master.rpcPort` | `8995` | RPC port |
 | `master.journalPort` | `8996` | Journal/Raft port |
-| `master.webPort` | `9000` | Web UI port |
-| `master.web1Port` | `9001` | Additional web port |
+| `master.webPort` | `9000` | Web UI port (admin console) |
+| `master.web1Port` | `9001` | Master metrics port (`[master].web_port`) |
 | `master.startupProbe.enabled` | `true` | Startup probe |
 | `master.startupProbe.failureThreshold` | `90` | Allow long Raft replay |
 | `master.storage.meta.enabled` | `true` | Enable metadata PVC |
@@ -258,12 +258,18 @@ Set `openKruise.enabled=true` to install the kruise subchart and switch master/w
 | `worker.affinity` | `{}` | Affinity rules |
 
 :::note
-The chart pins legacy web ports: Master web `9000`, Master `web1` `9001`, and
-Worker web `9001`. Standalone code defaults are Master `9001` and Worker
-`9002`; always read the effective ports from the generated ConfigMap.
+The chart keeps two master web ports: `master.webPort` (`9000`, the admin
+console, written to `[web].port`) and `master.web1Port` (`9001`, the master
+metrics listener, written to `[master].web_port`). Standalone code defaults
+differ — admin console `9000`, master metrics `9010`, Worker `9002` — so always
+read the effective ports from the generated ConfigMap rather than assuming.
 
-Older chart versions expose a `worker.s3Gateway.*` values block. The current
-Curvine server has no S3 gateway, so these values are ignored.
+`worker.s3Gateway.*` is live: with `enabled: true` the chart adds the
+`[s3_gateway]` block and `worker.enable_s3_gateway` to the ConfigMap, and creates
+a Service on `worker.s3Gateway.listen` (default `0.0.0.0:9900`). The worker
+container still only runs `/entrypoint.sh worker start`, so nothing starts the
+gateway binary for you — run `curvine-s3-gateway` as a sidecar or a separate
+Deployment until the chart ships one.
 :::
 
 ### Transfer

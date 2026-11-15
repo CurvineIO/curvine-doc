@@ -3,16 +3,17 @@ This chapter describes the observable monitoring metrics of Curvine, used for mo
 
 ## Metrics Collection
 
-Master, Worker, FUSE, and the optional Transfer service expose monitoring metrics through their HTTP web ports. These metrics can be collected by Prometheus and visualized through Grafana.
+Master, Worker, FUSE, the web console, and the optional Transfer service expose monitoring metrics through their HTTP ports. These metrics can be collected by Prometheus and visualized through Grafana or the built-in dashboards of `curvine-web`.
 
-- Master metrics: `http://<master-host>:9001/metrics`
+- Master metrics: `http://<master-host>:9010/metrics`
 - Worker metrics: `http://<worker-host>:9002/metrics`
 - FUSE metrics: `http://<fuse-host>:9003/metrics`
+- Web console / built-in metrics: `http://<web-host>:9000`
 - Transfer metrics: `http://<transfer-host>:9011/metrics`
 - MDS metrics (when enabled): `http://<mds-host>:9004/metrics`
 
 :::note
-These are the standalone code defaults. The Helm chart pins older web ports; read the effective ports from the generated ConfigMap.
+The Master `web_port` (`9010`) is a metrics-only listener; the admin UI lives in the separate `curvine-web` process on port `9000`. These are the standalone code defaults. The Helm chart pins older web ports; read the effective ports from the generated ConfigMap.
 :::
 
 ## Master Metrics
@@ -26,15 +27,20 @@ These are the standalone code defaults. The Helm chart pins older web ports; rea
 | capacity | Total storage capacity |
 | available | Available storage space |
 | fs_used | File system used space |
-| used_memory_bytes | Used memory in bytes |
-| rocksdb_used_memory_bytes | RocksDB memory usage |
 | worker_num | Number of workers (classified by status) |
 | rpc_request_total_count | Total RPC request count |
-| rpc_request_total_time | Total RPC request time |
+| rpc_request_time | Accumulated RPC request time |
+| rpc_queue_duration | Time a request waited in the RPC queue |
 | replication_staging_number | Number of blocks waiting for replication |
 | replication_inflight_number | Number of blocks currently being replicated |
 | replication_failure_count | Total cumulative replication failures |
 | operation_duration | Operation duration (classified by type, excluding heartbeats) |
+
+Every service also exposes the standard Prometheus process collector on Linux
+(`process_resident_memory_bytes`, `process_cpu_seconds_total`,
+`process_open_fds`, `process_threads`). Use those for memory and CPU alerting;
+the old `used_memory_bytes` and `rocksdb_used_memory_bytes` gauges no longer
+exist.
 
 ### Compatibility Metrics
 
@@ -93,4 +99,3 @@ increases to catch upgrade conflicts early.
 | total_disks | Total number of storage disks |
 | num_blocks | Total number of blocks |
 | num_blocks_to_delete | Number of blocks pending deletion |
-| used_memory_bytes | Used memory in bytes |
