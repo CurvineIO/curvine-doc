@@ -157,18 +157,22 @@ The current source exposes these `fs` subcommands:
 |---------|-------------|
 | `cv fs ls [PATH]` | List a directory, default path `/`. |
 | `cv fs mkdir <PATH> [-p\|--parents]` | Create a directory. |
-| `cv fs put <LOCAL_PATH> <REMOTE_PATH>` | Upload a local file into Curvine. |
+| `cv fs put <LOCAL_PATH> <REMOTE_PATH> [-n\|--no-clobber]` | Upload a local file into Curvine; `-n` keeps an existing destination. |
 | `cv fs get <PATH> <LOCAL_PATH>` | Download a Curvine file to local disk. |
-| `cv fs cat <PATH>` | Print file contents. |
+| `cv fs cat <PATH> [--offset N] [--length N]` | Print file contents, optionally a byte range. |
+| `cv fs tail <PATH> [-n\|--bytes N]` | Print the last bytes of a file, 1024 by default. |
 | `cv fs touch <PATH>` | Create an empty file or update timestamps. |
-| `cv fs rm <PATH> [-r\|--recursive]` | Remove a file or directory. |
-| `cv fs stat <PATH>` | Show file or directory status. |
+| `cv fs rm <PATH> [-r\|--recursive] [--skip-trash] [--async] [-f\|--force]` | Remove a file or directory. `--skip-trash` deletes permanently, bypassing the recycle bin if it is enabled; `--async` returns immediately and lets the Master reclaim the entry in the background (Curvine paths only); `-f` ignores a path that does not exist. |
+| `cv fs trash ls` | List the entries in the recycle bin. |
+| `cv fs trash restore <TRASH_PATH> [--dst <PATH>] [--overwrite]` | Restore a recycle-bin entry such as `/.Trash/1700000000000-42` to its original location, or to `--dst`. |
+| `cv fs trash empty [--wait]` | Permanently delete every entry in the recycle bin; `--wait` waits until the Master has reclaimed them and prints the reclaimed size. |
+| `cv fs stat <PATH> [--json]` | Show file or directory status; `--json` prints it as JSON. |
 | `cv fs count <PATH>` | Count files / directories under a path. |
 | `cv fs mv <SRC_PATH> <DST_PATH>` | Move or rename. |
 | `cv fs du <PATH> [-h] [-v]` | Show directory space usage. |
 | `cv fs df [-h]` | Show capacity / used / available space. |
-| `cv fs chmod <MODE> <PATH> [RECURSIVE]` | Change permissions. |
-| `cv fs chown <OWNER:GROUP> <PATH> [RECURSIVE]` | Change owner / group. |
+| `cv fs chmod <MODE> <PATH> [--recursive]` | Change permissions. |
+| `cv fs chown <OWNER:GROUP> <PATH> [--recursive]` | Change owner / group. |
 | `cv fs blocks <PATH> [--format table\|json]` | Show file block location details. |
 | `cv fs free <PATH> [-r\|--recursive]` | Release Curvine cache space for UFS-synced data. |
 
@@ -208,7 +212,7 @@ cv fs free /data --recursive
 | `-l, --long-format` | Long listing format. |
 
 :::note
-In the current source, recursive mode for `chmod` / `chown` is exposed as the third positional argument `[RECURSIVE]`, not as a `--recursive` flag. Permission strings support octal values such as `755` / `0o755` and symbolic forms such as `u=rwx,g=rx,o=rx`. `chown` supports `user:group`, `user:`, and `:group`.
+`chmod` / `chown` recurse with the `--recursive` flag, given before or after the other arguments. Permission strings support octal values such as `755` / `0o755` and symbolic forms such as `u=rwx,g=rx,o=rx`. `chown` supports `user:group`, `user:`, and `:group`.
 :::
 
 ---
@@ -551,6 +555,33 @@ get` therefore prints `(no runtime config entries)`, and `set` / `reset` return
 place for keys that will be registered later; use the config file plus a
 restart for any change you need today.
 :::
+
+---
+
+### 16. `snapshot`: create a Master metadata snapshot
+
+**Usage:** `cv snapshot create [--force]`
+
+Asks the active Master to create a metadata snapshot now, and prints the snapshot directory and how long the checkpoint took. Journal truncation and checkpoint retention are applied asynchronously.
+
+- A request within `journal.snapshot_min_interval` of the previous snapshot is rejected. `--force` runs the checkpoint anyway, stalling metadata writes while it runs.
+- The checkpoint runs on the Master and cannot be cancelled. On a large namespace it can take longer than `client.rpc_timeout_ms` (120s by default) even though it succeeds, and the retry then reports `a leader snapshot is already in progress`. Raise `client.rpc_timeout_ms` in the file passed with `--conf` first.
+
+```bash
+cv snapshot create
+```
+
+---
+
+### 17. `completion`: shell completion script
+
+**Usage:** `cv completion <SHELL>`
+
+Prints a completion script for `bash`, `zsh`, `fish`, `powershell` or `elvish`. For example, to enable completion in the current bash session:
+
+```bash
+source <(cv completion bash)
+```
 
 ---
 
