@@ -291,13 +291,13 @@ Storage types are `SSD`, `HDD`, `DISK`, and `MEM`. The Worker appends `cluster_i
 | `conn_retry_max_duration_ms` | `60000` | Connection retry max duration |
 | `conn_retry_min_sleep_ms` | `100` | Connection retry min sleep |
 | `conn_retry_max_sleep_ms` | `2000` | Connection retry max sleep |
-| `rpc_retry_max_duration_ms` | `120000` | RPC retry max duration |
+| `rpc_retry_max_duration_ms` | `60000` | RPC retry max duration |
 | `rpc_retry_min_sleep_ms` | `100` | RPC retry min sleep |
-| `rpc_retry_max_sleep_ms` | `10000` | RPC retry max sleep |
+| `rpc_retry_max_sleep_ms` | `3000` | RPC retry max sleep |
 | `rpc_close_idle` | `true` | Close idle RPC connections |
 | `conn_timeout_ms` | `30000` | Connection timeout |
 | `rpc_timeout_ms` | `120000` | RPC timeout |
-| `data_timeout_ms` | `120000` | Data transfer timeout |
+| `data_timeout_ms` | `300000` | Data transfer timeout |
 | `pipeline_timeout_ms` | `120000` | Pipeline timeout |
 | `master_conn_pool_size` | `1` | Connections per Master |
 | `enable_read_ahead` | `true` | Enable read-ahead |
@@ -307,7 +307,7 @@ Storage types are `SSD`, `HDD`, `DISK`, and `MEM`. The Worker appends `cluster_i
 | `enable_unified_fs` | `true` | Enable the unified filesystem view |
 | `enable_rust_read_ufs` | `true` | Allow direct UFS reads on cache miss |
 | `audit_logging_enabled` | `true` | Emit client audit logs |
-| `mount_update_ttl_ms` | `10000` | Mount metadata refresh interval |
+| `mount_update_ttl_ms` | `60000` | Mount metadata refresh interval |
 | `umask` | `022` | File creation umask (octal) |
 | `metric_report_enable` | `true` | Report client metrics |
 | `clean_task_interval_ms` | `60000` | Cleanup task interval |
@@ -354,8 +354,8 @@ Size values are strings such as `"128MB"`, `"4MB"`, or `"10GB"`. Duration fields
 | `remember` | `false` | Remember opened files and directories |
 | `max_background` | `256` | Maximum background requests |
 | `congestion_threshold` | `192` | Congestion threshold; must be ≤ `max_background` |
-| `enable_meta_cache` | `false` | Enable the userspace metadata cache |
-| `meta_cache_timeout` | `60s` | Userspace metadata cache TTL |
+| `enable_meta_cache` | unset | Enable the userspace metadata cache; unset enables it whenever the `meta_cache_timeout` window is non-zero, as it is by default |
+| `meta_cache_timeout` | unset | Userspace metadata cache window; unset follows `attr_timeout` |
 | `node_cache_timeout` | `1h` | Inode/node map eviction TTL |
 | `direct_io` | `false` | Bypass the kernel page cache for all opens |
 | `open_direct_on_stale` | `false` | Per-open direct I/O when local metadata is stale |
@@ -366,7 +366,7 @@ Size values are strings such as `"128MB"`, `"4MB"`, or `"10GB"`. Duration fields
 | `state_dir` | system temp dir | Directory for persisted FUSE state |
 | `max_readahead_kb` | unset | Override the BDI `read_ahead_kb`; unset keeps the kernel default |
 | `list_limit` | `1000` | Directory listing limit |
-| `enable_splice` | `true` | Use splice/vmsplice for FUSE data transfer |
+| `enable_splice` | `false` | Use splice/vmsplice for FUSE data transfer |
 | `path_lock_stripes` | `1024` | Path lock stripes |
 
 Notes:
