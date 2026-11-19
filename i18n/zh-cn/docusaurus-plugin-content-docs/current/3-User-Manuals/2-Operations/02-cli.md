@@ -152,18 +152,22 @@ Version Distribution:
 |------|------|
 | `cv fs ls [PATH]` | 列目录，默认路径 `/`。 |
 | `cv fs mkdir <PATH> [-p\|--parents]` | 创建目录。 |
-| `cv fs put <LOCAL_PATH> <REMOTE_PATH>` | 上传本地文件到 Curvine。 |
+| `cv fs put <LOCAL_PATH> <REMOTE_PATH> [-n\|--no-clobber]` | 上传本地文件到 Curvine；`-n` 不覆盖已存在的目标。 |
 | `cv fs get <PATH> <LOCAL_PATH>` | 下载 Curvine 文件到本地。 |
-| `cv fs cat <PATH>` | 输出文件内容。 |
+| `cv fs cat <PATH> [--offset N] [--length N]` | 输出文件内容，可指定字节范围。 |
+| `cv fs tail <PATH> [-n\|--bytes N]` | 输出文件末尾的字节，默认 1024。 |
 | `cv fs touch <PATH>` | 创建空文件或更新时间戳。 |
-| `cv fs rm <PATH> [-r\|--recursive]` | 删除文件或目录。 |
-| `cv fs stat <PATH>` | 查看路径状态。 |
+| `cv fs rm <PATH> [-r\|--recursive] [--skip-trash] [--async] [-f\|--force]` | 删除文件或目录。`--skip-trash` 绕过回收站（如已启用）直接永久删除；`--async` 立即返回，由 Master 在后台回收（仅限 Curvine 路径）；`-f` 忽略不存在的路径。 |
+| `cv fs trash ls` | 列出回收站中的条目。 |
+| `cv fs trash restore <TRASH_PATH> [--dst <PATH>] [--overwrite]` | 将回收站条目（如 `/.Trash/1700000000000-42`）恢复到原位置，或恢复到 `--dst` 指定的路径。 |
+| `cv fs trash empty [--wait]` | 永久删除回收站中的所有条目；`--wait` 等待 Master 回收完毕并输出回收的大小。 |
+| `cv fs stat <PATH> [--json]` | 查看路径状态；`--json` 以 JSON 输出。 |
 | `cv fs count <PATH>` | 统计目录下文件 / 目录数量。 |
 | `cv fs mv <SRC_PATH> <DST_PATH>` | 移动或重命名。 |
 | `cv fs du <PATH> [-h] [-v]` | 查看目录空间占用。 |
 | `cv fs df [-h]` | 查看文件系统容量 / 已用 / 可用。 |
-| `cv fs chmod <MODE> <PATH> [RECURSIVE]` | 修改权限。 |
-| `cv fs chown <OWNER:GROUP> <PATH> [RECURSIVE]` | 修改属主 / 属组。 |
+| `cv fs chmod <MODE> <PATH> [--recursive]` | 修改权限。 |
+| `cv fs chown <OWNER:GROUP> <PATH> [--recursive]` | 修改属主 / 属组。 |
 | `cv fs blocks <PATH> [--format table\|json]` | 查看文件块位置信息。 |
 | `cv fs free <PATH> [-r\|--recursive]` | 释放已同步到 UFS 的 Curvine 缓存空间。 |
 
@@ -203,7 +207,7 @@ cv fs free /data --recursive
 | `-l, --long-format` | 长列表格式。 |
 
 :::note
-当前源码里 `chmod` / `chown` 的递归参数暴露为第三个位置参数 `[RECURSIVE]`，不是 `--recursive` 旗标。权限字符串支持八进制（如 `755`、`0o755`）和符号形式（如 `u=rwx,g=rx,o=rx`）。`chown` 支持 `user:group`、`user:` 和 `:group`。
+`chmod` / `chown` 通过 `--recursive` 旗标递归，旗标可放在其它参数之前或之后。权限字符串支持八进制（如 `755`、`0o755`）和符号形式（如 `u=rwx,g=rx,o=rx`）。`chown` 支持 `user:group`、`user:` 和 `:group`。
 :::
 
 ---
@@ -524,6 +528,33 @@ cv admin config get
 :::warning
 当前版本中 Master **没有注册任何**运行时可调整的键（`build_master_runtime_registry` 返回空注册表）。因此 `cv admin config get` 会输出 `(no runtime config entries)`，`set` / `reset` 会返回 `unsupported runtime configuration ...; writable: []`。命令入口是为后续可注册的键预留的；现阶段需要修改参数请改配置文件并重启。
 :::
+
+---
+
+### 16. `snapshot`：创建 Master 元数据快照
+
+**用法：** `cv snapshot create [--force]`
+
+请求活跃 Master 立即创建元数据快照，并输出快照目录和 checkpoint 耗时。日志截断和 checkpoint 保留在后台异步完成。
+
+- 距上一次快照不足 `journal.snapshot_min_interval` 时请求会被拒绝；`--force` 仍然执行 checkpoint，执行期间元数据写入会暂停。
+- checkpoint 在 Master 上执行，无法取消。命名空间很大时，耗时可能超过 `client.rpc_timeout_ms`（默认 120s），即使快照成功，重试也会报告 `a leader snapshot is already in progress`。请先在 `--conf` 指定的配置文件中调大 `client.rpc_timeout_ms`。
+
+```bash
+cv snapshot create
+```
+
+---
+
+### 17. `completion`：Shell 补全脚本
+
+**用法：** `cv completion <SHELL>`
+
+输出 `bash`、`zsh`、`fish`、`powershell` 或 `elvish` 的补全脚本。例如在当前 bash 会话中启用补全：
+
+```bash
+source <(cv completion bash)
+```
 
 ---
 
