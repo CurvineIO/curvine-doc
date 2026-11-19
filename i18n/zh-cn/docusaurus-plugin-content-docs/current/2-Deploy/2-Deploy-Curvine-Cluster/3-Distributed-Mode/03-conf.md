@@ -127,10 +127,22 @@ Curvine 常见的配置输入包括：
 | `quota_eviction_scan_page` | `2` | 扫描页数 |
 | `quota_eviction_dry_run` | `false` | 只报告可逐出对象，不实际删除 |
 | `quota_eviction_capacity` | `5000000` | 逐出扫描容量（条目数） |
+| `quota_eviction_max_scan` | `10000` | 每次触发最多检查的逐出候选数；`0` 表示扫描全部候选 |
 | `lock_expire_time` | `5m` | 过期文件锁回收时间 |
+| `client_session_lock_lease` | `true` | 会话持有的锁只由持有者或会话回收器释放，不按 `lock_expire_time` 过期；设为 `false` 时恢复该 TTL |
+| `client_session_timeout` | `60s` | 客户端会话超过该时长没有心跳即视为过期；应为客户端心跳间隔（默认 `12s`）的数倍 |
 | `buffer_size` | `128KB` | 内部缓冲区大小 |
 | `conn_limit` | `8` | 单连接在途请求上限，必须 > 0 |
 | `global_limit` | `4096` | 全局在途请求上限，必须 > 0 |
+| `trash_enabled` | `false` | 删除的条目移入回收站 `/.Trash`，而不是直接删除 |
+| `trash_retention` | `7d` | 条目在 `/.Trash` 中保留多久后被清理；`0` 表示保留到手动清理 |
+| `trash_check_interval` | `1h` | 扫描 `/.Trash` 中过期条目的间隔 |
+| `trash_purge_interval` | `1s` | 清理异步删除暂存条目（`/.Trash/.pending`）的间隔；即使 `trash_enabled` 为 `false` 也会运行 |
+| `trash_purge_batch_inodes` | `4096` | 单个清理批次在释放命名空间锁之前最多删除的 inode 数 |
+| `trash_purge_yield_ms` | `5` | 清理批次之间的停顿（毫秒），让其他元数据操作获得锁 |
+| `delete_stage_min_children` | `4096` | 直接子项数不少于该值的目录在永久递归删除时先暂存到 `/.Trash/.purging`，再分批清理；`0` 表示不暂存 |
+| `s3_allow_env_credentials` | `false` | 允许 S3 挂载使用 `s3.credentials.type = role` 或 `auto`，即使用节点自身的云身份。挂载 RPC 没有认证，只应在 Master RPC 仅对管理员开放时启用 |
+| `read_cache_reservation_enabled` | `false` | Worker 确认最新容量报告后，释放已完成缓存文件的空间预留；仅用于专用读缓存集群，写缓存或混合用途请保持关闭 |
 
 `worker_policy = "local"` 会为第一个副本优先选择本地 Worker，其余副本通过 weighted 策略分配；`weighted` 按 `worker.weight` 分配。
 
