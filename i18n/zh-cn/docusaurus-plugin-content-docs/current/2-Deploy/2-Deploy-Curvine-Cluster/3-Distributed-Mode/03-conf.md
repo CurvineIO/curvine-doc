@@ -289,13 +289,13 @@ data_dir = [
 | `conn_retry_max_duration_ms` | `60000` | 连接重试最大时长 |
 | `conn_retry_min_sleep_ms` | `100` | 连接重试最小休眠 |
 | `conn_retry_max_sleep_ms` | `2000` | 连接重试最大休眠 |
-| `rpc_retry_max_duration_ms` | `120000` | RPC 重试最大时长 |
+| `rpc_retry_max_duration_ms` | `60000` | RPC 重试最大时长 |
 | `rpc_retry_min_sleep_ms` | `100` | RPC 重试最小休眠 |
-| `rpc_retry_max_sleep_ms` | `10000` | RPC 重试最大休眠 |
+| `rpc_retry_max_sleep_ms` | `3000` | RPC 重试最大休眠 |
 | `rpc_close_idle` | `true` | 关闭空闲 RPC 连接 |
 | `conn_timeout_ms` | `30000` | 连接超时 |
 | `rpc_timeout_ms` | `120000` | RPC 超时 |
-| `data_timeout_ms` | `120000` | 数据传输超时 |
+| `data_timeout_ms` | `300000` | 数据传输超时 |
 | `pipeline_timeout_ms` | `120000` | Pipeline 超时 |
 | `master_conn_pool_size` | `1` | 每个 Master 的连接数 |
 | `enable_read_ahead` | `true` | 启用预读 |
@@ -305,7 +305,7 @@ data_dir = [
 | `enable_unified_fs` | `true` | 启用统一文件系统视图 |
 | `enable_rust_read_ufs` | `true` | cache miss 时允许直接读 UFS |
 | `audit_logging_enabled` | `true` | 输出客户端审计日志 |
-| `mount_update_ttl_ms` | `10000` | Mount 元数据刷新周期 |
+| `mount_update_ttl_ms` | `60000` | Mount 元数据刷新周期 |
 | `umask` | `022` | 文件创建 umask（八进制） |
 | `metric_report_enable` | `true` | 上报客户端指标 |
 | `clean_task_interval_ms` | `60000` | 清理任务周期 |
@@ -352,8 +352,8 @@ data_dir = [
 | `remember` | `false` | 记住已打开的文件与目录 |
 | `max_background` | `256` | 最大后台请求数 |
 | `congestion_threshold` | `192` | 拥塞阈值；必须 ≤ `max_background` |
-| `enable_meta_cache` | `false` | 启用用户态元数据缓存 |
-| `meta_cache_timeout` | `60s` | 用户态元数据缓存 TTL |
+| `enable_meta_cache` | 未设置 | 启用用户态元数据缓存；未设置时，只要 `meta_cache_timeout` 窗口非零即启用，默认即为非零 |
+| `meta_cache_timeout` | 未设置 | 用户态元数据缓存窗口；未设置时跟随 `attr_timeout` |
 | `node_cache_timeout` | `1h` | inode/node map 逐出 TTL |
 | `direct_io` | `false` | 所有打开操作绕过内核 page cache |
 | `open_direct_on_stale` | `false` | 本地元数据陈旧时对该次打开使用 direct I/O |
@@ -364,7 +364,7 @@ data_dir = [
 | `state_dir` | 系统临时目录 | 持久化 FUSE 状态的目录 |
 | `max_readahead_kb` | 未设置 | 覆盖 BDI `read_ahead_kb`；未设置时保持内核默认 |
 | `list_limit` | `1000` | 目录列举数量限制 |
-| `enable_splice` | `true` | FUSE 数据传输使用 splice/vmsplice |
+| `enable_splice` | `false` | FUSE 数据传输使用 splice/vmsplice |
 | `path_lock_stripes` | `1024` | 路径锁分片数 |
 
 说明：
