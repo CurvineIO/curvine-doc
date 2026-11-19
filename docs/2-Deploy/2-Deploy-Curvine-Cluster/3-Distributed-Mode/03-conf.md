@@ -442,6 +442,8 @@ The S3-compatible gateway is a standalone service (binary `curvine-s3-gateway`, 
 | `credentials_path` | empty | Curvine path holding the credential file |
 | `cache_refresh_interval_secs` | `30` | Credential cache refresh interval |
 | `get_chunk_size_mb` | `1.0` | Read chunk size in MB (`0.5`, `1`, or `2`) |
+| `signed_chunk_spool_dir` | `/tmp/curvine-signed-spool` | Absolute directory where signed `aws-chunked` records over 16 MiB are buffered until their signature is verified; use a private directory |
+| `signed_chunk_spool_max_bytes` | `10GB` (`10737418240`) | Spool budget per gateway process; a record that cannot reserve its full size gets `503 SlowDown`. Keep at least 5 GiB so any legal single record fits |
 | `web_port` | `9003` | Gateway health / metrics HTTP port |
 
 `worker.enable_s3_gateway` (default `false`) selects where multipart staging lives: `false` keeps upload parts on the gateway host's local filesystem, `true` uses Curvine DFS so several gateway instances can serve the same upload.
@@ -493,6 +495,12 @@ Rotation only applies when `log_dir` is a directory. With size and time rotation
 | `task_timeout` | `1h` | Maximum task execution time |
 | `task_report_interval` | `10s` | Task progress report interval |
 | `worker_max_concurrent_tasks` | `100` | Maximum concurrent tasks per Worker |
+| `worker_max_queued_tasks` | `0` | Tasks a Worker holds at once (waiting plus running); beyond it new tasks get a retryable "queue full" answer. `0` means 2 × `worker_max_concurrent_tasks` |
+| `worker_queue_full_timeout` | `30m` | How long one submission may wait for a full Worker queue to drain before the dispatch gives up on that task |
+| `load_parallel_streams` | `8` | Parallel read streams per object for load and export tasks; mounts can override it with `load_task.parallel_streams` |
+| `load_min_bytes_per_stream` | `32MB` | Minimum source bytes per stream: an object gets `len / load_min_bytes_per_stream` streams, capped by `load_parallel_streams`; mounts can override it with `load_task.min_bytes_per_stream` |
+| `ufs_read_chunk_size` | `2097152` (2 MiB) | Range size of one UFS read request; mounts can override it with `opendal.read_chunk_size` |
+| `ufs_read_concurrent` | `4` | Range requests each stream keeps in flight; mounts can override it with `opendal.read_concurrent`. One object buffers about `load_parallel_streams × ufs_read_concurrent × ufs_read_chunk_size` (64 MiB by default) and a Worker up to `worker_max_concurrent_tasks` of those, so raise them with the Worker memory in mind |
 
 ## `[transfer]`
 
