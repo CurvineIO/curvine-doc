@@ -180,6 +180,7 @@ The MDS is an optional standalone metadata service, started with `curvine-server
 | `leader_create_snapshot` | unset | Whether the leader creates snapshots; unset means "only for a single-node group" |
 | `snapshot_entries` | `1000000` | Entries between snapshots |
 | `snapshot_read_chunk_size` | `1MB` | Snapshot read chunk size |
+| `snapshot_download_parallel` | `8` | Snapshot files downloaded at the same time (one connection each) when this node fetches a snapshot; `1` keeps it serial |
 | `conn_retry_max_duration_ms` | `0` | Connection retry max duration |
 | `conn_retry_min_sleep_ms` | `10000` | Connection retry min sleep |
 | `conn_retry_max_sleep_ms` | `10000` | Connection retry max sleep |
@@ -238,6 +239,8 @@ Key points:
 | `scheduler_threads` | `2` | Scheduler threads |
 | `executor_threads` | `10` | Background executor threads |
 | `executor_channel_size` | `1000` | Background executor queue size |
+| `transfer_io_threads` | `0` | Threads of a separate runtime for load, export and replication tasks, so their block I/O cannot stall RPC handling; `0` shares the RPC runtime. Workers running many transfers should use 8 to 32 |
+| `transfer_blocking_threads` | `max(64, 2 × CPU)` | Concurrent local block I/O calls of that runtime (only read when `transfer_io_threads` is non-zero); `0` means tokio's default of 512 |
 | `enable_splice` | `false` | Enable splice optimization |
 | `enable_send_file` | `true` | Enable sendfile optimization |
 | `pipe_buf_size` | `64KB` | Pipe buffer size |
@@ -246,6 +249,11 @@ Key points:
 | `pipe_pool_idle_time` | `0` | Pipe idle recycle time |
 | `block_replication_concurrency_limit` | `100` | Concurrent replication tasks |
 | `block_replication_chunk_size` | `1MB` | Replication chunk size |
+| `block_checksum` | `false` | Write a per-chunk CRC32C sidecar next to each finalized local block |
+| `block_checksum_verify` | `false` | Check every chunk read from a local block against its sidecar and fail the read on a mismatch; disables sendfile and short-circuit reads |
+| `block_checksum_allow_missing` | `true` | With `block_checksum_verify`, read a block that has no sidecar unverified instead of rejecting it |
+| `block_checksum_scan_on_start` | `true` | With `block_checksum_verify`, re-verify every finalized block in the background after startup and remove blocks that fail |
+| `block_checksum_scan_rate` | `100MB` | Read rate limit per second for that startup scan; `0` does not limit it |
 | `spdk_disk` | disabled | SPDK NVMe-oF/RDMA disk configuration |
 | `compatibility` | diagnose | Version compatibility policy for data-plane peers |
 
