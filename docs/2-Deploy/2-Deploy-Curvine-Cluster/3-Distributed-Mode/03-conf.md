@@ -275,11 +275,15 @@ Storage types are `SSD`, `HDD`, `DISK`, and `MEM`. The Worker appends `cluster_i
 | `worker_threads` | `max(16, 2 × CPU)` | Client RPC worker threads |
 | `replicas` | `1` | Default replica count |
 | `block_size` | `128MB` | Default block size |
+| `alloc_first_block_on_create` | `true` | Ask the Master to allocate the first block when a file is created or opened, saving one RPC for small files; Masters without support ignore it |
 | `write_chunk_size` | `128KB` | Write chunk size |
 | `write_chunk_num` | `8` | Write chunks per pipeline |
+| `write_buffer_size` | `256MB` | Total bytes the buffered writers of this client may queue before new writes wait; `0` leaves only the per-file chunk count as a bound |
+| `write_limit` | `0` | Write bandwidth limit in Mbps, shared by all block writers of the client and counted once rather than per replica; `0` disables it |
 | `read_chunk_size` | `128KB` | Read chunk size |
 | `read_chunk_num` | `8` | Read chunks per pipeline |
 | `read_parallel` | `1` | Base read parallelism |
+| `read_pipeline_depth` | `1` | Chunk requests kept in flight per remote block read; above `1` the next request overlaps the current chunk's transfer |
 | `read_slice_size` | `0` | Read slice size; `0` means `read_chunk_size × read_chunk_num` |
 | `max_cache_block_handles` | `10` | Maximum cached block handles |
 | `short_circuit` | `true` | Enable short-circuit reads |
@@ -324,6 +328,7 @@ Storage types are `SSD`, `HDD`, `DISK`, and `MEM`. The Worker appends `cluster_i
 | `large_file_size` | `10GB` | Large-file threshold |
 | `max_read_parallel` | `8` | Maximum dynamic read parallelism |
 | `sequential_read_threshold` | `7` | Sequential-read detection threshold |
+| `seek_absorb_window` | `0` | Forward-seek absorption window: a forward seek within this distance of the prefetch buffer is served from it. Needs `enable_smart_prefetch = true` and `read_chunk_num > 1`; `0` disables it |
 
 Size values are strings such as `"128MB"`, `"4MB"`, or `"10GB"`. Duration fields ending in `_ms` accept integer milliseconds. The older unsuffixed aliases (`mount_update_ttl`, `sync_check_interval_min`, and so on) are still accepted.
 
@@ -344,6 +349,7 @@ Size values are strings such as `"128MB"`, `"4MB"`, or `"10GB"`. Duration fields
 | `stream_channel_size` | `0` | Read/write request queue size; `0` uses the backend default |
 | `fuse_opts` | `[]` | Extra mount options (see below) |
 | `readonly` | `false` | Mount read-only at the kernel level |
+| `async_delete` | `false` | `unlink` and `rmdir` go through the Master's async lane: the entry is removed from the namespace at once and its space is reclaimed in the background |
 | `umask` | `022` | Umask for synthesized `.`/`..` permission bits |
 | `uid` / `gid` | current process | Default owner of mounted entries |
 | `web_port` | `9003` | FUSE web / metrics port |
