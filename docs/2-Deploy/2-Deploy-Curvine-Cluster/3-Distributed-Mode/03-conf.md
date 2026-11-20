@@ -129,10 +129,22 @@ The current `ClusterConf` contains these sections:
 | `quota_eviction_scan_page` | `2` | Scan page count |
 | `quota_eviction_dry_run` | `false` | Report eviction candidates without deleting |
 | `quota_eviction_capacity` | `5000000` | Eviction scan capacity (entries) |
+| `quota_eviction_max_scan` | `10000` | Maximum eviction candidates examined per trigger; `0` scans the whole candidate set |
 | `lock_expire_time` | `5m` | Stale file-lock expiration |
+| `client_session_lock_lease` | `true` | Session-owned locks are released only by their owner or the session reaper, not after `lock_expire_time`; `false` returns them to that TTL |
+| `client_session_timeout` | `60s` | A client session with no heartbeat for this long is expired; keep it several times the client heartbeat interval (`12s` by default) |
 | `buffer_size` | `128KB` | Internal buffer size |
 | `conn_limit` | `8` | Per-connection in-flight request limit; must be > 0 |
 | `global_limit` | `4096` | Global in-flight request limit; must be > 0 |
+| `trash_enabled` | `false` | Move deleted entries to the recycle bin `/.Trash` instead of removing them |
+| `trash_retention` | `7d` | How long entries stay in `/.Trash` before they are purged; `0` keeps them until they are purged manually |
+| `trash_check_interval` | `1h` | How often `/.Trash` is scanned for expired entries |
+| `trash_purge_interval` | `1s` | How often entries staged by async deletes (`/.Trash/.pending`) are purged; runs even when `trash_enabled` is `false` |
+| `trash_purge_batch_inodes` | `4096` | Maximum inodes one purge batch removes before the namespace lock is released |
+| `trash_purge_yield_ms` | `5` | Pause between purge batches, in milliseconds, so other metadata operations can take the lock |
+| `delete_stage_min_children` | `4096` | A permanent recursive delete of a directory with at least this many direct children is staged under `/.Trash/.purging` and purged in bounded batches; `0` disables staging |
+| `s3_allow_env_credentials` | `false` | Allow S3 mounts with `s3.credentials.type = role` or `auto`, which use the node's own cloud identity. The mount RPC is not authenticated, so enable it only where the Master RPC is reachable by administrators alone |
+| `read_cache_reservation_enabled` | `false` | Release the space reservations of completed cache files once a Worker confirms a fresh capacity report; for dedicated read-cache clusters only, leave it off for write-cache or mixed use |
 
 `worker_policy = "local"` prefers a local Worker for the first replica and assigns the remaining replicas through the weighted policy. `weighted` allocates according to `worker.weight`.
 
