@@ -273,11 +273,15 @@ data_dir = [
 | `worker_threads` | `max(16, 2 × CPU)` | 客户端 RPC worker 线程数 |
 | `replicas` | `1` | 默认副本数 |
 | `block_size` | `128MB` | 默认 block 大小 |
+| `alloc_first_block_on_create` | `true` | 创建或打开文件时请求 Master 同时分配第一个块，小文件可少一次 RPC；不支持的 Master 会忽略 |
 | `write_chunk_size` | `128KB` | 写 chunk 大小 |
 | `write_chunk_num` | `8` | 单 pipeline 写 chunk 数 |
+| `write_buffer_size` | `256MB` | 本客户端所有带缓冲的写入器可排队的总字节数，超过后新的写入等待；`0` 表示只受每个文件的 chunk 数限制 |
+| `write_limit` | `0` | 写带宽上限（Mbps），由客户端所有块写入器共享，按写入字节计一次而不是按副本计；`0` 表示不限制 |
 | `read_chunk_size` | `128KB` | 读 chunk 大小 |
 | `read_chunk_num` | `8` | 单 pipeline 读 chunk 数 |
 | `read_parallel` | `1` | 基础读并发 |
+| `read_pipeline_depth` | `1` | 每个远程块读取同时在途的 chunk 请求数；大于 `1` 时下一个请求与当前 chunk 的传输重叠 |
 | `read_slice_size` | `0` | 读切片大小；`0` 表示 `read_chunk_size × read_chunk_num` |
 | `max_cache_block_handles` | `10` | block handle 缓存上限 |
 | `short_circuit` | `true` | 启用 short-circuit 读 |
@@ -322,6 +326,7 @@ data_dir = [
 | `large_file_size` | `10GB` | 大文件阈值 |
 | `max_read_parallel` | `8` | 最大动态读并发 |
 | `sequential_read_threshold` | `7` | 顺序读判定阈值 |
+| `seek_absorb_window` | `0` | 前向 seek 吸收窗口：落在预读缓冲区该距离内的前向 seek 直接由缓冲区提供。需要 `enable_smart_prefetch = true` 且 `read_chunk_num > 1`；`0` 表示关闭 |
 
 大小字段使用字符串，例如 `"128MB"`、`"4MB"`、`"10GB"`；以 `_ms` 结尾的时长字段使用整数毫秒。旧的无后缀别名（`mount_update_ttl`、`sync_check_interval_min` 等）仍被接受。
 
@@ -342,6 +347,7 @@ data_dir = [
 | `stream_channel_size` | `0` | 读写请求队列大小；`0` 使用后端默认值 |
 | `fuse_opts` | `[]` | 额外挂载选项（见下文） |
 | `readonly` | `false` | 在内核层以只读方式挂载 |
+| `async_delete` | `false` | `unlink` 和 `rmdir` 走 Master 的异步删除通道：条目立即从命名空间移除，空间在后台回收 |
 | `umask` | `022` | 为 `.`/`..` 合成权限位时使用的 umask |
 | `uid` / `gid` | 当前进程 | 挂载条目的默认属主 |
 | `web_port` | `9003` | FUSE Web / 指标端口 |
