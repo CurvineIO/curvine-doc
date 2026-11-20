@@ -178,6 +178,7 @@ MDS 是可选的独立元数据服务，通过 `curvine-server --service mds` �
 | `leader_create_snapshot` | 未设置 | Leader 是否创建 snapshot；未设置表示仅单节点组创建 |
 | `snapshot_entries` | `1000000` | 两次 snapshot 之间的 entry 数 |
 | `snapshot_read_chunk_size` | `1MB` | Snapshot 读取 chunk 大小 |
+| `snapshot_download_parallel` | `8` | 本节点下载快照时同时传输的快照文件数（每个文件一个连接）；`1` 表示串行 |
 | `conn_retry_max_duration_ms` | `0` | 连接重试最大时长 |
 | `conn_retry_min_sleep_ms` | `10000` | 连接重试最小休眠 |
 | `conn_retry_max_sleep_ms` | `10000` | 连接重试最大休眠 |
@@ -236,6 +237,8 @@ MDS 是可选的独立元数据服务，通过 `curvine-server --service mds` �
 | `scheduler_threads` | `2` | 调度线程数 |
 | `executor_threads` | `10` | 后台执行线程数 |
 | `executor_channel_size` | `1000` | 后台执行队列大小 |
+| `transfer_io_threads` | `0` | 加载、导出和副本复制任务使用的独立运行时线程数，避免其块 I/O 阻塞 RPC 处理；`0` 表示与 RPC 运行时共用。运行大量传输任务的 Worker 建议设为 8 到 32 |
+| `transfer_blocking_threads` | `max(64, 2 × CPU)` | 该运行时并发的本地块 I/O 调用上限（仅在 `transfer_io_threads` 非零时生效）；`0` 表示 tokio 默认值 512 |
 | `enable_splice` | `false` | 启用 splice 优化 |
 | `enable_send_file` | `true` | 启用 sendfile 优化 |
 | `pipe_buf_size` | `64KB` | Pipe buffer 大小 |
@@ -244,6 +247,11 @@ MDS 是可选的独立元数据服务，通过 `curvine-server --service mds` �
 | `pipe_pool_idle_time` | `0` | Pipe 空闲回收时间 |
 | `block_replication_concurrency_limit` | `100` | 复制任务并发上限 |
 | `block_replication_chunk_size` | `1MB` | 复制 chunk 大小 |
+| `block_checksum` | `false` | 在每个完成的本地块旁写入按 chunk 计算的 CRC32C 校验文件 |
+| `block_checksum_verify` | `false` | 读取本地块时逐 chunk 与校验文件比对，不一致则读取失败；启用后不使用 sendfile 和短路读 |
+| `block_checksum_allow_missing` | `true` | 启用 `block_checksum_verify` 时，没有校验文件的块不校验直接读取，而不是拒绝 |
+| `block_checksum_scan_on_start` | `true` | 启用 `block_checksum_verify` 时，Worker 启动后在后台重新校验所有已完成的块，并删除校验失败的块 |
+| `block_checksum_scan_rate` | `100MB` | 启动扫描每秒读取速率上限；`0` 表示不限速 |
 | `spdk_disk` | 关闭 | SPDK NVMe-oF/RDMA 磁盘配置 |
 | `compatibility` | diagnose | 数据面 peer 的版本兼容策略 |
 
