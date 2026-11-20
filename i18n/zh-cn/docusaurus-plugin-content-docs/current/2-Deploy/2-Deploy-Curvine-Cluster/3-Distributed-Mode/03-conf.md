@@ -440,6 +440,8 @@ S3 兼容网关是一个独立服务（二进制 `curvine-s3-gateway`，通过 `
 | `credentials_path` | 空 | 存放凭证文件的 Curvine 路径 |
 | `cache_refresh_interval_secs` | `30` | 凭证缓存刷新间隔 |
 | `get_chunk_size_mb` | `1.0` | 读块大小（MB），可选 `0.5`、`1`、`2` |
+| `signed_chunk_spool_dir` | `/tmp/curvine-signed-spool` | 大于 16 MiB 的已签名 `aws-chunked` 记录在签名校验通过前缓存到的绝对路径目录；请使用私有目录 |
+| `signed_chunk_spool_max_bytes` | `10GB`（`10737418240`） | 每个网关进程的缓存上限；无法预留完整大小的记录返回 `503 SlowDown`。至少保留 5 GiB，以容纳任何合法的单条记录 |
 | `web_port` | `9003` | 网关健康检查 / 指标 HTTP 端口 |
 
 `worker.enable_s3_gateway`（默认 `false`）决定分片上传的暂存位置：`false` 时存放在网关宿主机的本地文件系统，`true` 时使用 Curvine DFS，从而允许多个网关实例共同处理同一次上传。
@@ -491,6 +493,12 @@ S3 兼容网关是一个独立服务（二进制 `curvine-s3-gateway`，通过 `
 | `task_timeout` | `1h` | 任务最大执行时间 |
 | `task_report_interval` | `10s` | 任务进度上报间隔 |
 | `worker_max_concurrent_tasks` | `100` | 单 Worker 最大并发任务数 |
+| `worker_max_queued_tasks` | `0` | Worker 同时持有的任务数上限（等待加运行中）；超过后新任务收到可重试的“队列已满”应答。`0` 表示 2 × `worker_max_concurrent_tasks` |
+| `worker_queue_full_timeout` | `30m` | 单次提交等待已满的 Worker 队列腾出空间的最长时间，超时后放弃该任务的派发 |
+| `load_parallel_streams` | `8` | 加载和导出任务中每个对象的并行读取流数；挂载可通过 `load_task.parallel_streams` 覆盖 |
+| `load_min_bytes_per_stream` | `32MB` | 每个流最少的源数据字节数：对象被拆成 `len / load_min_bytes_per_stream` 个流，上限为 `load_parallel_streams`；挂载可通过 `load_task.min_bytes_per_stream` 覆盖 |
+| `ufs_read_chunk_size` | `2097152`（2 MiB） | 单个 UFS 读取请求的范围大小；挂载可通过 `opendal.read_chunk_size` 覆盖 |
+| `ufs_read_concurrent` | `4` | 每个流同时在途的范围请求数；挂载可通过 `opendal.read_concurrent` 覆盖。单个对象约占用 `load_parallel_streams × ufs_read_concurrent × ufs_read_chunk_size`（默认 64 MiB）读缓冲，一个 Worker 最多有 `worker_max_concurrent_tasks` 个这样的对象，调大前请考虑 Worker 内存 |
 
 ## `[transfer]`
 
