@@ -152,6 +152,8 @@ The current `ClusterConf` contains these sections:
 
 `[master.compatibility]` is described in the Version Compatibility Policy section below.
 
+Follower metadata reads are off by default. Their settings (`follower_reads_enabled`, `follower_worker_state_enabled`, `follower_read_max_commit_lag` and `follower_read_apply_stall_timeout` in `[master]`, `follower_reports_enabled` and the `follower_report_*` limits in `[worker]`, `follower_reads_enabled` and `follower_write_sticky_ms` in `[client]`) are described in [Follower Metadata Reads](../../../3-User-Manuals/1-Key-Features/04-follower-reads.md).
+
 ## `[mds]`
 
 The MDS is an optional standalone metadata service, started with `curvine-server --service mds`. It is disabled by default.
@@ -187,6 +189,8 @@ The MDS is an optional standalone metadata service, started with `curvine-server
 | `writer_channel_size` | `0` | Journal writer queue size; `0` means unbounded |
 | `writer_flush_batch_size` | `1000` | Journal flush batch size |
 | `writer_flush_batch_ms` | `10` | Journal flush interval |
+| `writer_flush_batch_bytes` | `4194304` (4 MiB) | Byte limit of one journal batch: the sender flushes early once the encoded entries reach it, because `writer_flush_batch_size` counts entries, not bytes. `0` disables the byte limit |
+| `coalesce_add_block` | `true` | Merge consecutive `AddBlock` entries of the same file into one journal record before sending; `false` turns it off |
 | `snapshot_interval` | `6h` | Follower snapshot trigger interval |
 | `snapshot_min_interval` | `10m` | Minimum gap between snapshots; `0` disables the limit |
 | `leader_create_snapshot` | unset | Whether the leader creates snapshots; unset means "only for a single-node group" |

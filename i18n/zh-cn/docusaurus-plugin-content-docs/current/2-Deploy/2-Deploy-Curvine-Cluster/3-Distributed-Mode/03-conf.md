@@ -150,6 +150,8 @@ Curvine 常见的配置输入包括：
 
 `[master.compatibility]` 见下文“版本兼容策略”。
 
+Follower 元数据读取默认关闭。相关配置（`[master]` 的 `follower_reads_enabled`、`follower_worker_state_enabled`、`follower_read_max_commit_lag`、`follower_read_apply_stall_timeout`，`[worker]` 的 `follower_reports_enabled` 及 `follower_report_*` 限制，`[client]` 的 `follower_reads_enabled` 和 `follower_write_sticky_ms`）见 [Follower 元数据读取](../../../3-User-Manuals/1-Key-Features/04-follower-reads.md)。
+
 ## `[mds]`
 
 MDS 是可选的独立元数据服务，通过 `curvine-server --service mds` 启动，默认关闭。
@@ -185,6 +187,8 @@ MDS 是可选的独立元数据服务，通过 `curvine-server --service mds` �
 | `writer_channel_size` | `0` | Journal writer 队列大小；`0` 表示无界 |
 | `writer_flush_batch_size` | `1000` | Journal flush batch 大小 |
 | `writer_flush_batch_ms` | `10` | Journal flush 周期 |
+| `writer_flush_batch_bytes` | `4194304`（4 MiB） | 单个 journal batch 的字节上限：编码后的条目达到该值时提前 flush，因为 `writer_flush_batch_size` 只计条目数、不计字节。`0` 关闭字节上限 |
+| `coalesce_add_block` | `true` | 发送前把同一文件连续的 `AddBlock` 条目合并为一条 journal 记录；`false` 关闭 |
 | `snapshot_interval` | `6h` | Follower 触发 snapshot 的周期 |
 | `snapshot_min_interval` | `10m` | 两次 snapshot 的最小间隔；`0` 关闭限制 |
 | `leader_create_snapshot` | 未设置 | Leader 是否创建 snapshot；未设置表示仅单节点组创建 |
