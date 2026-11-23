@@ -155,7 +155,9 @@ const DOC_ASSET_PREFIX = '/doc-assets';
 /**
  * @param {string} body
  * @param {{ urlBySrcRel: Map<string,string>, assetUrlBySrcRel: Map<string,string>,
- *           selfDirRel: string, label: string }} ctx
+ *           selfDirRel: string, label: string, docUrlPrefix?: string }} ctx
+ *   `docUrlPrefix` is prepended to rewritten doc URLs (`/zh-cn` for the
+ *   Chinese pages, so their links stay in Chinese); asset URLs are shared.
  */
 function rewriteLinks(body, ctx) {
   return body.replace(
@@ -168,7 +170,7 @@ function rewriteLinks(body, ctx) {
       if (href.startsWith('/docs/')) {
         const key = decodeURI(href.replace(/^\/docs\//, '').replace(/\/+$/, ''));
         const mapped = ctx.urlBySrcRel.get(key);
-        if (mapped) return `${bang}[${text}](${mapped}${title})`;
+        if (mapped) return `${bang}[${text}](${ctx.docUrlPrefix ?? ''}${mapped}${title})`;
         return full;
       }
 
@@ -199,7 +201,7 @@ function rewriteLinks(body, ctx) {
           warn(`unresolved doc link "${href}" in ${ctx.label}`);
           return full;
         }
-        return `[${text}](${url}${hash ? `#${hash}` : ''}${title})`;
+        return `[${text}](${ctx.docUrlPrefix ?? ''}${url}${hash ? `#${hash}` : ''}${title})`;
       }
 
       return full; // other relative asset (pdf, json, ...)
@@ -446,7 +448,8 @@ async function main() {
       stats.pages++;
 
       if (zhRaw) {
-        const zh = convert({ raw: zhRaw, ctx, dropH1: true });
+        // Every doc has a /zh-cn route (untranslated pages fall back to English).
+        const zh = convert({ raw: zhRaw, ctx: { ...ctx, docUrlPrefix: `/${LOCALE}` }, dropH1: true });
         await fs.writeFile(outFile.replace(/\.mdx$/, `.${LOCALE}.mdx`), zh.content);
         stats.translated++;
       } else {
