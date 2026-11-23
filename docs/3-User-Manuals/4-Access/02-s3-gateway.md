@@ -45,8 +45,13 @@ The S3 gateway is the frontend for S3 API clients; it converts S3 requests into 
 | `GetObject` | `GET /{bucket}/{key}` |
 | `HeadObject` | `HEAD /{bucket}/{key}` |
 | `DeleteObject` | `DELETE /{bucket}/{key}` |
+| `CopyObject` | `PUT /{bucket}/{key}` with an `x-amz-copy-source` header |
 | `ListObjectsV2` | `GET /{bucket}?list-type=2` |
+| `ListObjects` (V1) | `GET /{bucket}` without `list-type` |
+| `ListObjectVersions` | `GET /{bucket}?versions` |
 | `DeleteObjects` (batch) | `POST /{bucket}?delete` |
+
+`GetObject` and `HeadObject` evaluate `If-Match`, `If-None-Match`, `If-Modified-Since`, and `If-Unmodified-Since`. `PutObject` applies `If-Match` and `If-None-Match` to the destination (`If-None-Match: *` creates the object only if it does not exist). `CopyObject` and `UploadPartCopy` evaluate the `x-amz-copy-source-if-*` headers against the source.
 
 ### Multipart upload
 
@@ -54,10 +59,14 @@ The S3 gateway is the frontend for S3 API clients; it converts S3 requests into 
 | --- | --- |
 | `CreateMultipartUpload` | `POST /{bucket}/{key}?uploads` |
 | `UploadPart` | `PUT /{bucket}/{key}?partNumber={n}&uploadId={id}` |
+| `UploadPartCopy` | `PUT /{bucket}/{key}?partNumber={n}&uploadId={id}` with an `x-amz-copy-source` header |
 | `CompleteMultipartUpload` | `POST /{bucket}/{key}?uploadId={id}` |
+| `AbortMultipartUpload` | `DELETE /{bucket}/{key}?uploadId={id}` |
+| `ListParts` | `GET /{bucket}/{key}?uploadId={id}` |
+| `ListMultipartUploads` | `GET /{bucket}?uploads` |
 
 :::note
-`CopyObject` and `AbortMultipartUpload` are not implemented, and `ListObjectsV2` does not paginate. See [Limitations](#limitations).
+Operations not listed here are not implemented. A request for an S3 sub-resource the gateway does not serve, such as `?tagging`, `?acl`, `?versioning`, `?cors`, `?lifecycle`, `?policy`, or `?object-lock`, gets `501 NotImplemented` after authentication. See [Limitations](#limitations).
 :::
 
 ## Path Mapping
@@ -175,6 +184,10 @@ curl http://localhost:9900/healthz
 | `enable_distributed_auth` | boolean | `false` | Store credentials in Curvine instead of the local filesystem |
 | `credentials_path` | string | See below | Credential store path |
 | `cache_refresh_interval_secs` | integer | `30` | Credential cache refresh interval, in seconds |
+| `access_key` / `secret_key` | string | unset | A fixed credential. When both are set (both must be non-empty), the gateway adds this pair to the local credential store at its default path (`~/.curvine/credentials.jsonl`) and uses that store; `credentials_path` and `enable_distributed_auth` are then not used |
+| `web_port` | integer | `9003` | Port of the gateway's metrics server (`/metrics` and `/healthz`). FUSE also uses `9003` by default, so change one of them when both run on the same host |
+| `signed_chunk_spool_dir` | string | `"/tmp/curvine-signed-spool"` | Directory where signed `aws-chunked` records over 16 MiB are buffered until their signature is verified; use a private directory |
+| `signed_chunk_spool_max_bytes` | integer | `10737418240` (10 GiB) | Spool budget per gateway process; a record that cannot reserve its full size gets `503 SlowDown` |
 
 `worker.enable_s3_gateway` (in the `[worker]` section) selects distributed multipart storage: upload parts are written under `/.s3temp` in Curvine instead of `put_temp_dir`, so any gateway instance can complete an upload. Setting it also switches the binary to the distributed credential store.
 
@@ -215,6 +228,9 @@ credentials_path = "~/.curvine/credentials.jsonl"
 
 # Credential cache refresh interval (seconds)
 cache_refresh_interval_secs = 30
+
+# Metrics server port (/metrics and /healthz); FUSE defaults to 9003 too
+web_port = 9003
 ```
 
 ## Credential Management
@@ -232,8 +248,9 @@ Credentials are stored in JSONL format, one entry per line:
 | `AWS_ACCESS_KEY_ID` or `CURVINE_ACCESS_KEY` | Access key |
 | `AWS_SECRET_ACCESS_KEY` or `CURVINE_SECRET_KEY` | Secret key |
 | `RUST_LOG` | Log level (for example `info`, `debug`, `curvine_s3_gateway::auth=debug`) |
+| `CURVINE_S3_ALLOW_EMPTY_CREDENTIALS` | Set to `1` to start even when no credential is available |
 
-The gateway imports environment credentials only when the configured credential store is empty; the imported pair is written to the local credential store. If neither a stored credential nor an environment pair is available, the gateway starts with an empty store and rejects every request.
+The gateway imports environment credentials only when the configured credential store is empty; the imported pair is written to the local credential store. If neither a stored credential nor an environment pair is available, the gateway refuses to start, because it would answer every request with `403`. With `CURVINE_S3_ALLOW_EMPTY_CREDENTIALS=1` it starts with an empty store and rejects requests until a credential is added.
 
 ### Commands
 
@@ -449,6 +466,8 @@ curl http://localhost:9900/healthz
 # ok
 ```
 
+`/healthz` on the S3 port needs no signature. It answers `503 no credentials configured` while the credential store is empty. The metrics port (`web_port`, default `9003`) also serves `/healthz`, which always answers `ok`.
+
 ## Monitoring and Logging
 
 The gateway logs through `tracing` to stdout. Adjust the level with `RUST_LOG`:
@@ -464,14 +483,13 @@ export RUST_LOG=curvine_s3_gateway::auth=debug
 export RUST_LOG=trace
 ```
 
-Logs cover request handling, authentication failures, multipart operations, and filesystem errors. There is no metrics endpoint yet; use the `/healthz` endpoint for liveness checks.
+Logs cover request handling, authentication failures, multipart operations, and filesystem errors.
+
+Prometheus metrics are served at `http://<gateway-host>:<web_port>/metrics` (`s3_gateway.web_port`, default `9003`). The metrics server runs next to the S3 listener; if its port is taken (for example by a FUSE client on the same host), the gateway logs `Failed to start metrics server` and keeps serving S3 requests without metrics.
 
 ## Limitations
 
-- `CopyObject` is not implemented; clients must download and re-upload.
-- `AbortMultipartUpload` is not implemented; abandoned uploads leave temporary parts behind.
-- `ListObjectsV2` returns a single page: `continuation-token` and `max-keys` are ignored, and `is-truncated` is always `false`.
-- Conditional request headers (`If-Match`, `If-None-Match`) are accepted but not evaluated.
+- Bucket and object sub-resources such as tagging, ACLs, versioning configuration, lifecycle, CORS, policies, and object lock are not supported (`501 NotImplemented`). `ListObjectVersions` lists every object as its single current version (`VersionId` `null`); there is no version history and there are no delete markers.
 - When Curvine trash is enabled, `DeleteObject` and `DeleteBucket` move data into the recycle bin instead of removing it permanently.
 
 ## Troubleshooting

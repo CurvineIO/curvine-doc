@@ -45,8 +45,13 @@ S3 网关是 S3 API 客户端的前端，负责将 S3 请求转换为 Curvine �
 | `GetObject` | `GET /{bucket}/{key}` |
 | `HeadObject` | `HEAD /{bucket}/{key}` |
 | `DeleteObject` | `DELETE /{bucket}/{key}` |
+| `CopyObject` | 带 `x-amz-copy-source` 请求头的 `PUT /{bucket}/{key}` |
 | `ListObjectsV2` | `GET /{bucket}?list-type=2` |
+| `ListObjects`（V1） | 不带 `list-type` 的 `GET /{bucket}` |
+| `ListObjectVersions` | `GET /{bucket}?versions` |
 | `DeleteObjects`（批量） | `POST /{bucket}?delete` |
+
+`GetObject` 和 `HeadObject` 会判断 `If-Match`、`If-None-Match`、`If-Modified-Since` 和 `If-Unmodified-Since`。`PutObject` 将 `If-Match` 和 `If-None-Match` 应用于目标对象（`If-None-Match: *` 表示仅在对象不存在时创建）。`CopyObject` 和 `UploadPartCopy` 针对源对象判断 `x-amz-copy-source-if-*` 请求头。
 
 ### 分片上传
 
@@ -54,10 +59,14 @@ S3 网关是 S3 API 客户端的前端，负责将 S3 请求转换为 Curvine �
 | --- | --- |
 | `CreateMultipartUpload` | `POST /{bucket}/{key}?uploads` |
 | `UploadPart` | `PUT /{bucket}/{key}?partNumber={n}&uploadId={id}` |
+| `UploadPartCopy` | 带 `x-amz-copy-source` 请求头的 `PUT /{bucket}/{key}?partNumber={n}&uploadId={id}` |
 | `CompleteMultipartUpload` | `POST /{bucket}/{key}?uploadId={id}` |
+| `AbortMultipartUpload` | `DELETE /{bucket}/{key}?uploadId={id}` |
+| `ListParts` | `GET /{bucket}/{key}?uploadId={id}` |
+| `ListMultipartUploads` | `GET /{bucket}?uploads` |
 
 :::note
-`CopyObject` 和 `AbortMultipartUpload` 尚未实现，`ListObjectsV2` 也不支持分页。详见 [限制](#限制)。
+未列出的操作均未实现。请求网关不支持的 S3 子资源（例如 `?tagging`、`?acl`、`?versioning`、`?cors`、`?lifecycle`、`?policy`、`?object-lock`）时，在认证通过后返回 `501 NotImplemented`。详见 [限制](#限制)。
 :::
 
 ## 路径映射
@@ -181,6 +190,10 @@ curl http://localhost:9900/healthz
 | `enable_distributed_auth` | boolean | `false` | 将凭据存储在 Curvine 中，而不是本地文件系统 |
 | `credentials_path` | string | 见下文 | 凭据存储路径 |
 | `cache_refresh_interval_secs` | integer | `30` | 凭据缓存刷新间隔（秒） |
+| `access_key` / `secret_key` | string | 未设置 | 固定凭据。两者都设置（且都不能为空）时，网关把这对密钥加入默认路径（`~/.curvine/credentials.jsonl`）的本地凭据存储并使用该存储，此时不使用 `credentials_path` 和 `enable_distributed_auth` |
+| `web_port` | integer | `9003` | 网关指标服务端口（`/metrics` 和 `/healthz`）。FUSE 默认也使用 `9003`，同一主机上同时运行时需修改其中一个 |
+| `signed_chunk_spool_dir` | string | `"/tmp/curvine-signed-spool"` | 超过 16 MiB 的签名 `aws-chunked` 记录在签名验证完成前的缓冲目录；请使用私有目录 |
+| `signed_chunk_spool_max_bytes` | integer | `10737418240`（10 GiB） | 每个网关进程的缓冲预算；无法预留完整大小的记录返回 `503 SlowDown` |
 
 `[worker]` 部分的 `worker.enable_s3_gateway` 用于启用分布式分片存储：分片数据写入 Curvine 的 `/.s3temp`，而不是 `put_temp_dir`，因此任意网关实例都可以完成上传。设置该项也会使二进制切换到分布式凭据存储。
 
@@ -221,6 +234,9 @@ credentials_path = "~/.curvine/credentials.jsonl"
 
 # 凭据缓存刷新间隔（秒）
 cache_refresh_interval_secs = 30
+
+# 指标服务端口（/metrics 和 /healthz）；FUSE 默认也是 9003
+web_port = 9003
 ```
 
 ## 凭据管理
@@ -238,8 +254,9 @@ cache_refresh_interval_secs = 30
 | `AWS_ACCESS_KEY_ID` 或 `CURVINE_ACCESS_KEY` | Access key |
 | `AWS_SECRET_ACCESS_KEY` 或 `CURVINE_SECRET_KEY` | Secret key |
 | `RUST_LOG` | 日志级别（例如 `info`、`debug`、`curvine_s3_gateway::auth=debug`） |
+| `CURVINE_S3_ALLOW_EMPTY_CREDENTIALS` | 设为 `1` 时，即使没有任何凭据也启动 |
 
-仅当配置的凭据存储为空时，网关才会导入环境变量中的凭据；导入的密钥对会写入本地凭据存储。如果既没有已存储的凭据，也没有环境变量凭据，网关将以空存储启动，并拒绝所有请求。
+仅当配置的凭据存储为空时，网关才会导入环境变量中的凭据；导入的密钥对会写入本地凭据存储。如果既没有已存储的凭据，也没有环境变量凭据，网关会拒绝启动，因为它会对所有请求返回 `403`。设置 `CURVINE_S3_ALLOW_EMPTY_CREDENTIALS=1` 后，网关以空存储启动，在添加凭据之前拒绝所有请求。
 
 ### 命令
 
@@ -455,6 +472,8 @@ curl http://localhost:9900/healthz
 # ok
 ```
 
+S3 端口上的 `/healthz` 不需要签名。凭据存储为空时返回 `503 no credentials configured`。指标端口（`web_port`，默认 `9003`）也提供 `/healthz`，始终返回 `ok`。
+
 ## 监控与日志
 
 网关通过 `tracing` 将日志输出到 stdout。可以使用 `RUST_LOG` 调整日志级别：
@@ -470,14 +489,13 @@ export RUST_LOG=curvine_s3_gateway::auth=debug
 export RUST_LOG=trace
 ```
 
-日志覆盖请求处理、认证失败、分片操作和文件系统错误。目前没有 metrics 端点；请使用 `/healthz` 端点进行存活检查。
+日志覆盖请求处理、认证失败、分片操作和文件系统错误。
+
+Prometheus 指标位于 `http://<gateway-host>:<web_port>/metrics`（`s3_gateway.web_port`，默认 `9003`）。指标服务与 S3 监听并行运行；如果端口被占用（例如同一主机上的 FUSE 客户端），网关会记录 `Failed to start metrics server`，并在没有指标的情况下继续处理 S3 请求。
 
 ## 限制
 
-- 未实现 `CopyObject`；客户端需要先下载再重新上传。
-- 未实现 `AbortMultipartUpload`；放弃的上传会遗留临时分片。
-- `ListObjectsV2` 只返回单页：`continuation-token` 和 `max-keys` 会被忽略，`is-truncated` 始终为 `false`。
-- 接受条件请求头（`If-Match`、`If-None-Match`），但不会对其进行判断。
+- 不支持标签、ACL、版本控制配置、生命周期、CORS、策略、对象锁等 bucket 和对象子资源（返回 `501 NotImplemented`）。`ListObjectVersions` 把每个对象作为其唯一的当前版本列出（`VersionId` 为 `null`）；没有版本历史，也没有删除标记。
 - 启用 Curvine 回收站时，`DeleteObject` 和 `DeleteBucket` 会将数据移入回收站，而不是永久删除。
 
 ## 故障排除
