@@ -35,6 +35,19 @@ Skill 会通过 AI 助手本来就会读取的目录自动加载：`.claude/skil
 
 Cursor 会自动发现这些 skill，不需要斜杠命令。如果你不确定某个 skill 具体做什么，打开它的 `SKILL.md` 看看——那份文件就是它的约定。
 
+## 敏感数据检查
+
+这些 skill 发布的任何内容——Issue、PR 标题和正文、Review 评论、回复、提交——都会先经过 `cv-sensitive-review`。下面的工作流会自动运行它，你也可以自己运行它的扫描脚本：
+
+```bash
+SCAN=.agents/skills/cv-sensitive-review/scripts/scan.sh
+bash "$SCAN" /tmp/pr_body.md               # 准备发布的草稿
+bash "$SCAN" --staged                      # 本次提交新增的内容
+bash "$SCAN" --range origin/main...HEAD    # 本次 PR 新增的内容
+```
+
+它会查找凭据和私钥、内部端点、主机名和 IP 地址以及个人信息，只报告文件和行号，从不打印命中的值。退出码 `1` 表示必须先移除该内容才能发布；`3` 表示需要明确做出决定。扫描脚本无法理解文字的含义，所以 skill 还会让你通读草稿，检查集群名称、客户数据和未发布的内容。示例中请使用占位符，例如 `example.com`、`<access-key>`，或 `192.0.2.10` 这样的文档专用地址。
+
 ## 四个常用工作流
 
 ### 1. 用 `cv-create-issue` 创建 Issue
@@ -79,7 +92,7 @@ Skill 会先搜索现有的 Issue，避免重复，然后从 `.github/ISSUE_TEMP
 Skill 会运行 `make format`、检查 diff，然后起草 PR：
 
 - **标题：** `<type>(<module>): <description> (#<issueNumber>)`
-- **正文：** Summary、Issue Describe / Design、Changes、Test verified、Dependencies
+- **正文：** Summary、Issue Describe / Design、Changes、Test verified、Dependencies，以及 Sensitive data review（扫描结论）
 
 请花一点时间认真填写 **Test verified** 表格，写下你实际运行过的测试。CI 全绿是好消息，但它和“我跑了这些用例，结果如下”不是一回事，Reviewer 能看出区别。
 
@@ -115,9 +128,12 @@ Review 是一场讨论，不是打分。如果你不同意某条意见，把理�
 | --- | --- |
 | `cv-codegraph` | 在本地建立符号和调用路径索引，让 AI 助手不用扫全仓库就能回答“这段逻辑在哪里”。一次性安装步骤见该 skill 本身。 |
 | `cv-tasks-breakdown` | 把大型功能拆成有依赖顺序的小任务，每个任务作为一次提交并自带测试，也可以创建子 Issue。 |
-| `cv-csi-test` | 指导在 Kubernetes 上部署和测试 CSI 驱动，包括重启、恢复和卷扩容等场景。 |
+| `cv-sensitive-review` | 即上文介绍的敏感数据检查，也可以单独用来审查任意文本或 diff。 |
+| `cv-csi-test` | 指导在 Kubernetes 上部署和测试 CSI 驱动，包括重启和恢复等场景。 |
 | `cv-run-workflow` | 用正确的分支和参数触发 GitHub Actions，并跟踪运行结果、定位失败。 |
 | `cv-test-report` | 把全链路测试结果整理成标准格式，并发布到测试报告站点。 |
+| `cv-add-blog` | 把一篇文章发布为 Curvine 博客上配对的中英文文章，并配好各自语言的图片。 |
+| `cv-add-adopter` | 在 `ADOPTERS.md` 中新增或更新使用 Curvine 的组织，包括 logo 和使用场景。 |
 | `cv-add-skills` | 说明如何新增或修改 `cv-*` skill，并同步维护 `AGENTS.md` 中的注册表。 |
 
 ## 串起来看一遍

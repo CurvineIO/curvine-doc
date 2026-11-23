@@ -35,6 +35,19 @@ If your agent supports slash commands, call a skill by name:
 
 Cursor discovers the same skills without a slash command. If you are ever unsure what a skill does, open its `SKILL.md` — that file is the contract.
 
+## The sensitive data check
+
+Anything these skills publish — an issue, a PR title and body, a review comment, a reply, a commit — first goes through `cv-sensitive-review`. The workflows below run it for you; you can also run its scanner yourself:
+
+```bash
+SCAN=.agents/skills/cv-sensitive-review/scripts/scan.sh
+bash "$SCAN" /tmp/pr_body.md               # a draft you are about to post
+bash "$SCAN" --staged                      # what your commit adds
+bash "$SCAN" --range origin/main...HEAD    # what your PR adds
+```
+
+It looks for credentials and private keys, internal endpoints, hostnames and IP addresses, and personal data, and reports only the file and line, never the value. Exit code `1` blocks publication until the finding is removed; `3` needs an explicit decision. A scanner cannot judge prose, so the skill also has you read the draft for cluster names, customer data and unreleased material. In examples, use placeholders such as `example.com`, `<access-key>` or a documentation address like `192.0.2.10`.
+
 ## The four everyday workflows
 
 ### 1. Create an issue with `cv-create-issue`
@@ -79,7 +92,7 @@ When your commits are ready:
 The skill runs `make format`, reviews the diff, and drafts the PR:
 
 - **Title:** `<type>(<module>): <description> (#<issueNumber>)`
-- **Body:** Summary, Issue Describe / Design, Changes, Test verified, and Dependencies
+- **Body:** Summary, Issue Describe / Design, Changes, Test verified, Dependencies, and Sensitive data review (the scanner's verdict)
 
 Give the **Test verified** table a minute of your attention. Write down the tests you actually ran. A green CI run is good news, but it is not the same as "I ran these cases and here is what I saw." Reviewers can tell the difference.
 
@@ -115,9 +128,12 @@ The four workflows above are the main road. These skills are the side streets th
 | --- | --- |
 | `cv-codegraph` | Builds a local map of symbols and call paths so the agent can answer "where does this happen?" without scanning the whole repository. One-time setup is described in the skill. |
 | `cv-tasks-breakdown` | Turns a large feature into dependency-ordered tasks, each landing as one commit with its own tests, and optionally files sub-issues. |
-| `cv-csi-test` | Walks through deploying and testing the CSI driver on Kubernetes, including restart, recovery, and volume expansion scenarios. |
+| `cv-sensitive-review` | The sensitive data check described above, also usable on its own to review any text or diff. |
+| `cv-csi-test` | Walks through deploying and testing the CSI driver on Kubernetes, including restart and recovery scenarios. |
 | `cv-run-workflow` | Dispatches a GitHub Actions workflow with the right branch and inputs, then watches the run and surfaces failures. |
 | `cv-test-report` | Turns a full-chain test run into the standard report format and publishes it to the test reports site. |
+| `cv-add-blog` | Publishes an article as a paired English and Chinese post on the Curvine blog, with localized images. |
+| `cv-add-adopter` | Adds or updates an organization in `ADOPTERS.md`, with its logo and use case. |
 | `cv-add-skills` | Explains how to write or update a `cv-*` skill and keep the registry in `AGENTS.md` in sync. |
 
 ## Putting it together
