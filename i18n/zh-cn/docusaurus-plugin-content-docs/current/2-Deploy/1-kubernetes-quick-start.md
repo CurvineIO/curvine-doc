@@ -202,7 +202,7 @@ metadata:
 provisioner: curvine
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
-allowVolumeExpansion: true
+allowVolumeExpansion: false   # 暂不支持卷扩容
 parameters:
   master-addrs: "curvine-master.curvine.svc.cluster.local:8995"
   fs-path: "/k8s-volumes"

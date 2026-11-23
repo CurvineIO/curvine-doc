@@ -62,7 +62,7 @@ metadata:
 provisioner: curvine
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
-allowVolumeExpansion: true
+allowVolumeExpansion: false   # 暂不支持卷扩容
 parameters:
   master-addrs: "curvine-master.curvine.svc.cluster.local:8995"
   fs-path: "/k8s-volumes"
@@ -92,7 +92,7 @@ spec:
 
 ```bash
 kubectl apply -f pvc.yaml
-kubectl wait --for=condition=Bound pvc/app-data -n curvine --timeout=120s
+kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/app-data -n curvine --timeout=120s
 ```
 
 ### 3. Pod
@@ -167,7 +167,7 @@ spec:
 
 ```bash
 kubectl apply -f pv-pvc.yaml
-kubectl wait --for=condition=Bound pvc/app-data -n curvine --timeout=120s
+kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/app-data -n curvine --timeout=120s
 ```
 
 ### 3. Pod
