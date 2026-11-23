@@ -31,7 +31,7 @@ export CURVINE_MASTER_HOSTNAME=localhost
 
 - `curvine-master`
 - `curvine-worker`
-- `curvine-transfer`（仅当 `[transfer].enabled = true`）
+- `curvine-transfer`（仅当 `[transfer]` 配置了 `endpoints` 或 `mode = "standalone"`；默认 Transfer 运行在 Master 内）
 - `curvine-fuse`
 
 这里的 Web UI 不是独立进程；静态页面资源打包在 `webui/` 中，通过服务自身的 Web 端口提供访问。

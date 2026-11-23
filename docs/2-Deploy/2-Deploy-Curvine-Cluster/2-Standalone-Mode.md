@@ -21,7 +21,7 @@ cd build/dist
 2. Kill any previous Curvine processes.
 3. Start `curvine-master`.
 4. Start `curvine-worker`.
-5. Start `curvine-transfer` when `[transfer].enabled = true`.
+5. Start `curvine-transfer` when `[transfer]` sets `endpoints` or `mode = "standalone"`. By default Transfer runs inside the Master and no separate process is started.
 6. Start `curvine-fuse`.
 
 It does not start a separate `webui` process. Web pages are served on the service web ports using the bundled `webui/` assets.

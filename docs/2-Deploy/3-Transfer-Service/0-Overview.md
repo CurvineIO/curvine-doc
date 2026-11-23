@@ -4,14 +4,9 @@ sidebar_position: 0
 
 # Transfer Service
 
-Transfer is an independent service for Load and Export jobs. It persists job
-state, plans work from mount and Worker information, dispatches tasks to
-Workers, and receives task reports. It does not host a replica of the full
-Curvine metadata tree.
-
-Deploy Transfer after the Master and Workers are healthy. It is optional: a
-cluster that does not enable Transfer continues to use the legacy Master Load
-and Export path.
+Transfer runs every Load and Export job. It keeps job state, plans work from
+mount and Worker information, dispatches tasks to Workers, and receives task
+reports. It does not host a replica of the full Curvine metadata tree.
 
 ```mermaid
 flowchart LR
@@ -21,20 +16,32 @@ flowchart LR
     W -->|progress and terminal report| T
 ```
 
-## Configuration Boundary
+## Embedded and Standalone Modes
 
-The service and the client use different Transfer settings. Do not change the
-running Master or Worker configuration merely to deploy Transfer.
+The `[transfer]` section chooses where the service runs:
+
+| Mode | Selected by | Where it runs | Job store |
+| --- | --- | --- | --- |
+| Embedded (default) | No `endpoints` | Inside the leader Master, on the Master's RPC port; it logs to the Master log | The Master's memory |
+| Standalone | `endpoints` set (optionally with `mode = "standalone"`) | One or more separate `curvine-transfer` processes | SQLite for one instance, or a shared MySQL or PostgreSQL database |
+
+A cluster needs no Transfer deployment and no `[transfer]` settings: with the
+default configuration, `cv load`, `cv export`, and `cv transfer` reach the
+embedded service through the `[client]` Master addresses. Deploy a standalone
+service when job state must be kept in a database, or when transfer planning
+should run outside the Master.
+
+## Configuration for a Standalone Service
 
 | Component | Required change | Notes |
 | --- | --- | --- |
-| Transfer service | Set `transfer.enabled = true`, a persistent `store_url`, and a reachable endpoint. | The service configuration must also contain the existing cluster's Master addresses. |
-| CLI or SDK client | Set `transfer.enabled = true` and a reachable endpoint (`endpoints`, or `hostname` plus `rpc_port`). | `cv load`, `cv export`, and compatible status/cancel commands then use Transfer automatically. |
-| Master | None. | The Master does not need a configuration change; clients that disable Transfer keep using the legacy Load and Export RPCs. |
-| Worker | None. | Workers need a version that supports Transfer tasks. Report endpoints are included in each task. |
+| Transfer service | `endpoints`, a persistent `store_url`, and the cluster's `[client]` Master addresses. | `endpoints` is the address clients use; it can differ from `hostname`, for example behind a load balancer. |
+| Master | The same `endpoints`. | The Master then runs no embedded transfer, and its own submissions (such as fs-mode write-back) go to the service. Without them it keeps running the embedded service. |
+| CLI, SDK, and FUSE clients | The same `endpoints`. | A client without them sends its requests to the Master, which rejects them once it is configured for a standalone service ("transfer RPC is not served by this master"). |
+| Worker | None. | Report endpoints are included in each task. |
 
-The client configuration contains no database URL. The store belongs only to
-the Transfer service.
+Clients never need a database URL. The store belongs only to the Transfer
+service.
 
 ## Choose a State Store
 
@@ -46,15 +53,17 @@ the Transfer service.
 Never point multiple Transfer instances at independent SQLite files. They would
 hold different job state and cannot fail over correctly.
 
+The embedded service always uses the in-memory store and rejects any other
+`store_url` at startup, so a configuration without `endpoints` must not set
+`store_url`.
+
 ## Required Configuration
 
 The Transfer server needs a complete cluster configuration, including
-`[client]` Master addresses. Add this section only to the Transfer server's
-configuration file:
+`[client]` Master addresses, and this section:
 
 ```toml
 [transfer]
-enabled = true
 store_url = "sqlite:///var/lib/curvine-transfer/transfer.db"
 hostname = "transfer-1.example.com"
 endpoints = ["transfer-1.example.com:9010"]
@@ -63,19 +72,16 @@ endpoints = ["transfer-1.example.com:9010"]
 For a MySQL-backed service, replace `store_url` with a shared MySQL URL. Do not
 put credentials in a client configuration file or a ConfigMap.
 
-Clients need only the routing settings:
+The Master and the clients need only the address:
 
 ```toml
 [transfer]
-enabled = true
-hostname = "transfer-1.example.com"
-rpc_port = 9010
+endpoints = ["transfer-1.example.com:9010"]
 ```
 
-If `endpoints` is omitted, Curvine derives one endpoint from
-`hostname:rpc_port`. Prefer this form in Kubernetes, where the chart writes the
-Service FQDN to `hostname`. Set `endpoints` explicitly only when clients reach
-the service through a different address, such as a load balancer.
+Curvine no longer derives an endpoint from `hostname:rpc_port`: without
+`endpoints` a process uses embedded mode, and `mode = "standalone"` without
+`endpoints` fails validation.
 
 ## Deploy and Verify
 
@@ -83,13 +89,16 @@ the service through a different address, such as a load balancer.
 - [Deploy on Kubernetes](./2-Kubernetes.md)
 - [Transfer configuration reference](../2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md#transfer)
 
-After deployment, run `cv transfer list` from a client configured for Transfer.
-Submit a small mounted UFS file with `cv load <path> --watch`, then verify that
-the job reaches `Completed` and the target can be read with `cv fs --cache-only get`.
+After deployment, run `cv transfer list` from a client with the same
+`endpoints`. Submit a small mounted UFS file with `cv load <path> --watch`,
+then verify that the job reaches `Completed` and the target can be read with
+`cv fs --cache-only get`.
 
-## Rollout and Rollback
+## Switching Modes
 
-Enable Transfer in clients gradually. A client with `transfer.enabled = false`
-continues to use the legacy Master job API, so deploying the service alone does
-not change existing workloads. To roll back a client, disable Transfer in that
-client configuration; do not delete a Transfer store while jobs are active.
+To move a cluster between embedded and standalone mode, change `[transfer]` in
+the Master, Transfer, and client configurations together and restart those
+processes. Job records are not copied between the in-memory store and a
+standalone store, so wait for running jobs to finish first
+(`cv transfer list --state running`). Do not delete a Transfer store while jobs
+are active.

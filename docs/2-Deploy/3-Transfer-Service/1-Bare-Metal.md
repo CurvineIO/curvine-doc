@@ -4,9 +4,10 @@ sidebar_position: 1
 
 # Deploy Transfer on Bare Metal
 
-This guide deploys one independent Transfer process next to an existing
-Curvine cluster. Master and Worker processes must already be running and must
-come from a version that supports Transfer tasks.
+This guide deploys one standalone Transfer process next to an existing Curvine
+cluster. Without it, Transfer runs inside the Master (see
+[Transfer Service](./0-Overview.md)). Master and Worker processes must already
+be running.
 
 ## Prepare the Service Configuration
 
@@ -17,16 +18,19 @@ new section required for a single-instance SQLite deployment.
 ```toml
 # conf/curvine-transfer.toml
 [transfer]
-enabled = true
 store_url = "sqlite:///var/lib/curvine-transfer/transfer.db"
 hostname = "transfer-1.example.com"
 rpc_port = 9010
 web_port = 9011
+endpoints = ["transfer-1.example.com:9010"]
 ```
 
-With an empty `endpoints` list, Curvine advertises `hostname:rpc_port`. Set
-`endpoints` explicitly only when clients must use a different address, for
-example behind a load balancer.
+`endpoints` selects standalone mode and is the address that clients use; it
+can point to a load balancer instead of `hostname`. Add the same `endpoints`
+to the `[transfer]` section of the Master and client configurations and
+restart the Masters. Without it, the Master keeps its embedded Transfer
+service, and jobs submitted through the Master, including its own fs-mode
+write-back, run there instead of in this service.
 
 Create the store directory with the same operating-system user that runs the
 service. The SQLite database must live on persistent local or block storage.

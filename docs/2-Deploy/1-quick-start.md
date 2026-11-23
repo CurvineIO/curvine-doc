@@ -31,7 +31,7 @@ export CURVINE_MASTER_HOSTNAME=localhost
 
 - `curvine-master`
 - `curvine-worker`
-- `curvine-transfer` (only when `[transfer].enabled = true`)
+- `curvine-transfer` (only when `[transfer]` sets `endpoints` or `mode = "standalone"`; by default Transfer runs inside the Master)
 - `curvine-fuse`
 
 The Web UI is not started as a separate process. Static UI assets are bundled in `webui/` and served on the service web ports.

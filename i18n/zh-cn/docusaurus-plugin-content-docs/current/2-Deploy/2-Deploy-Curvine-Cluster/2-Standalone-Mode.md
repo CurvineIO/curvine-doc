@@ -21,7 +21,7 @@ cd build/dist
 2. 杀掉旧的 Curvine 进程
 3. 启动 `curvine-master`
 4. 启动 `curvine-worker`
-5. 当 `[transfer].enabled = true` 时启动 `curvine-transfer`
+5. 当 `[transfer]` 配置了 `endpoints` 或 `mode = "standalone"` 时启动 `curvine-transfer`；默认 Transfer 运行在 Master 内，不会启动单独的进程
 6. 启动 `curvine-fuse`
 
 它不会额外启动独立的 `webui` 进程；Web 页面通过服务自身的 Web 端口和打包在 `webui/` 下的静态资源提供。
