@@ -269,7 +269,7 @@ cv mount s3://bucket/datasets /bucket/datasets \
   --config s3.region_name=cn \
   --config s3.credentials.access=access_key \
   --config s3.credentials.secret=secret_key \
-  --config s3.path_style=true \
+  --config s3.force.path.style=true \
   --provider opendal
 
 # 通过 JindoSDK / OSS-HDFS 创建 OSS 挂载
@@ -282,7 +282,7 @@ cv mount oss://my-bucket/prefix /oss-data --provider oss-hdfs \
 cv mount resync /bucket/datasets --dry-run --verbose
 ```
 
-各 UFS 类型（S3、OSS、HDFS、WebHDFS）的常见参数列表见文末 [附录：UFS 挂载参数](#附录ufs-挂载参数)。
+各 UFS 类型（S3、OSS、HDFS、WebHDFS、COSN）的常见参数列表见文末 [附录：UFS 挂载参数](#附录ufs-挂载参数)。
 
 :::warning
 默认开启 `--check-path-consist=true`。因此像 `s3://bucket/datasets` 这样的 UFS 路径，通常需要挂载到 `/bucket/datasets`。如果确实需要不一致映射，请显式传 `--check-path-consist=false`。
@@ -622,7 +622,7 @@ stat /curvine-fuse/data.txt
 | `s3.credentials.access` | 必填 | Access Key ID。 |
 | `s3.credentials.secret` | 必填 | Secret Access Key。 |
 | `s3.region_name` | 可选 | 区域名。 |
-| `s3.path_style` | 可选 | 是否使用路径风格访问，常见于 MinIO 兼容端点。 |
+| `s3.force.path.style` | 可选 | 寻址方式，默认 `true`（路径风格，`http://endpoint/bucket/key`），AWS S3、MinIO 和大多数 S3 兼容服务都支持。只支持虚拟主机风格（`http://bucket.endpoint/key`）的服务需设为 `false`。 |
 
 ### OSS（`oss://`）
 
@@ -641,7 +641,7 @@ stat /curvine-fuse/data.txt
 |------|-----------|------|
 | `hdfs.namenode` | 可选 | NameNode 地址；不填时从挂载 URI 的 authority 推导。 |
 | `hdfs.root` | 可选 | 根路径；不填时从挂载 URI 的 path 推导。 |
-| `hdfs.user` | 可选 | HDFS 用户名。 |
+| `hdfs.user` | 可选 | HDFS 用户名；未设置时使用环境变量 `HADOOP_USER_NAME` 或 `USER`。 |
 | `hdfs.atomic_write_dir` | 可选 | 是否启用原子写目录。 |
 | `hdfs.kerberos.ccache` | 可选 | Kerberos ticket cache 路径；也可由 `KRB5CCNAME` 提供。 |
 | `hdfs.kerberos.krb5_conf` | 可选 | `krb5.conf` 文件路径。 |
@@ -652,5 +652,29 @@ stat /curvine-fuse/data.txt
 | 参数 | 必填/可选 | 描述 |
 |------|-----------|------|
 | `webhdfs.endpoint` | 可选 | WebHDFS HTTP 服务地址；不填时从 URI 的 authority 推导。 |
-| `webhdfs.root` | 可选 | 根路径。 |
-| `webhdfs.delegation` | 可选 | delegation token。 |
+| `webhdfs.root` | 可选 | 根路径，默认 `/`。 |
+
+WebHDFS 客户端只读取这两个参数，不支持 delegation token 配置。
+
+### COSN（`cosn://`）
+
+通过 Hadoop COSN 连接器（`hadoop-cos`）和 libhdfs 访问腾讯云 COS，使用 `--provider cosn` 选择。需要使用 `--ufs cosn` 构建 Curvine（`make build ARGS='--ufs cosn'`），运行时需要 `libhdfs.so`（Hadoop 3.1 C API）、Hadoop classpath 中的 `hadoop-cos` jar 以及 JVM。URI 中的 bucket 为 `<bucket>-<appid>`。
+
+| 参数 | 必填/可选 | 说明 |
+|------|-----------|------|
+| `cosn.secretId` | 必填 | SecretId（`fs.cosn.userinfo.secretId`）。 |
+| `cosn.secretKey` | 必填 | SecretKey（`fs.cosn.userinfo.secretKey`）。 |
+| `cosn.region` | 必填 | Bucket 所在地域，例如 `ap-guangzhou`（`fs.cosn.bucket.region`）。 |
+| `cosn.endpoint_suffix` | 可选 | Endpoint 后缀（`fs.cosn.bucket.endpoint_suffix`）。 |
+| `cosn.appid` | 可选 | APPID（`fs.cosn.userinfo.appid`），Java 侧用它解析短 bucket 名。 |
+| `cosn.user` | 可选 | Hadoop 用户名。 |
+
+也可以直接传 Hadoop 参数（`fs.cosn.*`）代替上面的简写。每个挂载使用独立的 libhdfs 实例，因此不同挂载可以使用不同账号。不支持追加写（append）。
+
+```bash
+cv mount cosn://mybucket-1250000000/ /mnt/cosn \
+  -c cosn.secretId=AKIDxxx \
+  -c cosn.secretKey=yyy \
+  -c cosn.region=ap-guangzhou \
+  --provider cosn
+```

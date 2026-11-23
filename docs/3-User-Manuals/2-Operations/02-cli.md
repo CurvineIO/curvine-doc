@@ -274,7 +274,7 @@ cv mount s3://bucket/datasets /bucket/datasets \
   --config s3.region_name=cn \
   --config s3.credentials.access=access_key \
   --config s3.credentials.secret=secret_key \
-  --config s3.path_style=true \
+  --config s3.force.path.style=true \
   --provider opendal
 
 # Create an OSS mount through JindoSDK / OSS-HDFS
@@ -287,7 +287,7 @@ cv mount oss://my-bucket/prefix /oss-data --provider oss-hdfs \
 cv mount resync /bucket/datasets --dry-run --verbose
 ```
 
-For detailed parameter lists of each UFS type (S3, OSS, HDFS, WebHDFS), see [Appendix: UFS Mount Parameters](#appendix-ufs-mount-parameters) at the end.
+For detailed parameter lists of each UFS type (S3, OSS, HDFS, WebHDFS, COSN), see [Appendix: UFS Mount Parameters](#appendix-ufs-mount-parameters) at the end.
 
 :::warning
 `--check-path-consist=true` is enabled by default. That means a path such as `s3://bucket/datasets` is normally expected to mount to `/bucket/datasets`. If you really need a different mapping, pass `--check-path-consist=false` explicitly.
@@ -649,7 +649,7 @@ Used with `--provider opendal` or auto-selection.
 | `s3.credentials.access` | Required | Access Key ID. |
 | `s3.credentials.secret` | Required | Secret Access Key. |
 | `s3.region_name` | Optional | Region name. |
-| `s3.path_style` | Optional | Whether to use path-style access, commonly needed for MinIO-compatible endpoints. |
+| `s3.force.path.style` | Optional | Addressing style, default `true` (path style, `http://endpoint/bucket/key`), which AWS S3, MinIO and most S3-compatible services accept. Set `false` for services that only accept virtual-host style (`http://bucket.endpoint/key`). |
 
 ### OSS (`oss://`)
 
@@ -668,7 +668,7 @@ For Alibaba Cloud OSS / OSS-HDFS style access.
 |-----------|-------------------|-------------|
 | `hdfs.namenode` | Optional | NameNode address; if omitted, inferred from the mount URI authority. |
 | `hdfs.root` | Optional | Root path; if omitted, inferred from the mount URI path. |
-| `hdfs.user` | Optional | HDFS username. |
+| `hdfs.user` | Optional | HDFS username; if omitted, `HADOOP_USER_NAME` or `USER` from the environment. |
 | `hdfs.atomic_write_dir` | Optional | Enable atomic write directory behavior. |
 | `hdfs.kerberos.ccache` | Optional | Kerberos credential cache path; can also come from `KRB5CCNAME`. |
 | `hdfs.kerberos.krb5_conf` | Optional | `krb5.conf` path. |
@@ -679,5 +679,29 @@ For Alibaba Cloud OSS / OSS-HDFS style access.
 | Parameter | Required/Optional | Description |
 |-----------|-------------------|-------------|
 | `webhdfs.endpoint` | Optional | WebHDFS HTTP endpoint; if omitted, inferred from the URI authority. |
-| `webhdfs.root` | Optional | Root path. |
-| `webhdfs.delegation` | Optional | Delegation token. |
+| `webhdfs.root` | Optional | Root path, default `/`. |
+
+The WebHDFS client reads only these two keys; it has no delegation-token setting.
+
+### COSN (`cosn://`)
+
+Tencent COS through the Hadoop COSN connector (`hadoop-cos`) and libhdfs, selected with `--provider cosn`. It needs a Curvine build with `--ufs cosn` (`make build ARGS='--ufs cosn'`), and at runtime `libhdfs.so` (Hadoop 3.1 C API), the `hadoop-cos` jar on the Hadoop classpath, and a JVM. The bucket in the URI is `<bucket>-<appid>`.
+
+| Parameter | Required/Optional | Description |
+|-----------|-------------------|-------------|
+| `cosn.secretId` | Required | SecretId (`fs.cosn.userinfo.secretId`). |
+| `cosn.secretKey` | Required | SecretKey (`fs.cosn.userinfo.secretKey`). |
+| `cosn.region` | Required | Bucket region, for example `ap-guangzhou` (`fs.cosn.bucket.region`). |
+| `cosn.endpoint_suffix` | Optional | Endpoint suffix (`fs.cosn.bucket.endpoint_suffix`). |
+| `cosn.appid` | Optional | APPID (`fs.cosn.userinfo.appid`), used on the Java side to resolve short bucket names. |
+| `cosn.user` | Optional | Hadoop user name. |
+
+Hadoop keys (`fs.cosn.*`) can be passed instead of the short forms. Each mount gets its own libhdfs instance, so mounts can use different accounts. Append is not supported.
+
+```bash
+cv mount cosn://mybucket-1250000000/ /mnt/cosn \
+  -c cosn.secretId=AKIDxxx \
+  -c cosn.secretKey=yyy \
+  -c cosn.region=ap-guangzhou \
+  --provider cosn
+```
