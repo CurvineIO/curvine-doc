@@ -66,8 +66,8 @@ For Spark, set the same keys with the `spark.hadoop.` prefix, e.g.
 ### Java API
 
 `io.curvine.CurvineFileSystem` also works directly (open/create/append/stat/…),
-and `CurvineLoadClient` / `CurvineTransferClient` / `CurvineMountClient` cover
-load, transfer, and mount operations from JVM code without shelling out.
+and `CurvineTransferClient` / `CurvineMountClient` cover load, export, and
+mount operations from JVM code without shelling out.
 
 Compatible with Hadoop, Spark, Flink, and other JVM-based frameworks that support custom FileSystem implementations.
 

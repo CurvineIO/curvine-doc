@@ -60,8 +60,8 @@ Spark 中使用时加上 `spark.hadoop.` 前缀，例如
 ### Java API
 
 `io.curvine.CurvineFileSystem` 也可以直接使用（open/create/append/stat 等）；
-`CurvineLoadClient`、`CurvineTransferClient`、`CurvineMountClient` 可在 JVM 代码中直接完成
-load、transfer、mount 操作，无需调用 shell。
+`CurvineTransferClient`、`CurvineMountClient` 可在 JVM 代码中直接完成
+load、export、mount 操作，无需调用 shell。
 
 兼容 Hadoop、Spark、Flink 等支持自定义 FileSystem 的 JVM 框架。
 
