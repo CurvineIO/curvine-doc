@@ -340,7 +340,7 @@ The command line is the same for both Transfer deployment modes:
 | `[transfer] endpoints` empty (default) | The Transfer service inside the Master, reached through the `[client]` Master addresses. |
 | `[transfer] endpoints` set | The standalone Transfer service at those addresses. |
 
-See [`[transfer]`](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md#transfer) for the two modes.
+See the [transfer settings](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md#transfer) for the two modes.
 
 ---
 

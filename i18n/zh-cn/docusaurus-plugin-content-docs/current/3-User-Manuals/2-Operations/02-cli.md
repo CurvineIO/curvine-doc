@@ -335,7 +335,7 @@ cv load s3://bucket/datasets/train/part-0001.parquet /datasets/train/part-0001.p
 | `[transfer] endpoints` 为空（默认） | 运行在 Master 内的 Transfer 服务，通过 `[client]` 中的 Master 地址访问。 |
 | 配置了 `[transfer] endpoints` | 位于这些地址的独立 Transfer 服务。 |
 
-两种模式的说明见 [`[transfer]`](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md#transfer)。
+两种模式的说明见 [transfer 配置](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md#transfer)。
 
 ---
 
