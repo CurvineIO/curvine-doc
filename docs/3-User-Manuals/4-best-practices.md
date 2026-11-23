@@ -116,7 +116,7 @@ bin/cv mount \
   s3://bucket/analytics /analytics \
   --write-type cache_mode \
   --ttl-ms 7d \
-  --read-verify-ufs false \
+  --read-verify-ufs=false \
   -s ssd \
   -c s3.endpoint_url=https://s3.example.com \
   -c s3.credentials.access=YOUR_KEY \
@@ -124,7 +124,7 @@ bin/cv mount \
   -c s3.region_name=us-east-1
 ```
 
-- Enable `--read-verify-ufs true` **only** when UFS data changes frequently and staleness is unacceptable. It adds one extra UFS HEAD request per read.
+- Enable `--read-verify-ufs` **only** when UFS data changes frequently and staleness is unacceptable. It adds one extra UFS HEAD request per read.
 - Use `bin/cv fs free -r /path` to release cache space safely without deleting UFS data.
 - **Warning**: `delete` in cache_mode deletes UFS data. Use `free` for cache-only cleanup.
 
@@ -293,7 +293,7 @@ bin/cv load s3://bucket/datasets/imagenet
 bin/cv load-status <job-id>
 ```
 
-- Automatic caching is enabled per-mount when TTL > 0. First reads trigger background load jobs.
+- Automatic caching is on for new mounts (`--auto-cache true`) whatever the TTL: first reads trigger background load jobs. Turn it off per mount with `--auto-cache false`.
 - Combine proactive + automatic caching for best hit ratio.
 
 ---
@@ -326,7 +326,7 @@ bin/cv mount \
   --write-type cache_mode \
   --storage-type mem \
   --ttl-ms 0 \
-  --read-verify-ufs true
+  --read-verify-ufs
 ```
 
 - Use `--ttl-ms 0` (no expiration) for model files that must always be available.

@@ -225,6 +225,7 @@ The current implementation uses `mount` for three related workflows:
 - `cv mount --check`: list mount points and validate UFS reachability
 - `cv mount <UFS_PATH> <CV_PATH> [OPTIONS]`: create or update a mount
 - `cv mount resync <CV_PATH> [OPTIONS]`: run metadata resync for an `fs_mode` mount
+- `cv mount --info <CV_PATH>`: show the full effective configuration of the mount that contains `CV_PATH`, including every `--config` property stored on the Master
 
 Common options:
 
@@ -233,16 +234,23 @@ Common options:
 | `--config <key=value>` | UFS configuration entry. Can be repeated. |
 | `--update` | Update an existing mount configuration. |
 | `--check-path-consist <true\|false>` | Whether to enforce path consistency between `UFS_PATH` and `CV_PATH`. Default `true`. |
-| `--read-verify-ufs` | Validate cached reads against UFS using `mtime` / `len`. |
-| `--ttl-ms <DURATION>` | TTL, default `7d`. Supports durations such as `1h` and `7d`. |
+| `--read-verify-ufs` | Validate cached reads against UFS using `mtime` / `len`. The bare flag means `true`; turn it off with `--read-verify-ufs=false` (the `=` is required). Default `false` for new mounts. |
+| `--ttl-ms <DURATION>` | Lifetime of cached data, default `7d` for new mounts. Supports durations such as `1h` and `7d`. `0` means cached data never expires. Independent of `--auto-cache`. |
+| `--auto-cache <true\|false>` | Submit a background load job when a read misses the cache or finds it invalid. Default `true` for new mounts. Independent of `--ttl-ms`. |
+| `--access-mode <read_only\|read_write>` | Access mode of a `cache_mode` mount. Default `read_only` for new mounts. |
+| `--write-cache <true\|false>` | For a `cache_mode` mount with `read_write` access, also write sequential create and overwrite data to Curvine. Default `false` for new mounts. |
 | `--replicas <N>` | Override replica count. |
 | `--block-size <SIZE>` | Override block size, for example `128MB`. |
 | `-s, --storage-type <TYPE>` | Override storage type. |
 | `--write-type <cache_mode\|fs_mode>` | The current source only distinguishes these two modes. Default `fs_mode`. |
-| `--provider <auto\|oss-hdfs\|opendal>` | Select the UFS provider implementation. |
+| `--provider <auto\|oss-hdfs\|opendal\|cosn>` | Select the UFS provider implementation. |
+| `--skip-ufs-probe` | Skip the UFS reachability check that runs before mounting. Use it when the mount's credentials exist only on the cluster side, such as an S3 `role` or `auto` credential source; UFS access errors then appear on the first data access instead of at mount time. |
+| `--info <CV_PATH>` | Show the configuration of the mount that contains `CV_PATH` (see above). Cannot be combined with the mount paths or `--update`. |
 | `--check` | Only meaningful when listing mounts; also validates each entry. |
 | `--dry-run` | During `resync`, scan and print differences without delete / create changes. |
 | `--verbose` | During `resync`, print detailed per-file logs. |
+
+With `--update`, an omitted `--ttl-ms`, `--auto-cache`, `--access-mode`, `--write-cache` or `--read-verify-ufs` keeps the mount's stored value; the defaults above apply to new mounts.
 
 **About `--provider`**: some URI schemes can map to multiple implementations. For example, `oss://...` may be handled either by OSS-HDFS / JindoSDK or by OpenDAL, so `--provider` lets you force the implementation.
 
@@ -251,6 +259,7 @@ Common options:
 | `auto` | Auto-select implementation based on the URI scheme. | All supported schemes |
 | `oss-hdfs` | Use JindoSDK / OSS-HDFS path handling. | `oss://` |
 | `opendal` | Use OpenDAL-based backends. | `s3://`, `oss://`, `hdfs://`, `webhdfs://`, `cos://`, `gcs://`, `azblob://`, etc. |
+| `cosn` | Tencent COS through the Hadoop COSN connector and libhdfs. Needs a build with `--ufs cosn`. | `cosn://` |
 
 There are also a few implementation details worth calling out:
 

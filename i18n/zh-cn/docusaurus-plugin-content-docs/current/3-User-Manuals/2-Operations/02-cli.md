@@ -220,6 +220,7 @@ cv fs free /data --recursive
 - `cv mount --check`：列出挂载点并逐个校验 UFS 可达性
 - `cv mount <UFS_PATH> <CV_PATH> [OPTIONS]`：创建或更新挂载
 - `cv mount resync <CV_PATH> [OPTIONS]`：对 `fs_mode` 挂载执行元数据重同步
+- `cv mount --info <CV_PATH>`：显示包含 `CV_PATH` 的挂载点的完整生效配置，包括 Master 上保存的每个 `--config` 属性
 
 常用选项如下：
 
@@ -228,16 +229,23 @@ cv fs free /data --recursive
 | `--config <key=value>` | UFS 配置项，可重复传入多个键值对。 |
 | `--update` | 更新已存在的挂载配置。 |
 | `--check-path-consist <true\|false>` | 是否检查 `UFS_PATH` 与 `CV_PATH` 的路径一致性，默认 `true`。 |
-| `--read-verify-ufs` | 读缓存时按 `mtime` / `len` 校验 UFS。 |
-| `--ttl-ms <DURATION>` | TTL，默认 `7d`。支持 `1h`、`7d` 之类的时长格式。 |
+| `--read-verify-ufs` | 读缓存时按 `mtime` / `len` 校验 UFS。单独写该参数即为 `true`；关闭时使用 `--read-verify-ufs=false`（必须带 `=`）。新挂载默认 `false`。 |
+| `--ttl-ms <DURATION>` | 缓存数据的生存时间，新挂载默认 `7d`。支持 `1h`、`7d` 之类的时长格式。`0` 表示缓存数据永不过期。与 `--auto-cache` 无关。 |
+| `--auto-cache <true\|false>` | 读取未命中缓存或缓存失效时，提交后台加载任务。新挂载默认 `true`。与 `--ttl-ms` 无关。 |
+| `--access-mode <read_only\|read_write>` | `cache_mode` 挂载的访问模式。新挂载默认 `read_only`。 |
+| `--write-cache <true\|false>` | 对 `read_write` 访问的 `cache_mode` 挂载，顺序创建和覆盖写的数据同时写入 Curvine。新挂载默认 `false`。 |
 | `--replicas <N>` | 覆盖副本数。 |
 | `--block-size <SIZE>` | 覆盖块大小，例如 `128MB`。 |
 | `-s, --storage-type <TYPE>` | 覆盖存储类型。 |
 | `--write-type <cache_mode\|fs_mode>` | 当前源码只区分这两种模式，默认 `fs_mode`。 |
-| `--provider <auto\|oss-hdfs\|opendal>` | 指定 UFS provider。 |
+| `--provider <auto\|oss-hdfs\|opendal\|cosn>` | 指定 UFS provider。 |
+| `--skip-ufs-probe` | 跳过挂载前的 UFS 可达性检查。适用于凭据只存在于集群侧的挂载，例如 S3 的 `role` 或 `auto` 凭据来源；UFS 访问错误会在首次访问数据时出现，而不是在挂载时。 |
+| `--info <CV_PATH>` | 显示包含 `CV_PATH` 的挂载点配置（见上文）。不能与挂载路径或 `--update` 同时使用。 |
 | `--check` | 仅在列挂载点时生效，附带有效性检查。 |
 | `--dry-run` | `resync` 时只扫描和打印差异，不执行删除 / 创建。 |
 | `--verbose` | `resync` 时打印更详细的逐文件日志。 |
+
+使用 `--update` 时，未指定的 `--ttl-ms`、`--auto-cache`、`--access-mode`、`--write-cache`、`--read-verify-ufs` 保留挂载点已保存的值；上面的默认值只用于新挂载。
 
 **关于 `--provider`**：同一种 URI scheme 可能映射到不同实现。例如 `oss://...` 既可能走 OSS-HDFS / JindoSDK，也可能走 OpenDAL，因此可以通过 `--provider` 强制指定实现。
 
@@ -246,6 +254,7 @@ cv fs free /data --recursive
 | `auto` | 按 URI scheme 自动选择实现。 | 所有已支持 scheme |
 | `oss-hdfs` | 使用 JindoSDK / OSS-HDFS 语义。 | `oss://` |
 | `opendal` | 使用 OpenDAL 后端。 | `s3://`、`oss://`、`hdfs://`、`webhdfs://`、`cos://`、`gcs://`、`azblob://` 等 |
+| `cosn` | 通过 Hadoop COSN 连接器和 libhdfs 访问腾讯云 COS。需要使用 `--ufs cosn` 构建。 | `cosn://` |
 
 当前实现还有几个容易遗漏的行为：
 

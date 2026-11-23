@@ -121,7 +121,9 @@ When mounting UFS with `cv mount`, TTL can be set for that mount:
 
 | Option | Type | Default | Description | Example |
 | --- | --- | --- | --- | --- |
-| `--ttl-ms` | duration | `7d` | Cache data expiration time | `24h`, `7d`, `30d` |
+| `--ttl-ms` | duration | `7d` | Cache data expiration time. `0` means cached data never expires | `24h`, `7d`, `30d`, `0` |
+
+The TTL only sets how long cached data lives. Whether reads cache data at all is the separate `--auto-cache` option (see [9.1](#91-automatic-caching)).
 
 For mount points, the expiration action is derived from `write_type`:
 
@@ -198,7 +200,9 @@ If `ttl_action = "none"` is configured, disabling time-based expiration, the dat
 
 ### 9.1 Automatic Caching
 
-Automatic caching is enabled for a mount when that mount has a non-zero TTL, for example `cv mount s3://bucket/prefix /path --ttl-ms 7d`. On the first read of a UFS file under that mount, Curvine submits an asynchronous load job to bring the data into Curvine. The read is served from UFS while the job runs in the background. The job follows the same Transfer routing as a manual `cv load` command.
+Automatic caching is controlled only by the mount's `--auto-cache` option, which is `true` for new mounts; the TTL does not affect it. Turn it off with `cv mount <ufs_path> <cv_path> --update --auto-cache false`. On the first read of a UFS file under that mount, Curvine submits an asynchronous load job to bring the data into Curvine. The read is served from UFS while the job runs in the background. The job follows the same Transfer routing as a manual `cv load` command.
+
+With `--ttl-ms 0`, cached data never expires. A mount with automatic caching then keeps serving the first cached copy of a file until that file is deleted, overwritten, or loaded again with `cv load` (which overwrites by default); it is not compared with the UFS again unless the mount has `--read-verify-ufs`. Add `--read-verify-ufs` to mounts that must see UFS changes. Before CurvineIO/curvine#2073, `--ttl-ms 0` also turned automatic caching off. To keep that behavior on an existing mount, run `cv mount <ufs_path> <cv_path> --update --auto-cache false --ttl-ms 0`.
 
 Example log output:
 

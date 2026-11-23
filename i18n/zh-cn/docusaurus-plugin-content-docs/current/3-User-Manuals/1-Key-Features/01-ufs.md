@@ -135,11 +135,15 @@ bin/cv mount \
 | `--update` | `false` | 开关型 flag 参数，挂载点已存在时用于更新配置，挂载路径（`ufs_path` + `cv_path`）不可修改，未传该参数重复挂载会直接报错 |
 | `--check-path-consist` | `true` | 布尔值，新建挂载时校验 UFS 路径与 CV 路径 path 部分一致，方便运维对应；设为 `false` 可允许两者路径形状不一致 |
 | `--read-verify-ufs` | `false` | 布尔值，仅 `cache_mode` 生效，设为 `true` 时，读取缓存前比对 UFS 文件 `mtime`（修改时间）和文件大小，不一致则判定缓存失效，重新从 UFS 读取数据 |
-| `--ttl-ms` | `7d` | 挂载点数据缓存过期时间，支持人性化时间单位：`7d`（7 天）、`1h`（1 小时）、`30m`（30 分钟）、`100s`（100 秒），无需手动换算毫秒 |
+| `--ttl-ms` | `7d` | 挂载点数据缓存过期时间，支持人性化时间单位：`7d`（7 天）、`1h`（1 小时）、`30m`（30 分钟）、`100s`（100 秒），无需手动换算毫秒。`0` 表示缓存数据永不过期。它不控制是否自动缓存，那由 `--auto-cache` 决定 |
+| `--auto-cache` | `true` | 读取未命中缓存或缓存失效时，是否为该文件提交后台加载任务。与 `--ttl-ms` 无关 |
+| `--access-mode` | `read_only` | `cache_mode` 挂载的访问模式：`read_only` 或 `read_write` |
+| `--write-cache` | `false` | 对 `read_write` 访问的 `cache_mode` 挂载，顺序创建和覆盖写的数据同时写入 Curvine |
+| `--skip-ufs-probe` | `false` | 跳过挂载前的 UFS 可达性检查，用于只存在于集群侧的凭据（S3 `role` 或 `auto`）。访问错误会在首次访问数据时出现 |
 | `--replicas` | 无 | 整数类型，文件副本数配置，未设置时，创建文件自动回退至客户端默认副本配置 |
 | `--block-size` | 无 | 文件数据块大小配置，未设置时，创建文件自动回退至客户端默认块大小配置 |
 | `--storage-type`（简写 `-s`） | 无 | Curvine 本地存储介质类型，可选 `mem`（内存）、`ssd`（固态硬盘）、`hdd`（机械硬盘） |
-| `--provider` | 未设置（底层默认 `opendal`） | UFS 底层实现方式选择，可选 `auto`（自动识别）、`oss-hdfs`、`opendal`，默认 `opendal` 适配绝大多数存储类型 |
+| `--provider` | 未设置（底层默认 `opendal`） | UFS 底层实现方式选择，可选 `auto`（自动识别）、`oss-hdfs`、`opendal`、`cosn`，默认 `opendal` 适配绝大多数存储类型 |
 
 完整可复制挂载命令模板：
 
@@ -150,8 +154,9 @@ bin/cv mount \
   --write-type cache_mode/fs_mode \
   --update \
   --check-path-consist true/false \
-  --read-verify-ufs true/false \
+  --read-verify-ufs=true/false \
   --ttl-ms 7d \
+  --auto-cache true/false \
   --replicas 3 \
   --block-size 128M \
   -s ssd \

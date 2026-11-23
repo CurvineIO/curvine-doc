@@ -121,7 +121,9 @@ ttl_action = "delete"
 
 | 选项 | 类型 | 默认值 | 说明 | 示例 |
 | --- | --- | --- | --- | --- |
-| `--ttl-ms` | duration | `7d`（挂载默认） | 缓存数据过期时间 | `24h`、`7d`、`30d` |
+| `--ttl-ms` | duration | `7d`（挂载默认） | 缓存数据过期时间。`0` 表示缓存数据永不过期 | `24h`、`7d`、`30d`、`0` |
+
+TTL 只决定缓存数据的生存时间。读取时是否缓存数据由单独的 `--auto-cache` 选项决定（见 9.1 节）。
 
 挂载点的 TTL 动作由 `write_type` 推导：
 
@@ -198,7 +200,9 @@ quota_eviction_high_rate = 0.8
 
 ### 9.1 自动缓存
 
-当某挂载配置了非零 TTL（例如 `cv mount s3://bucket/prefix /path --ttl-ms 7d`）时，即启用该挂载的自动缓存。在该挂载下首次读取某个 UFS 文件（缓存未命中）时，Curvine 会提交一个异步加载任务，将数据拉取到 Curvine；本次读取由 UFS 直接返回，任务在后台执行。该任务与手工 `cv load` 使用相同的 Transfer 路由规则。
+自动缓存只由挂载的 `--auto-cache` 选项控制，新挂载默认为 `true`，与 TTL 无关。关闭方式：`cv mount <ufs_path> <cv_path> --update --auto-cache false`。在该挂载下首次读取某个 UFS 文件（缓存未命中）时，Curvine 会提交一个异步加载任务，将数据拉取到 Curvine；本次读取由 UFS 直接返回，任务在后台执行。该任务与手工 `cv load` 使用相同的 Transfer 路由规则。
+
+`--ttl-ms 0` 表示缓存数据永不过期。此时启用了自动缓存的挂载会一直返回文件第一次缓存的副本，直到该文件被删除、覆盖，或用 `cv load`（默认覆盖）重新加载；除非挂载启用了 `--read-verify-ufs`，否则不会再与 UFS 比对。需要感知 UFS 变化的挂载请加上 `--read-verify-ufs`。在 CurvineIO/curvine#2073 之前，`--ttl-ms 0` 同时会关闭自动缓存；如需在已有挂载上保持该行为，执行 `cv mount <ufs_path> <cv_path> --update --auto-cache false --ttl-ms 0`。
 
 在日志中可看到类似输出：
 

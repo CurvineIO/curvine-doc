@@ -137,11 +137,15 @@ For `s3://...` mounts, the CLI can auto-fill `s3.bucket_name` from the URI. For 
 | `--update` | `false` | Flag used to update configuration when the mount point already exists. The mount path (`ufs_path` + `cv_path`) cannot be changed. Without this flag, repeated mounting reports an error. |
 | `--check-path-consist` | `true` | Checks whether the path parts of the UFS path and CV path are consistent when creating a mount. Set to `false` to allow different path shapes. |
 | `--read-verify-ufs` | `false` | Only effective in `cache_mode`. When set to `true`, Curvine compares UFS file `mtime` and size before reading cache. If they are inconsistent, the cache is invalidated and data is re-read from UFS. |
-| `--ttl-ms` | `7d` | Cache expiration time of the mount point. Human-readable units are supported, such as `7d`, `1h`, `30m`, and `100s`. |
+| `--ttl-ms` | `7d` | Cache expiration time of the mount point. Human-readable units are supported, such as `7d`, `1h`, `30m`, and `100s`. `0` means cached data never expires. It does not turn automatic caching on or off; that is `--auto-cache`. |
+| `--auto-cache` | `true` | Whether a read that misses the cache, or finds it invalid, submits a background load job for the file. Independent of `--ttl-ms`. |
+| `--access-mode` | `read_only` | Access mode of a `cache_mode` mount: `read_only` or `read_write`. |
+| `--write-cache` | `false` | For a `cache_mode` mount with `read_write` access, also write sequential create and overwrite data to Curvine. |
+| `--skip-ufs-probe` | `false` | Skip the UFS reachability check before mounting, for credentials that only exist on the cluster side (S3 `role` or `auto`). Access errors then appear on the first data access. |
 | `--replicas` | none | File replica count. If not set, file creation falls back to the client default replica configuration. |
 | `--block-size` | none | File block size. If not set, file creation falls back to the client default block size configuration. |
 | `--storage-type`, `-s` | none | Curvine local storage media type. Optional values include `mem`, `ssd`, and `hdd`. |
-| `--provider` | not set, underlying default is `opendal` | UFS backend implementation. Optional values include `auto`, `oss-hdfs`, and `opendal`. The default `opendal` works for most storage types. |
+| `--provider` | not set, underlying default is `opendal` | UFS backend implementation. Optional values include `auto`, `oss-hdfs`, `opendal`, and `cosn`. The default `opendal` works for most storage types. |
 
 Full mount command template:
 
@@ -152,8 +156,9 @@ bin/cv mount \
   --write-type cache_mode/fs_mode \
   --update \
   --check-path-consist true/false \
-  --read-verify-ufs true/false \
+  --read-verify-ufs=true/false \
   --ttl-ms 7d \
+  --auto-cache true/false \
   --replicas 3 \
   --block-size 128M \
   -s ssd \
