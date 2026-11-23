@@ -662,6 +662,52 @@ For Alibaba Cloud OSS / OSS-HDFS style access.
 | `oss.accessKeySecret` | Required | Alibaba Cloud AccessKey Secret. |
 | `oss.region` | Optional | Region. |
 
+### Google Cloud Storage (`gcs://`, `gs://`)
+
+OpenDAL GCS backend, included in the release packages and images (`--ufs opendal-gcs`).
+
+| Parameter | Required/Optional | Description |
+|-----------|-------------------|-------------|
+| `gcs.service_account` | Optional | Service account (or external account) JSON, base64-encoded; passed to OpenDAL as `credential`. Without it, OpenDAL looks for Application Default Credentials and, on Google Cloud, the VM metadata server. |
+| `gcs.endpoint_url` | Optional | GCS endpoint; OpenDAL's default is `https://storage.googleapis.com`. |
+
+### Azure Blob Storage (`azblob://`)
+
+OpenDAL Azure Blob backend, included in the release packages and images (`--ufs opendal-azblob`). The URI authority is the container: `azblob://<container>/<path>`.
+
+| Parameter | Required/Optional | Description |
+|-----------|-------------------|-------------|
+| `azure.endpoint_url` | Required | Full Blob service endpoint, for example `https://<account>.blob.core.windows.net` (or `http://127.0.0.1:10000/devstoreaccount1` for Azurite). |
+| `azure.account_name` | Optional | Storage account name; when unset, OpenDAL reads it from the environment. |
+| `azure.account_key` | Optional | Storage account key; when unset, OpenDAL reads it from the environment, and without any credential it sends unsigned requests. |
+
+### Tencent COS through OpenDAL (`cos://`)
+
+OpenDAL COS backend. It is not in the release packages or images: build with `--ufs opendal-cos`.
+
+| Parameter | Required/Optional | Description |
+|-----------|-------------------|-------------|
+| `cos.endpoint_url` | Required | COS endpoint without bucket or APPID, for example `https://cos.ap-guangzhou.myqcloud.com`. |
+| `cos.credentials.access` | Optional | SecretId; when unset, OpenDAL reads it from the environment (for example `TENCENTCLOUD_SECRET_ID`). |
+| `cos.credentials.secret` | Optional | SecretKey; when unset, OpenDAL reads it from the environment. |
+
+### OpenDAL retries, timeouts and reads (every OpenDAL mount)
+
+These keys apply to every mount served by OpenDAL: S3, OSS, GCS, Azure Blob, COS, HDFS, WebHDFS and `file://`. Durations accept values such as `30s` or `10m`.
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `opendal.retry_times` | `3` | Retries of a failed request. |
+| `opendal.retry_interval_ms` | `1000` | First retry delay in milliseconds; it doubles on each retry, with jitter. |
+| `opendal.retry_max_delay_ms` | `10000` | Upper bound of the retry delay in milliseconds. |
+| `opendal.connect_timeout` | `30s` | Added to `opendal.read_timeout` to give the timeout of each read or write call within one attempt. |
+| `opendal.read_timeout` | `120s` | See `opendal.connect_timeout`. |
+| `opendal.operation_timeout` | `30s` | Upper bound of one whole operation, retries included: stat, create, open, delete, rename, one read or write chunk, one listing page. |
+| `opendal.list_idle_timeout` | `10m` | A listing that produces no entry for this long fails. |
+| `opendal.commit_timeout` | `600s` | Upper bound for operations that grow with the object size: the server-side copy of a rename on stores without a native rename (such as S3) and the final commit of a write. |
+| `opendal.read_chunk_size` | `1048576` (1 MiB) | Bytes per range request. Load and export tasks use `[job] ufs_read_chunk_size` unless the mount sets this key. |
+| `opendal.read_concurrent` | `4` | Range requests in flight for a sequential read. Load and export tasks use `[job] ufs_read_concurrent` unless the mount sets this key. |
+
 ### HDFS (`hdfs://`)
 
 | Parameter | Required/Optional | Description |

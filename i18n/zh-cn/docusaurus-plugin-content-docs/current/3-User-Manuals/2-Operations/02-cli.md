@@ -635,6 +635,52 @@ stat /curvine-fuse/data.txt
 | `oss.accessKeySecret` | 必填 | 阿里云 AccessKey Secret。 |
 | `oss.region` | 可选 | 区域。 |
 
+### Google Cloud Storage（`gcs://`、`gs://`）
+
+OpenDAL GCS 后端，已包含在发布包和镜像中（`--ufs opendal-gcs`）。
+
+| 参数 | 必填/可选 | 描述 |
+|------|-----------|------|
+| `gcs.service_account` | 可选 | base64 编码的服务账号（或外部账号）JSON，作为 `credential` 传给 OpenDAL。未设置时，OpenDAL 会查找 Application Default Credentials，在 Google Cloud 上还会使用 VM 元数据服务。 |
+| `gcs.endpoint_url` | 可选 | GCS 端点；OpenDAL 默认为 `https://storage.googleapis.com`。 |
+
+### Azure Blob Storage（`azblob://`）
+
+OpenDAL Azure Blob 后端，已包含在发布包和镜像中（`--ufs opendal-azblob`）。URI 的 authority 是容器名：`azblob://<container>/<path>`。
+
+| 参数 | 必填/可选 | 描述 |
+|------|-----------|------|
+| `azure.endpoint_url` | 必填 | 完整的 Blob 服务端点，例如 `https://<account>.blob.core.windows.net`（Azurite 为 `http://127.0.0.1:10000/devstoreaccount1`）。 |
+| `azure.account_name` | 可选 | 存储账号名；未设置时 OpenDAL 从环境变量读取。 |
+| `azure.account_key` | 可选 | 存储账号密钥；未设置时 OpenDAL 从环境变量读取，没有任何凭据时发送未签名的请求。 |
+
+### 通过 OpenDAL 访问腾讯云 COS（`cos://`）
+
+OpenDAL COS 后端。发布包和镜像中不包含它，需要使用 `--ufs opendal-cos` 构建。
+
+| 参数 | 必填/可选 | 描述 |
+|------|-----------|------|
+| `cos.endpoint_url` | 必填 | 不含 bucket 和 APPID 的 COS 端点，例如 `https://cos.ap-guangzhou.myqcloud.com`。 |
+| `cos.credentials.access` | 可选 | SecretId；未设置时 OpenDAL 从环境变量读取（例如 `TENCENTCLOUD_SECRET_ID`）。 |
+| `cos.credentials.secret` | 可选 | SecretKey；未设置时 OpenDAL 从环境变量读取。 |
+
+### OpenDAL 重试、超时与读取（所有 OpenDAL 挂载）
+
+这些参数作用于所有由 OpenDAL 提供的挂载：S3、OSS、GCS、Azure Blob、COS、HDFS、WebHDFS 和 `file://`。时长参数可写成 `30s`、`10m` 这样的值。
+
+| 参数 | 默认值 | 描述 |
+|------|--------|------|
+| `opendal.retry_times` | `3` | 请求失败后的重试次数。 |
+| `opendal.retry_interval_ms` | `1000` | 第一次重试的等待时间（毫秒），之后每次翻倍并加入随机抖动。 |
+| `opendal.retry_max_delay_ms` | `10000` | 重试等待时间的上限（毫秒）。 |
+| `opendal.connect_timeout` | `30s` | 与 `opendal.read_timeout` 相加，作为一次尝试中每个读写调用的超时。 |
+| `opendal.read_timeout` | `120s` | 见 `opendal.connect_timeout`。 |
+| `opendal.operation_timeout` | `30s` | 单个完整操作（包括重试）的上限：stat、create、open、delete、rename、一个读或写分块、一页列表。 |
+| `opendal.list_idle_timeout` | `10m` | 列表操作在这段时间内没有返回任何条目即失败。 |
+| `opendal.commit_timeout` | `600s` | 耗时随对象大小增长的操作的上限：不支持原生 rename 的存储（如 S3）上 rename 使用的服务端复制，以及写入的最终提交。 |
+| `opendal.read_chunk_size` | `1048576`（1 MiB） | 每个范围请求的字节数。加载和导出任务使用 `[job] ufs_read_chunk_size`，除非挂载设置了该参数。 |
+| `opendal.read_concurrent` | `4` | 顺序读取时同时进行的范围请求数。加载和导出任务使用 `[job] ufs_read_concurrent`，除非挂载设置了该参数。 |
+
 ### HDFS（`hdfs://`）
 
 | 参数 | 必填/可选 | 描述 |
