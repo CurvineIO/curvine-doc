@@ -40,9 +40,9 @@ Helm Chart 默认值：
 - `master-addrs` 必填，格式必须是 `host:port,host:port,...`
 - `fs-path` 缺失时默认回落为 `/`
 - `path-type` 默认值为 `Directory`
-- 用户手工传入的 `mnt-path` 仍兼容，但当前主线已经改为自动生成挂载路径，手工 `mnt-path` 只算兼容旧行为
+- `mnt-path` 会被拒绝（`InvalidArgument`）；FUSE 挂载路径由 node 自己计算（`/var/lib/kubelet/plugins/kubernetes.io/csi/curvine/<mount-key>/fuse-mount`）
 
-校验器还会接受一组可选的 FUSE 调优参数，并在 node 侧启动 FUSE 时透传过去。
+除驱动自己处理的键（`master-addrs`、`fs-path`、`path-type`、`curvine-path`、`author`、`volume-handle`）和 Kubernetes 添加的 `csi.storage.k8s.io/*` 键之外，其他键都会以 `--<key> <value>` 的形式传给 `curvine-fuse`。`CreateVolume` 会用这些参数执行 `curvine-fuse validate-config`，只要有一个参数不被 `curvine-fuse` 接受，就以 `InvalidArgument`（`invalid fuse configuration: ...`）失败；node 在启动 FUSE 前也会做同样的检查。可用的键见下文“FUSE 命令构造”一节。
 
 ### 2. Controller 生成的字段
 
@@ -145,28 +145,15 @@ fs-path="/test-data", curvine-path="/test-data/pvc-abc"
 - `--fs-path`
 - `--mnt-path`
 
-然后再拼上 CSI 侧传入的 FUSE 调优参数。
+然后按键名顺序把 StorageClass / PV 中的其他键作为参数追加上去。
 
-当前主线 `curvine-fuse` CLI 明确暴露的常用参数包括：
+这些键必须是 `curvine-fuse` 的参数。`[fuse]` 参数由 `FuseConf` 的字段生成，`lib/curvine-fuse list-config-flags --format json` 可以打印完整列表。除了由驱动设置的 `mnt-path` 和 `fs-path` 之外，它们是：
 
-- `--io-threads`
-- `--worker-threads`
-- `--mnt-per-task`
-- `--clone-fd`
-- `--fuse-channel-size`
-- `--stream-channel-size`
-- `--direct-io`
-- `--cache-readdir`
-- `--entry-timeout`
-- `--attr-timeout`
-- `--negative-timeout`
-- `--max-background`
-- `--congestion-threshold`
-- `--node-cache-size`
-- `--node-cache-timeout`
-- `--mnt-number`
+`metrics-enabled`、`io-threads`、`worker-threads`、`mnt-number`、`tasks-per-mnt`（别名 `mnt-per-task`）、`clone-fd`、`fuse-channel-size`、`stream-channel-size`、`web-port`、`read-dir-fill-ino`、`entry-timeout`、`attr-timeout`、`negative-timeout`、`remember`、`max-background`、`congestion-threshold`、`enable-meta-cache`、`meta-cache-ttl`、`node-cache-timeout`、`direct-io`、`write-back-cache`、`cache-readdir`、`non-seekable`、`check-permission`、`list-limit`
 
-同时，校验器还兼容接受 `auto-cache`、`kernel-cache`、`master-hostname`、`master-rpc-port`、`master-web-port` 这类更旧的键。但这些键并没有在当前 `curvine-fuse` CLI 页面上单独作为稳定接口文档化，因此更适合视为兼容行为，而不是建议新配置依赖的公开契约。
+`[client]` 配置同样可以作为参数传入，需加 `client-` 前缀（例如 `client-block-size`）。
+
+不是 `curvine-fuse` 参数的键，例如较旧的 `auto-cache`、`kernel-cache`、`master-hostname`、`master-rpc-port`、`master-web-port`，或 `node-cache-size`，都会让 `validate-config` 失败，卷也就不会被创建。
 
 ## 生命周期总结
 

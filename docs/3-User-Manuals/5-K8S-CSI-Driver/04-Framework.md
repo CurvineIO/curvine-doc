@@ -40,9 +40,9 @@ Raw `deploy/` manifests in the `curvine-csi` repository may still default node p
 - `master-addrs` must be present and parse as `host:port,host:port,...`
 - `fs-path` defaults to `/` when omitted
 - `path-type` defaults to `Directory`
-- legacy user-supplied `mnt-path` is still accepted, but the code path now auto-generates mount paths and treats manual `mnt-path` as compatibility behavior
+- `mnt-path` is rejected with `InvalidArgument`; the node computes the FUSE mount path itself (`/var/lib/kubelet/plugins/kubernetes.io/csi/curvine/<mount-key>/fuse-mount`)
 
-The validator also accepts a set of optional FUSE tuning keys and forwards them to the node-side FUSE start logic.
+Every other key is passed to `curvine-fuse` as `--<key> <value>`, except the keys the driver owns (`master-addrs`, `fs-path`, `path-type`, `curvine-path`, `author`, `volume-handle`) and the `csi.storage.k8s.io/*` keys Kubernetes adds. `CreateVolume` runs `curvine-fuse validate-config` with those flags and fails with `InvalidArgument` (`invalid fuse configuration: ...`) when `curvine-fuse` does not accept one; the node runs the same check before it starts FUSE. See [FUSE Command Construction](#fuse-command-construction) for the valid keys.
 
 ### 2. Controller Output
 
@@ -145,28 +145,15 @@ It always injects:
 - `--fs-path`
 - `--mnt-path`
 
-and then appends any CSI-supplied FUSE tuning flags.
+and then appends the other StorageClass / PV keys as flags, in key order.
 
-The `curvine-fuse` CLI in the main reference exposes these documented flags directly:
+Those keys must be `curvine-fuse` flags. The `[fuse]` flags are generated from the `FuseConf` fields; `lib/curvine-fuse list-config-flags --format json` prints the full list. Apart from `mnt-path` and `fs-path`, which the driver sets, they are:
 
-- `--io-threads`
-- `--worker-threads`
-- `--mnt-per-task`
-- `--clone-fd`
-- `--fuse-channel-size`
-- `--stream-channel-size`
-- `--direct-io`
-- `--cache-readdir`
-- `--entry-timeout`
-- `--attr-timeout`
-- `--negative-timeout`
-- `--max-background`
-- `--congestion-threshold`
-- `--node-cache-size`
-- `--node-cache-timeout`
-- `--mnt-number`
+`metrics-enabled`, `io-threads`, `worker-threads`, `mnt-number`, `tasks-per-mnt` (alias `mnt-per-task`), `clone-fd`, `fuse-channel-size`, `stream-channel-size`, `web-port`, `read-dir-fill-ino`, `entry-timeout`, `attr-timeout`, `negative-timeout`, `remember`, `max-background`, `congestion-threshold`, `enable-meta-cache`, `meta-cache-ttl`, `node-cache-timeout`, `direct-io`, `write-back-cache`, `cache-readdir`, `non-seekable`, `check-permission`, `list-limit`
 
-The validator also still accepts several older keys such as `auto-cache`, `kernel-cache`, `master-hostname`, `master-rpc-port`, and `master-web-port`. Those keys are not separately documented on the current `curvine-fuse` CLI page, so treat them as compatibility behavior rather than a stable public contract.
+`[client]` settings are flags too, with a `client-` prefix (for example `client-block-size`).
+
+A key that is not a `curvine-fuse` flag, such as the older `auto-cache`, `kernel-cache`, `master-hostname`, `master-rpc-port`, or `master-web-port`, or `node-cache-size`, makes `validate-config` fail, so the volume is not created.
 
 ## Lifecycle Summary
 
