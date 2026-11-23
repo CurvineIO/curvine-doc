@@ -174,8 +174,10 @@ function rewriteLinks(body, ctx) {
 
       if (href.startsWith('/')) return full; // /img/..., /install.sh
 
-      const isRelative = href.startsWith('./') || href.startsWith('../');
-      if (!isRelative) return full;
+      // Any other scheme (ftp:, data:, ...) is left alone. What remains is
+      // relative to the page, with or without a leading `./`: Docusaurus
+      // resolved `[x](04-version-management.md)` like `./04-version-management.md`.
+      if (/^[a-z][a-z0-9+.-]*:/i.test(href)) return full;
 
       const [target, hash] = href.split('#');
       const absRel = path.posix.normalize(
