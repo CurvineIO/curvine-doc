@@ -37,7 +37,7 @@ Commands:
   version
 ```
 
-`load-status`、`cancel-load`、`transfer-status`、`cancel-transfer` 仍然可用，但不再列入 `--help`；它们作为旧版任务 API 的兼容快捷命令保留。
+`transfer-status` 和 `cancel-transfer` 同样可用，但不列入 `--help`；它们是 `cv transfer status` 和 `cv transfer cancel` 的简写。旧的 `load-status` 和 `cancel-load` 已随旧版 Master 任务 API 一起移除。
 
 所有 `cv` 命令都支持以下全局参数：
 
@@ -324,20 +324,18 @@ cv load /datasets/train/part-0001.parquet --watch
 cv load s3://bucket/datasets/train/part-0001.parquet /datasets/train/part-0001.parquet --no-overwrite --watch
 ```
 
-启用 Transfer 后，`load` 会提交 Transfer Job；否则使用旧 Master Job 路径。两种模式
-下命令都会输出 Job ID 和目标路径。
+`load` 会提交 Transfer Job，并输出 Job ID 和目标路径。
 
 #### Transfer 路由
 
-启用独立 Transfer 后，命令行不变：
+两种 Transfer 部署模式下命令行相同：
 
-| 客户端配置 | `cv load` / `cv export` 路由 |
+| 客户端配置 | `cv load` / `cv export` / `cv transfer` 路由 |
 | --- | --- |
-| `[transfer] enabled = false` | 为兼容已有集群，调用旧 Master Load API。 |
-| `[transfer] enabled = true` | CLI 直接调用 Transfer 服务 RPC。 |
+| `[transfer] endpoints` 为空（默认） | 运行在 Master 内的 Transfer 服务，通过 `[client]` 中的 Master 地址访问。 |
+| 配置了 `[transfer] endpoints` | 位于这些地址的独立 Transfer 服务。 |
 
-Transfer 服务和客户端都需要配置 Transfer。按客户端切换时无需修改 Master 和 Worker
-配置；`transfer.enabled = false` 的客户端会继续调用旧 Master API。
+两种模式的说明见 [`[transfer]`](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md#transfer)。
 
 ---
 
@@ -361,13 +359,13 @@ cv export /bucket/datasets/train/part-0001.parquet --watch
 
 ---
 
-### 8. `load-status`：查询加载任务状态
+### 8. `transfer-status`：查询任务状态
 
-**用法：** `cv load-status [OPTIONS] <JOB_ID>`
+**用法：** `cv transfer-status [OPTIONS] <JOB_ID>`
 
 | 选项 / 参数 | 说明 |
 |-------------|------|
-| `<JOB_ID>` | 加载任务 ID。 |
+| `<JOB_ID>` | 加载或导出任务 ID。 |
 | `-v, --verbose` | 详细输出。 |
 | `-w, --watch <INTERVAL>` | 轮询间隔，默认 `5s`。支持 `1s`、`1m`、`1h` 等格式。 |
 | `--conf <PATH>` | 可选的单次配置覆盖；日常使用不需要。 |
@@ -375,19 +373,19 @@ cv export /bucket/datasets/train/part-0001.parquet --watch
 示例：
 
 ```bash
-cv load-status <job_id>
-cv load-status <job_id> -w 1s
+cv transfer-status <job_id>
+cv transfer-status <job_id> -w 1s
 ```
 
 :::note
-当前实现里 `load-status` 默认就会进入轮询模式，默认刷新间隔为 `5s`；源码暂未暴露“只查询一次然后退出”的独立开关。
+当前实现里 `transfer-status` 默认就会进入轮询模式，默认刷新间隔为 `5s`；源码暂未暴露“只查询一次然后退出”的独立开关。
 :::
 
 ---
 
-### 9. `cancel-load`：取消加载任务
+### 9. `cancel-transfer`：取消任务
 
-**用法：** `cv cancel-load [OPTIONS] <JOB_ID>`
+**用法：** `cv cancel-transfer [OPTIONS] <JOB_ID>`
 
 | 选项 / 参数 | 说明 |
 |-------------|------|
@@ -397,7 +395,7 @@ cv load-status <job_id> -w 1s
 示例：
 
 ```bash
-cv cancel-load <job_id>
+cv cancel-transfer <job_id>
 ```
 
 ---
@@ -426,9 +424,9 @@ cv load-list --mount /bucket/datasets --verbose
 
 ### 11. `transfer`：运维 Transfer 任务
 
-`cv transfer` 仅在 `[transfer] enabled = true` 时可用。它用于列举、查看、重试和分页查询 Transfer 任务；日常提交仍使用 `cv load` 或 `cv export`。
+`cv transfer` 用于列举、查看、重试和分页查询 Transfer 任务；日常提交仍使用 `cv load` 或 `cv export`。
 
-该命令要求客户端配置可访问的 Transfer endpoint。服务部署见
+它与 `cv load` 使用相同的路由（见第 6 节的“Transfer 路由”）。独立服务的部署见
 [Transfer 服务](../../2-Deploy/3-Transfer-Service/0-Overview.md)。
 
 | 命令 | 说明 |
@@ -448,7 +446,7 @@ cv transfer status <job_id> --watch --interval 2s
 cv transfer retry <job_id>
 ```
 
-`load-status` 与 `cancel-load` 仍保留为兼容命令。启用 Transfer 时它们调用 Transfer；关闭时调用旧 Master 实现。
+`cv transfer-status <JOB_ID>` 与 `cv cancel-transfer <JOB_ID>`（第 8、9 节）是 `cv transfer status --watch` 和 `cv transfer cancel` 的简写。
 
 ---
 

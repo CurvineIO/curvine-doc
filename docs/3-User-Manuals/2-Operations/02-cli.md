@@ -37,7 +37,7 @@ Commands:
   version
 ```
 
-`load-status`, `cancel-load`, `transfer-status`, and `cancel-transfer` are still accepted but hidden from `--help`; they remain as compatibility shortcuts for the legacy job API.
+`transfer-status` and `cancel-transfer` are also accepted but hidden from `--help`; they are short forms of `cv transfer status` and `cv transfer cancel`. The older `load-status` and `cancel-load` names were removed together with the legacy Master job API.
 
 All `cv` commands accept these global options:
 
@@ -329,23 +329,18 @@ cv load /datasets/train/part-0001.parquet --watch
 cv load s3://bucket/datasets/train/part-0001.parquet /datasets/train/part-0001.parquet --no-overwrite --watch
 ```
 
-With Transfer enabled, `load` submits a Transfer job. Otherwise it uses the
-legacy Master job path. The command prints a job ID and target path in either
-mode.
+`load` submits a Transfer job and prints its job ID and target path.
 
 #### Transfer routing
 
-The command line does not change when standalone Transfer is enabled:
+The command line is the same for both Transfer deployment modes:
 
-| Client configuration | `cv load` / `cv export` route |
+| Client configuration | `cv load` / `cv export` / `cv transfer` route |
 | --- | --- |
-| `[transfer] enabled = false` | Legacy Master Load API, for backward compatibility. |
-| `[transfer] enabled = true` | Transfer service RPC, selected directly by the CLI. |
+| `[transfer] endpoints` empty (default) | The Transfer service inside the Master, reached through the `[client]` Master addresses. |
+| `[transfer] endpoints` set | The standalone Transfer service at those addresses. |
 
-The Transfer service and the client must both be configured for Transfer. Master
-and Worker configuration does not change for a client-side rollout. A client
-with `transfer.enabled = false` continues to submit through the legacy Master
-API.
+See [`[transfer]`](../../2-Deploy/2-Deploy-Curvine-Cluster/3-Distributed-Mode/03-conf.md#transfer) for the two modes.
 
 ---
 
@@ -370,13 +365,13 @@ cv export /bucket/datasets/train/part-0001.parquet --watch
 
 ---
 
-### 8. `load-status`: query job status
+### 8. `transfer-status`: query job status
 
-**Usage:** `cv load-status [OPTIONS] <JOB_ID>`
+**Usage:** `cv transfer-status [OPTIONS] <JOB_ID>`
 
 | Option / Argument | Description |
 |-------------------|-------------|
-| `<JOB_ID>` | Load job identifier. |
+| `<JOB_ID>` | Load or export job identifier. |
 | `-v, --verbose` | Verbose output. |
 | `-w, --watch <INTERVAL>` | Poll interval, default `5s`. Supports formats such as `1s`, `1m`, and `1h`. |
 | `--conf <PATH>` | Optional one-command config override; normal use does not need it. |
@@ -384,19 +379,19 @@ cv export /bucket/datasets/train/part-0001.parquet --watch
 Examples:
 
 ```bash
-cv load-status <job_id>
-cv load-status <job_id> -w 1s
+cv transfer-status <job_id>
+cv transfer-status <job_id> -w 1s
 ```
 
 :::note
-In the current implementation, `load-status` enters watch mode by default with a `5s` refresh interval. The source does not currently expose a dedicated one-shot status-only switch.
+In the current implementation, `transfer-status` enters watch mode by default with a `5s` refresh interval. The source does not currently expose a dedicated one-shot status-only switch.
 :::
 
 ---
 
-### 9. `cancel-load`: cancel a load job
+### 9. `cancel-transfer`: cancel a job
 
-**Usage:** `cv cancel-load [OPTIONS] <JOB_ID>`
+**Usage:** `cv cancel-transfer [OPTIONS] <JOB_ID>`
 
 | Option / Argument | Description |
 |-------------------|-------------|
@@ -406,7 +401,7 @@ In the current implementation, `load-status` enters watch mode by default with a
 Example:
 
 ```bash
-cv cancel-load <job_id>
+cv cancel-transfer <job_id>
 ```
 
 ---
@@ -435,12 +430,12 @@ cv load-list --mount /bucket/datasets --verbose
 
 ### 11. `transfer`: operate Transfer jobs
 
-`cv transfer` is available only when `[transfer] enabled = true`. It is the
-operations command for listing, inspecting, retrying, and paging Transfer jobs;
-normal submission remains `cv load` or `cv export`.
+`cv transfer` is the operations command for listing, inspecting, retrying, and
+paging Transfer jobs; normal submission remains `cv load` or `cv export`.
 
-It requires a reachable Transfer endpoint in the client configuration. See
-[Transfer Service](../../2-Deploy/3-Transfer-Service/0-Overview.md) for deployment.
+It uses the same route as `cv load` (see [Transfer routing](#transfer-routing)).
+See [Transfer Service](../../2-Deploy/3-Transfer-Service/0-Overview.md) for
+deploying a standalone service.
 
 | Command | Description |
 | --- | --- |
@@ -459,9 +454,8 @@ cv transfer status <job_id> --watch --interval 2s
 cv transfer retry <job_id>
 ```
 
-`load-status` and `cancel-load` remain compatible shortcuts. With Transfer
-enabled, they call Transfer; with Transfer disabled, they call the legacy
-Master implementation.
+`cv transfer-status <JOB_ID>` and `cv cancel-transfer <JOB_ID>` (sections 8 and
+9) are short forms of `cv transfer status --watch` and `cv transfer cancel`.
 
 ---
 

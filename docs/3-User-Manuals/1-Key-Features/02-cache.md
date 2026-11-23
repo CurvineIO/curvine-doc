@@ -99,7 +99,7 @@ The current read-side validation control is `--read-verify-ufs` on the mount:
 | disabled | Cached data is trusted and normal unified filesystem fallback rules apply. |
 | enabled | On reads, Curvine compares cached file metadata against UFS (`mtime` and file length) before serving cached data. |
 
-When validation fails, or when the cache misses, data is read directly from UFS. If automatic caching is enabled for that mount, Curvine can also submit a background load job. With `[transfer] enabled = true`, that job is owned by the standalone Transfer service; otherwise it uses the legacy Master job path.
+When validation fails, or when the cache misses, data is read directly from UFS. If automatic caching is enabled for that mount, Curvine can also submit a background load job, which the Transfer service runs (inside the Master by default, or a standalone service when `[transfer] endpoints` is set).
 
 ## 7. Data Expiration Management (TTL)
 
@@ -206,15 +206,11 @@ Example log output:
 Submit async cache successfully for s3://bucket/cache/test.log, job res CacheJobResult { job_id: 7c00853f-13c8-43c1-8b3f-44740750b5a0, target_path: /s3/cache/test.log }
 ```
 
-When the client has Transfer enabled, automatic caching creates a Transfer job.
-Use the job ID to query its status:
+Automatic caching creates a Transfer job. Use the job ID to query its status:
 
 ```plain
 cv transfer status 7c00853f-13c8-43c1-8b3f-44740750b5a0
 ```
-
-`load-status` remains a compatibility command. A client without Transfer
-enabled continues to query the legacy Master job path.
 
 ### 9.2 Proactive Caching
 

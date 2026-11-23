@@ -45,8 +45,9 @@ Hadoop 路径使用的 URI scheme 是 **`cv://`**（不是 `fs.cv://`），实�
 
 | 键 | 默认值 | 含义 |
 | --- | --- | --- |
-| `fs.cv.transfer.enabled` | `false` | 将 load/export 路由到 Transfer 服务 |
-| `fs.cv.transfer.endpoints` | — | Transfer RPC 地址 |
+| `fs.cv.transfer.endpoints` | 空 | 独立 Transfer 服务的 `host:port` 地址，多个用逗号分隔。为空时 load/export 发送给运行在 Master 内的 Transfer 服务 |
+| `fs.cv.transfer.client_pending_queue_size` | `1024` | 同 `[transfer] client_pending_queue_size` |
+| `fs.cv.transfer.client_submit_concurrency` | `64` | 同 `[transfer] client_submit_concurrency` |
 | `fs.cv.proxy.enabled` | `true` | 启用基于 ZooKeeper 的 proxy 开关 |
 | `fs.cv.proxy.zk.server` | 空 | 该开关使用的 ZooKeeper 地址 |
 | `fs.cv.proxy.zk.path` | `/curvine/proxy_enabled` | 存放开关状态的 znode |

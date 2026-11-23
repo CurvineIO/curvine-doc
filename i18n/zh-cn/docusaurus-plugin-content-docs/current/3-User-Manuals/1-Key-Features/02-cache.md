@@ -99,7 +99,7 @@ storage_type = "mem"
 | 关闭 | 信任缓存与统一文件系统默认回退逻辑。 |
 | 开启 | 读前按 UFS 元数据（`mtime` 与文件长度）校验缓存。 |
 
-当校验失败或缓存未命中时，会直接从 UFS 读取；若该挂载启用了自动缓存，可同时异步将数据加载到 Curvine。`[transfer] enabled = true` 时，该任务由独立 Transfer 服务负责；否则仍使用旧 Master 任务路径。
+当校验失败或缓存未命中时，会直接从 UFS 读取；若该挂载启用了自动缓存，可同时异步将数据加载到 Curvine。该任务由 Transfer 服务执行（默认运行在 Master 内；配置了 `[transfer] endpoints` 时为独立服务）。
 
 ## 七、数据过期管理（TTL）
 
@@ -206,13 +206,11 @@ quota_eviction_high_rate = 0.8
 Submit async cache successfully for s3://bucket/cache/test.log, job res CacheJobResult { job_id: 7c00853f-13c8-43c1-8b3f-44740750b5a0, target_path: /s3/cache/test.log }
 ```
 
-客户端启用 Transfer 后，自动缓存会创建 Transfer Job。可使用 Job ID 查询状态：
+自动缓存会创建 Transfer Job。可使用 Job ID 查询状态：
 
 ```plain
 cv transfer status 7c00853f-13c8-43c1-8b3f-44740750b5a0
 ```
-
-`load-status` 仍是兼容命令。未启用 Transfer 的客户端仍查询旧 Master Job 路径。
 
 ### 9.2 主动缓存
 

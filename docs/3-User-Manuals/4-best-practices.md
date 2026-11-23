@@ -290,7 +290,7 @@ Warm up the cache before peak workloads:
 bin/cv load s3://bucket/datasets/imagenet
 
 # Check load job status
-bin/cv load-status <job-id>
+bin/cv transfer status <job-id>
 ```
 
 - Automatic caching is enabled per-mount when TTL > 0. First reads trigger background load jobs.

@@ -51,8 +51,9 @@ Optional keys:
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `fs.cv.transfer.enabled` | `false` | Route load/export through the Transfer service |
-| `fs.cv.transfer.endpoints` | — | Transfer RPC endpoints |
+| `fs.cv.transfer.endpoints` | empty | Comma-separated `host:port` addresses of a standalone Transfer service. Empty sends load and export to the Transfer service inside the Master |
+| `fs.cv.transfer.client_pending_queue_size` | `1024` | Same as `[transfer] client_pending_queue_size` |
+| `fs.cv.transfer.client_submit_concurrency` | `64` | Same as `[transfer] client_submit_concurrency` |
 | `fs.cv.proxy.enabled` | `true` | Enable the ZooKeeper-backed proxy switch |
 | `fs.cv.proxy.zk.server` | empty | ZooKeeper servers for that switch |
 | `fs.cv.proxy.zk.path` | `/curvine/proxy_enabled` | ZooKeeper znode holding the flag |
