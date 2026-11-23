@@ -56,8 +56,8 @@ Curvine 常见的配置输入包括：
 | `[client]` | 客户端默认值、重试、读写缓冲区、统一文件系统行为 |
 | `[fuse]` | FUSE 挂载与缓存参数 |
 | `[log]` | client / fuse 共用日志 |
-| `[job]` | 旧版 Master 侧 load 任务生命周期与并发控制 |
-| `[transfer]` | 独立 Load / Export 服务、状态存储和客户端路由 |
+| `[job]` | Worker 侧加载与导出任务限制，以及单对象读取调优 |
+| `[transfer]` | Load / Export 服务：默认运行在 Master 内，也可作为拥有独立状态存储的独立服务 |
 | `[cli]` | CLI 日志配置 |
 | `[discovery]` | 基于 etcd 的服务发现（默认关闭） |
 | `[fault_injection]` | 仅测试使用的故障 HTTP 控制面 |
@@ -502,54 +502,45 @@ S3 兼容网关是一个独立服务（二进制 `curvine-s3-gateway`，通过 `
 
 ### `[job]`
 
-`[job]` 配置 `transfer.enabled = false` 的客户端所使用的旧版 Master 侧任务实现。Transfer Job 的任务所有权、恢复和保留策略由 `[transfer]` 控制。
+`[job]` 包含 Worker 侧的任务限制，以及 Transfer 服务下发给每个加载和导出任务的单对象读取调优参数。Job 的任务所有权、恢复和保留策略由 `[transfer]` 控制。
 
 | 字段 | 默认值 | 含义 |
 | --- | --- | --- |
-| `job_life_ttl` | `24h` | Job 记录生命周期 |
-| `job_cleanup_ttl` | `10m` | 过期 Job 清理周期 |
-| `terminal_retention` | `10m` | 终态 Job 可查询时长 |
-| `job_max_files` | `100000` | 单 Job 最大文件数 |
-| `master_max_concurrent_load_jobs` | `16` | Master 侧并发 load 规划任务数 |
-| `master_max_background_load_jobs` | `1024` | 允许等待的后台 load 任务数 |
-| `master_max_pending_load_job_submits` | `4096` | 准入前允许等待的提交请求数 |
-| `master_load_job_runtime_threads` | `4` | 预留给 load 规划的运行时线程数 |
-| `master_load_job_blocking_threads` | `16` | 预留给 load 规划的阻塞线程数 |
-| `master_failed_load_job_retry_interval` | `30s` | 确定性 source-not-found 失败的重用窗口 |
 | `task_timeout` | `1h` | 任务最大执行时间 |
 | `task_report_interval` | `10s` | 任务进度上报间隔 |
 | `worker_max_concurrent_tasks` | `100` | 单 Worker 最大并发任务数 |
 | `worker_max_queued_tasks` | `0` | Worker 同时持有的任务数上限（等待加运行中）；超过后新任务收到可重试的“队列已满”应答。`0` 表示 2 × `worker_max_concurrent_tasks` |
-| `worker_queue_full_timeout` | `30m` | 单次提交等待已满的 Worker 队列腾出空间的最长时间，超时后放弃该任务的派发 |
 | `load_parallel_streams` | `8` | 加载和导出任务中每个对象的并行读取流数；挂载可通过 `load_task.parallel_streams` 覆盖 |
 | `load_min_bytes_per_stream` | `32MB` | 每个流最少的源数据字节数：对象被拆成 `len / load_min_bytes_per_stream` 个流，上限为 `load_parallel_streams`；挂载可通过 `load_task.min_bytes_per_stream` 覆盖 |
 | `ufs_read_chunk_size` | `2097152`（2 MiB） | 单个 UFS 读取请求的范围大小；挂载可通过 `opendal.read_chunk_size` 覆盖 |
 | `ufs_read_concurrent` | `4` | 每个流同时在途的范围请求数；挂载可通过 `opendal.read_concurrent` 覆盖。单个对象约占用 `load_parallel_streams × ufs_read_concurrent × ufs_read_chunk_size`（默认 64 MiB）读缓冲，一个 Worker 最多有 `worker_max_concurrent_tasks` 个这样的对象，调大前请考虑 Worker 内存 |
 
+Master 侧 load 任务字段（`job_life_ttl`、`job_cleanup_ttl`、`terminal_retention`、`job_max_files`、`master_max_concurrent_load_jobs`、`master_max_background_load_jobs`、`master_max_pending_load_job_submits`、`master_load_job_runtime_threads`、`master_load_job_blocking_threads`、`master_failed_load_job_retry_interval`）以及 `worker_queue_full_timeout` 已随旧版 load 任务引擎一起移除。Curvine 会忽略这些字段，并在启动时输出未知配置项警告；终态 Job 的保留时间现在由 `[transfer] terminal_retention` 控制。
+
 ## `[transfer]`
 
-`[transfer]` 由独立 Transfer 服务读取，也由需要将 Load / Export 提交给该服务的客户端读取。Transfer 服务除本段外，还需要正常的 `[client]` Master 地址。灰度阶段应保持 Master 与 Worker 配置中的 Transfer 关闭，只在 Transfer 服务和选定客户端配置中启用。
+`[transfer]` 配置 Transfer 服务，所有 Load / Export Job 都由它执行。它有两种运行模式：
+
+- **嵌入模式**（默认，`endpoints` 为空时）：由 Leader Master 在进程内运行该服务，Job 存储在内存中。客户端和 Worker 通过 Master 地址访问它，因此不需要单独的进程，也不需要任何 `[transfer]` 配置。
+- **独立模式**（配置了 `endpoints` 时）：单独部署的 Transfer 服务，拥有自己的 RPC / Web 端口和持久化状态存储。Master、Worker、Transfer 和客户端配置中应使用相同的 `endpoints`；Transfer 服务还需要正常的 `[client]` Master 地址。
 
 | 字段 | 默认值 | 含义 |
 | --- | --- | --- |
-| `enabled` | `false` | 在当前进程启用 Transfer 路由。客户端启用后 `load`、`export` 使用 Transfer；Transfer 服务端启用后启动该服务。 |
-| `store_url` | 空；推导为 `sqlite://data/transfer/transfer.db` | 状态存储 URL。支持 `memory://`、`sqlite://`、`mysql://`、`postgres://`、`postgresql://`。多实例使用一个共享的 `mysql://` 或 `postgres://` URL。 |
-| `hostname` | `localhost` | 未显式配置 endpoint 时使用的 RPC / Web 监听 hostname |
-| `rpc_port` | `9010` | Transfer RPC 端口 |
-| `web_port` | `9011` | 健康检查和指标 HTTP 端口 |
-| `endpoints` | `["<hostname>:<rpc_port>"]` | 客户端访问的 Transfer RPC 地址；应填写 Service 或负载均衡地址 |
+| `mode` | 未设置 | `embedded` 或 `standalone`。未设置时，`endpoints` 为空即为 `embedded`，非空即为 `standalone`。`embedded` 同时配置了 `endpoints`，或 `standalone` 未配置 `endpoints`，都会校验失败。 |
+| `store_url` | 嵌入模式：`memory://`；独立模式：空，推导为 `sqlite://data/transfer/transfer.db` | 状态存储 URL。支持 `memory://`、`sqlite://`、`mysql://`、`postgres://`、`postgresql://`。多个独立实例使用一个共享的 `mysql://` 或 `postgres://` URL。嵌入模式只接受 `memory://`，其他 URL 会导致启动失败。 |
+| `hostname` | `localhost` | 独立服务的 RPC / Web 监听 hostname |
+| `rpc_port` | `9010` | 独立 Transfer 服务的 RPC 端口 |
+| `web_port` | `9011` | 独立 Transfer 服务的健康检查和指标 HTTP 端口 |
+| `endpoints` | `[]` | 客户端和 Worker 访问独立 Transfer 服务的 RPC 地址；应填写 Service 或负载均衡地址。配置后即为独立模式 |
 | `instance_id` | 空 | 可选的稳定服务 owner ID；为空时自动生成 UUID |
 | `max_running_transfers` | `64` | 当前实例可并发执行的最大 Job 数 |
 | `client_pending_queue_size` | `1024` | 等待或正在提交的自动缓存请求上限 |
 | `client_submit_concurrency` | `64` | 客户端自动缓存提交的最大并发数 |
-| `max_tasks_per_transfer` | `100000` | 单个 Transfer Job 的最大任务数 |
-| `ufs_max_concurrency_per_endpoint` | `32` | 单个 UFS endpoint 的最大并发任务数 |
-| `task_max_retries` | `3` | 任务最大重试次数 |
 | `lease_timeout` | `120s` | 用于恢复和多实例协调的 owner 租约时长 |
-| `terminal_retention` | `168h` | Completed、Failed、Canceled Job 记录的保留时间 |
+| `terminal_retention` | 独立模式：`168h`；嵌入模式：`10m` | Completed、Failed、Canceled Job 记录的保留时间。嵌入模式将其保存在 Master 内存中，因此默认值更短 |
 | `log` | `transfer.log` | Transfer 日志配置 |
 
-新配置不要使用兼容字段 `store_type`、`sqlite_path`、`mysql_url`。`store_url` 根据 URL scheme 推导存储后端。内部队列、探测和调度参数不属于公开的用户配置面。
+`[transfer] enabled` 已不存在；Curvine 会忽略它并输出未知配置项警告。新配置不要使用兼容字段 `store_type`、`sqlite_path`、`mysql_url`。`store_url` 根据 URL scheme 推导存储后端。内部队列、探测和调度参数不属于公开的用户配置面；其中包括单个 Job 的任务数上限（`100000`）、单个 UFS endpoint 的并发数（`32`）和任务重试次数（`3`），配置文件无法修改它们。
 
 PostgreSQL 使用私有 CA 时，在 `store_url` 后追加 `sslrootcert=/path/to/ca.pem`；默认情况下 TLS 校验系统信任库。
 
@@ -638,7 +629,8 @@ master_addrs = [
 ]
 
 [transfer]
-enabled = false
+# endpoints 为空：Transfer 运行在 Master 内。
+# endpoints = ["transfer-01:9010"]  # 独立 Transfer 服务
 
 [fuse]
 mnt_path = "/curvine-fuse"

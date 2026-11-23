@@ -58,8 +58,8 @@ The current `ClusterConf` contains these sections:
 | `[client]` | Client defaults, retries, read/write buffers, unified FS behavior |
 | `[fuse]` | FUSE mount and cache settings |
 | `[log]` | Shared client / FUSE logging |
-| `[job]` | Legacy Master-side load-job lifecycle and concurrency |
-| `[transfer]` | Standalone Load and Export service, state store, and client routing |
+| `[job]` | Worker-side load and export task limits and per-object read tuning |
+| `[transfer]` | Load and Export service: inside the Master by default, or a standalone service with its own state store |
 | `[cli]` | CLI log settings |
 | `[discovery]` | etcd-based service discovery (disabled by default) |
 | `[fault_injection]` | Test-only fault HTTP control plane |
@@ -504,54 +504,45 @@ Rotation only applies when `log_dir` is a directory. With size and time rotation
 
 ### `[job]`
 
-`[job]` configures the legacy Master-side job implementation used by clients with `transfer.enabled = false`. Transfer jobs use `[transfer]` for ownership, recovery, and retention.
+`[job]` holds the Worker-side task limits and the per-object read tuning that the Transfer service passes to every load and export task. Job ownership, recovery, and retention are configured in `[transfer]`.
 
 | Field | Default | Meaning |
 | --- | --- | --- |
-| `job_life_ttl` | `24h` | Job record lifetime |
-| `job_cleanup_ttl` | `10m` | Cleanup interval for expired jobs |
-| `terminal_retention` | `10m` | How long terminal jobs stay queryable |
-| `job_max_files` | `100000` | Maximum files per job |
-| `master_max_concurrent_load_jobs` | `16` | Concurrent Master-side load planning jobs |
-| `master_max_background_load_jobs` | `1024` | Background load jobs allowed to wait |
-| `master_max_pending_load_job_submits` | `4096` | Pending submit requests before admission |
-| `master_load_job_runtime_threads` | `4` | Runtime threads reserved for load planning |
-| `master_load_job_blocking_threads` | `16` | Blocking threads reserved for load planning |
-| `master_failed_load_job_retry_interval` | `30s` | Reuse window for deterministic source-not-found failures |
 | `task_timeout` | `1h` | Maximum task execution time |
 | `task_report_interval` | `10s` | Task progress report interval |
 | `worker_max_concurrent_tasks` | `100` | Maximum concurrent tasks per Worker |
 | `worker_max_queued_tasks` | `0` | Tasks a Worker holds at once (waiting plus running); beyond it new tasks get a retryable "queue full" answer. `0` means 2 × `worker_max_concurrent_tasks` |
-| `worker_queue_full_timeout` | `30m` | How long one submission may wait for a full Worker queue to drain before the dispatch gives up on that task |
 | `load_parallel_streams` | `8` | Parallel read streams per object for load and export tasks; mounts can override it with `load_task.parallel_streams` |
 | `load_min_bytes_per_stream` | `32MB` | Minimum source bytes per stream: an object gets `len / load_min_bytes_per_stream` streams, capped by `load_parallel_streams`; mounts can override it with `load_task.min_bytes_per_stream` |
 | `ufs_read_chunk_size` | `2097152` (2 MiB) | Range size of one UFS read request; mounts can override it with `opendal.read_chunk_size` |
 | `ufs_read_concurrent` | `4` | Range requests each stream keeps in flight; mounts can override it with `opendal.read_concurrent`. One object buffers about `load_parallel_streams × ufs_read_concurrent × ufs_read_chunk_size` (64 MiB by default) and a Worker up to `worker_max_concurrent_tasks` of those, so raise them with the Worker memory in mind |
 
+The Master-side load-job keys (`job_life_ttl`, `job_cleanup_ttl`, `terminal_retention`, `job_max_files`, `master_max_concurrent_load_jobs`, `master_max_background_load_jobs`, `master_max_pending_load_job_submits`, `master_load_job_runtime_threads`, `master_load_job_blocking_threads`, `master_failed_load_job_retry_interval`) and `worker_queue_full_timeout` were removed together with the legacy load-job engine. Curvine ignores them and prints an unknown-key warning at startup; terminal job retention is now `[transfer] terminal_retention`.
+
 ## `[transfer]`
 
-`[transfer]` is read by the standalone Transfer service and by clients that submit Load and Export work to it. A Transfer service also needs the normal `[client]` Master addresses. During a staged rollout, keep this section disabled in the Master and Worker configuration and enable it only in the Transfer and selected client configurations.
+`[transfer]` configures the Transfer service, which runs every Load and Export job. It runs in one of two modes:
+
+- **Embedded** (the default, when `endpoints` is empty): the leader Master runs the service in-process with an in-memory job store. Clients and Workers reach it through the Master addresses, so no separate process and no `[transfer]` settings are required.
+- **Standalone** (when `endpoints` is set): a separate Transfer service with its own RPC and web ports and a persistent state store. Use the same `endpoints` in the Master, Worker, Transfer, and client configurations; the Transfer service also needs the normal `[client]` Master addresses.
 
 | Field | Default | Meaning |
 | --- | --- | --- |
-| `enabled` | `false` | Enable Transfer routing in this process. On a client, `load` and `export` use Transfer; on a Transfer server, it starts the service. |
-| `store_url` | empty; inferred as `sqlite://data/transfer/transfer.db` | State store URL. Schemes: `memory://`, `sqlite://`, `mysql://`, `postgres://`, `postgresql://`. Use one shared `mysql://` or `postgres://` URL for multiple instances. |
-| `hostname` | `localhost` | RPC and web bind hostname when explicit endpoints are not supplied |
-| `rpc_port` | `9010` | Transfer RPC port |
-| `web_port` | `9011` | Health and metrics HTTP port |
-| `endpoints` | `["<hostname>:<rpc_port>"]` | Client-facing Transfer RPC addresses; use a Service or load-balancer address |
+| `mode` | unset | `embedded` or `standalone`. When unset, an empty `endpoints` means `embedded` and a non-empty one `standalone`. `embedded` with `endpoints`, or `standalone` without them, fails validation. |
+| `store_url` | embedded: `memory://`; standalone: empty, inferred as `sqlite://data/transfer/transfer.db` | State store URL. Schemes: `memory://`, `sqlite://`, `mysql://`, `postgres://`, `postgresql://`. Use one shared `mysql://` or `postgres://` URL for multiple standalone instances. Embedded mode accepts only `memory://`; any other URL fails at startup. |
+| `hostname` | `localhost` | Standalone service RPC and web bind hostname |
+| `rpc_port` | `9010` | Standalone Transfer RPC port |
+| `web_port` | `9011` | Standalone health and metrics HTTP port |
+| `endpoints` | `[]` | Standalone Transfer RPC addresses that clients and Workers use; use a Service or load-balancer address. Setting it selects standalone mode |
 | `instance_id` | empty | Optional stable service owner ID; a UUID is generated when empty |
 | `max_running_transfers` | `64` | Maximum jobs this instance executes concurrently |
 | `client_pending_queue_size` | `1024` | Maximum auto-cache requests waiting for or performing submission |
 | `client_submit_concurrency` | `64` | Maximum concurrent client-side auto-cache submissions |
-| `max_tasks_per_transfer` | `100000` | Maximum tasks per transfer job |
-| `ufs_max_concurrency_per_endpoint` | `32` | Maximum concurrent tasks per UFS endpoint |
-| `task_max_retries` | `3` | Maximum task retries |
 | `lease_timeout` | `120s` | Ownership lease duration used for recovery and multi-instance coordination |
-| `terminal_retention` | `168h` | Retention for completed, failed, and canceled job records |
+| `terminal_retention` | standalone: `168h`; embedded: `10m` | Retention for completed, failed, and canceled job records. Embedded mode keeps them in the Master's memory, hence the shorter default |
 | `log` | `transfer.log` | Transfer log config |
 
-Do not use the deprecated inputs `store_type`, `sqlite_path`, or `mysql_url` in new configurations. `store_url` selects the backend from its scheme. Internal queue, probe, and scheduler values are not part of the supported user configuration surface.
+`[transfer] enabled` no longer exists; Curvine ignores it and prints an unknown-key warning. Do not use the deprecated inputs `store_type`, `sqlite_path`, or `mysql_url` in new configurations. `store_url` selects the backend from its scheme. Internal queue, probe, and scheduler values are not part of the supported user configuration surface; this includes the per-job task limit (`100000`), the per-UFS-endpoint concurrency (`32`), and the task retry count (`3`), which the configuration file cannot change.
 
 For PostgreSQL with a private CA, append `sslrootcert=/path/to/ca.pem` to the `store_url`; TLS validates the system trust store by default.
 
@@ -640,7 +631,8 @@ master_addrs = [
 ]
 
 [transfer]
-enabled = false
+# Empty endpoints: transfer runs inside the Master.
+# endpoints = ["transfer-01:9010"]  # standalone Transfer service
 
 [fuse]
 mnt_path = "/curvine-fuse"
