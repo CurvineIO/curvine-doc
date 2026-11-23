@@ -38,10 +38,15 @@ Every binary prints its structured version as JSON with `--version-json`:
 
 ```bash
 cv --version-json
-curvine-master --version-json
-curvine-worker --version-json
-curvine-fuse --version-json
+bin/curvine-master.sh --version-json
+bin/curvine-worker.sh --version-json
+bin/curvine-fuse.sh --version-json
 ```
+
+The launcher scripts pass the flag to the binaries. Master, Worker, MDS and
+Transfer all run `lib/curvine-server`, so
+`lib/curvine-server --service master --version-json` prints the same as the
+Master launcher.
 
 Example output:
 
@@ -54,17 +59,17 @@ Example output:
   "git_branch": "main",
   "protocol_version": 1,
   "min_protocol_version": 1,
-  "capabilities": ["transfer", "batch-write"]
+  "capabilities": []
 }
 ```
 
 The fields are:
 
-- `component` — component name (`master`, `worker`, `client`, `fuse`, `cli`, `csi`).
+- `component` — component name (`master`, `worker`, `mds`, `data-transfer`, `client`, `fuse`, `cli`, `csi`; `server` when `curvine-server` runs without `--service`).
 - `release_version` — Cargo/package version of the build.
 - `git_commit` / `git_tag` / `git_branch` — exact source provenance.
 - `protocol_version` / `min_protocol_version` — wire protocol bounds.
-- `capabilities` — feature-level negotiation tokens.
+- `capabilities` — feature-level negotiation tokens (empty in current builds, see [Capabilities](#capabilities)).
 
 ## Worker Version Statistics
 
@@ -155,16 +160,13 @@ blocked_versions = ["0.2.5"]
 
 ## Capabilities
 
-Beyond versions, features are negotiated through capability tokens that each
-component advertises in its `ComponentVersion`. A feature is enabled only when
-**both** peers declare it, so a capability introduced in a newer release is
-silently disabled until the whole data path upgrades.
+`ComponentVersion` carries a list of capability tokens so that a feature can be
+enabled only when **both** peers declare it; a capability introduced in a newer
+release would then stay disabled until the whole data path upgrades.
 
-| Capability | Description | Introduced In |
-|---|---|---|
-| `transfer` | Data transfer between workers | 0.4.0 |
-| `batch-write` | Batch write optimization | 0.4.0 |
-| `short-circuit` | Short-circuit read (client → worker direct) | 0.4.0 |
+No component advertises a capability yet: every component reports an empty
+`capabilities` list, in `--version-json` and in its handshake, and no feature
+is gated on a token. Rely on the release and protocol versions above.
 
 ## Observability
 
@@ -175,7 +177,8 @@ page for the full metric table.
 | Metric | Type | Labels | Description |
 |---|---|---|---|
 | `compat_worker_verdict` | Gauge | `worker_id`, `verdict` | 1 for the current compatibility verdict of each worker |
-| `compat_client_verdict` | Gauge | `client_addr`, `verdict` | 1 for the current compatibility verdict of each client |
+| `compat_client_verdict` | Gauge | `release_version`, `verdict` | Number of clients seen in the last hour per release version and verdict |
+| `compat_client_verdict_total` | Counter | `verdict` | Times a client address changed to a verdict |
 | `compat_enforce_rejected_total` | Counter | `component`, `verdict` | Total number of enforce-mode compatibility rejections |
 
 `verdict` takes one of: `compatible`, `missing_info`, `blocked`,

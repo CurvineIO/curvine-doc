@@ -30,10 +30,14 @@
 
 ```bash
 cv --version-json
-curvine-master --version-json
-curvine-worker --version-json
-curvine-fuse --version-json
+bin/curvine-master.sh --version-json
+bin/curvine-worker.sh --version-json
+bin/curvine-fuse.sh --version-json
 ```
+
+启动脚本会把该参数传给二进制。Master、Worker、MDS 和 Transfer 都运行
+`lib/curvine-server`，因此 `lib/curvine-server --service master --version-json`
+与 Master 启动脚本的输出相同。
 
 输出示例：
 
@@ -46,17 +50,17 @@ curvine-fuse --version-json
   "git_branch": "main",
   "protocol_version": 1,
   "min_protocol_version": 1,
-  "capabilities": ["transfer", "batch-write"]
+  "capabilities": []
 }
 ```
 
 字段含义：
 
-- `component` — 组件名称（`master`、`worker`、`client`、`fuse`、`cli`、`csi`）。
+- `component` — 组件名称（`master`、`worker`、`mds`、`data-transfer`、`client`、`fuse`、`cli`、`csi`；`curvine-server` 未指定 `--service` 时为 `server`）。
 - `release_version` — Cargo/包版本。
 - `git_commit` / `git_tag` / `git_branch` — 精确的源码来源信息。
 - `protocol_version` / `min_protocol_version` — 线上协议范围。
-- `capabilities` — 特性级协商令牌。
+- `capabilities` — 特性级协商令牌（当前构建中为空，见下文“能力”一节）。
 
 ## 查看 Worker 版本统计
 
@@ -132,13 +136,9 @@ blocked_versions = ["0.2.5"]
 
 ## 能力（Capabilities）
 
-除版本外，功能还通过能力令牌协商：每个组件在其 `ComponentVersion` 中声明能力，只有**双方**都声明某能力时该特性才启用。因此在新发布中引入的能力会静默禁用，直到整个数据链路都升级。
+`ComponentVersion` 带有一个能力令牌列表，用于让某个特性只在**双方**都声明时启用；这样新发布中引入的能力会保持禁用，直到整个数据链路都升级。
 
-| 能力 | 说明 | 引入版本 |
-|---|---|---|
-| `transfer` | Worker 间数据传输 | 0.4.0 |
-| `batch-write` | 批量写入优化 | 0.4.0 |
-| `short-circuit` | 短路读（客户端 → Worker 直连） | 0.4.0 |
+目前没有任何组件声明能力：所有组件在 `--version-json` 和握手中上报的 `capabilities` 都为空，也没有特性依赖能力令牌。请以上文的发布版本和协议版本为准。
 
 ## 可观测性
 
@@ -147,7 +147,8 @@ master 在 Prometheus 端点（`http://<master>:9010/metrics`）暴露兼容性�
 | 指标 | 类型 | 标签 | 说明 |
 |---|---|---|---|
 | `compat_worker_verdict` | Gauge | `worker_id`、`verdict` | 每个 worker 当前兼容性结论，为 1 |
-| `compat_client_verdict` | Gauge | `client_addr`、`verdict` | 每个 client 当前兼容性结论，为 1 |
+| `compat_client_verdict` | Gauge | `release_version`、`verdict` | 最近一小时内按版本和结论统计的 client 数量 |
+| `compat_client_verdict_total` | Counter | `verdict` | client 地址变为某个结论的累计次数 |
 | `compat_enforce_rejected_total` | Counter | `component`、`verdict` | enforce 模式下累计拒绝次数 |
 
 `verdict` 取值：`compatible`、`missing_info`、`blocked`、`protocol_mismatch`、`version_too_old`、`version_unknown`。
