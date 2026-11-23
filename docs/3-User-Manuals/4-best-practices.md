@@ -434,24 +434,26 @@ scrape_configs:
 
 ## 9. Transfer Service Best Practices
 
-The S3 gateway is not part of the current Curvine server. Use the optional
-Transfer service for independent Load and Export scheduling instead.
+Transfer runs every Load and Export job. By default it runs inside the leader
+Master with an in-memory job store. Deploy a standalone Transfer service (set
+`[transfer] endpoints`) when job state must be kept in a database; see
+[Transfer Service](../2-Deploy/3-Transfer-Service/0-Overview.md).
 
 ### 9.1 High Availability
 
-- Use a shared MySQL `store_url` before running more than one Transfer replica.
-- The default SQLite store is suitable for a single Transfer instance only.
-- Keep `transfer.replicas = 1` when SQLite is in use.
+- The embedded service runs on the leader Master, and its job records live in that Master's memory.
+- For a standalone service, use a shared MySQL `store_url` before running more than one Transfer replica.
+- The default SQLite store is suitable for a single standalone instance only; keep `transfer.replicas = 1` in the Helm chart when SQLite is in use.
 
 ### 9.2 Capacity and Retention
 
 - Tune `max_running_transfers` to match available UFS bandwidth.
-- Set `terminal_retention` according to how long completed jobs must remain queryable.
-- Monitor the Transfer `/metrics` endpoint and the `cv transfer list` backlog.
+- Set `terminal_retention` according to how long completed jobs must remain queryable (default `168h` for a standalone service, `10m` inside the Master).
+- Watch the `cv transfer list` backlog, and for a standalone service its `/metrics` endpoint.
 
 ```bash
-curl http://<transfer-host>:9011/metrics
 cv transfer list --state running
+curl http://<transfer-host>:9011/metrics   # standalone service
 ```
 
 ---
