@@ -53,7 +53,7 @@ Align with `rust-toolchain.toml`, `README.md`, and `README_zh.md` in the referen
 - Protobuf `3.x`
 - LLVM `12+`
 - libfuse2 or libfuse3 development packages
-- JDK `1.8+` and Maven `3.8+`
+- JDK `1.8+` and Maven `3.9+`
 - Node.js / npm `9+`
 - Python `3.7+`
 

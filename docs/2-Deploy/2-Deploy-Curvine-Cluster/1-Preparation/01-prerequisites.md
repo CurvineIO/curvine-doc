@@ -10,7 +10,7 @@ This chapter summarizes common Curvine development environment setups. The curre
 - **GCC**: version 10 or later ([GCC Installation](https://gcc.gnu.org/install/))
 - **Rust**: version 1.98 (pinned by `rust-toolchain.toml`; `build/check-env.sh` accepts 1.86 or later) ([Installation Guide](https://www.rust-lang.org/tools/install))
 - **Protobuf**: version 3.x+ ([Install Guide](https://github.com/protocolbuffers/protobuf/releases/download/v27.2/protoc-27.2-linux-x86_64.zip))
-- **Maven**: version 3.8 or later ([Install Guide](https://maven.apache.org/install.html))
+- **Maven**: version 3.9 or later ([Install Guide](https://maven.apache.org/install.html))
 - **LLVM**: version 12 or later ([Installation Guide](https://llvm.org/docs/GettingStarted.html))
 - **FUSE**: libfuse2 or libfuse3 development packages
 - **JDK**: version 1.8 or later (OpenJDK or Oracle JDK)
@@ -103,7 +103,7 @@ protoc --version
 ### Maven Installation
 
 ```bash
-# Download and install Maven 3.8+
+# Download and install Maven 3.9+
 cd /opt
 sudo wget https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz
 sudo tar -xzf apache-maven-3.9.6-bin.tar.gz
@@ -805,10 +805,8 @@ protoc --version
 ### Maven Installation
 
 ```bash
-# Method 1: Install using package manager
-sudo apt install -y maven
-
-# Method 2: Manual installation of latest version (recommended)
+# Install Maven 3.9+ manually. The apt package is too old to build the Java SDK
+# (3.6.3 on Ubuntu 22.04, 3.8.7 on Ubuntu 24.04).
 cd /opt
 sudo wget https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz
 sudo tar -xzf apache-maven-3.9.6-bin.tar.gz

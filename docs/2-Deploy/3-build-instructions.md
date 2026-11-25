@@ -13,7 +13,7 @@ This project requires the following dependencies. Please ensure they are install
 - **GCC**: version 10 or later ([Installation Guide](https://gcc.gnu.org/install/))
 - **Rust**: version 1.98 (pinned by `rust-toolchain.toml`; `build/check-env.sh` accepts 1.86 or later) ([Installation Guide](https://www.rust-lang.org/tools/install))
 - **Protobuf**: version 3.x
-- **Maven**: version 3.8 or later ([Install Guide](https://maven.apache.org/install.html))
+- **Maven**: version 3.9 or later ([Install Guide](https://maven.apache.org/install.html))
 - **LLVM**: version 12 or later ([Installation Guide](https://llvm.org/docs/GettingStarted.html))
 - **FUSE**: libfuse2 or libfuse3 development packages
 - **JDK**: version 1.8 or later (OpenJDK or Oracle JDK)
