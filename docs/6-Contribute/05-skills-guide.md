@@ -89,7 +89,7 @@ PRs are created as drafts by default. When the description looks right and the t
 
 There are two skills, one for each side of the conversation.
 
-**If you are reviewing**, run:
+**If you are reviewing**, run `cv-submit-pr-review`:
 
 ```text
 /cv-submit-pr-review 124
@@ -97,7 +97,7 @@ There are two skills, one for each side of the conversation.
 
 The skill checks the live base and head of the PR, reads the changed tests before the implementation, and maps which crates the change touches. It then looks at correctness, concurrency and lifecycle, wire compatibility, and performance on the data, RPC, and metadata paths. It drafts comments with a clear severity prefix — `Critical:`, `Required:`, or `Optional:` — and a local verdict. Nothing is posted until you confirm.
 
-**If you are the author responding to feedback**, run:
+**If you are the author responding to feedback**, run `cv-address-pr-review`:
 
 ```text
 /cv-address-pr-review 124
@@ -107,18 +107,34 @@ The skill collects every review comment and gives you a table of what it suggest
 
 Review is a conversation, not a scorecard. If you disagree with a comment, explain why. The reasoning is recorded for the next person who reads the thread.
 
+### 5. Check content with `cv-sensitive-review` before publishing
+
+Run the leak gate before creating or updating an Issue, PR, review comment, or commit:
+
+```text
+/cv-sensitive-review
+Check this issue/PR text and diff for credentials, private keys, internal endpoints, PII, or business-confidential data.
+```
+
+The skill returns **PASS** when the material is safe to publish, or **BLOCK** with a redaction plan when it finds sensitive data. Remove or replace the flagged material, then run the check again. A passing result does not replace your own review, and it does not make an unsafe test target safe to share.
+
 ## Supporting skills
 
-The four workflows above are the main road. These skills are the side streets that help when the road gets bumpy.
+The four workflows above are the main road. These skills are the side streets that help when the road gets bumpy. The table covers every versioned `cv-*` skill in the Curvine repository; use the invocation shown in the skill's `SKILL.md` when a skill needs arguments.
 
 | Skill | What it helps with |
 | --- | --- |
+| `cv-add-adopter` | Adds or updates an organization in `ADOPTERS.md`, including the logo and a short use-case description. Use it when your project adopts Curvine. |
+| `cv-add-blog` | Publishes a paired English and Chinese Curvine blog post, including frontmatter, localized images, validation, and the PR workflow. Use it when contributing an article to the Curvine blog. |
 | `cv-codegraph` | Builds a local map of symbols and call paths so the agent can answer "where does this happen?" without scanning the whole repository. One-time setup is described in the skill. |
 | `cv-tasks-breakdown` | Turns a large feature into dependency-ordered tasks, each landing as one commit with its own tests, and optionally files sub-issues. |
 | `cv-csi-test` | Walks through deploying and testing the CSI driver on Kubernetes, including restart, recovery, and volume expansion scenarios. |
 | `cv-run-workflow` | Dispatches a GitHub Actions workflow with the right branch and inputs, then watches the run and surfaces failures. |
 | `cv-test-report` | Turns a full-chain test run into the standard report format and publishes it to the test reports site. |
 | `cv-add-skills` | Explains how to write or update a `cv-*` skill and keep the registry in `AGENTS.md` in sync. |
+| `cv-sensitive-review` | Runs the mandatory pre-publication leak check for credentials, private keys, internal endpoints, PII, and business-confidential material. |
+
+The five skills used by the four workflows above, plus this gate and the supporting skills, cover all versioned `cv-*` skills currently maintained in Curvine.
 
 ## Putting it together
 
