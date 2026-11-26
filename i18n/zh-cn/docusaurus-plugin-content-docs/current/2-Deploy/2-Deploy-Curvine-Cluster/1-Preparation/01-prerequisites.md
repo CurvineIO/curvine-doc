@@ -10,7 +10,7 @@ sidebar_position: 0
 - ​**GCC**: version 10 or later ([GCC Installation](https://gcc.gnu.org/install/))
 - **Rust**：1.98（由 `rust-toolchain.toml` 固定；`build/check-env.sh` 接受 1.86 及以上） ([Installation Guide](https://www.rust-lang.org/tools/install))
 - ​**Protobuf**: version 3.x+ [(Install Guide)](https://github.com/protocolbuffers/protobuf/releases/download/v27.2/protoc-27.2-linux-x86_64.zip)
-- ​**Maven**: version 3.8 or later ([Install Guide](https://maven.apache.org/install.html))
+- ​**Maven**: version 3.9 or later ([Install Guide](https://maven.apache.org/install.html))
 - ​**LLVM**: version 12 or later ([Installation Guide](https://llvm.org/docs/GettingStarted.html))
 - ​**FUSE**: libfuse2 or libfuse3 development packages
 - ​**JDK**: version 1.8 or later (OpenJDK or Oracle JDK)
@@ -105,7 +105,7 @@ protoc --version
 ### Maven 安装
 
 ```bash
-# 下载并安装 Maven 3.8+
+# 下载并安装 Maven 3.9+
 cd /opt
 sudo wget https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz
 sudo tar -xzf apache-maven-3.9.6-bin.tar.gz
@@ -729,10 +729,8 @@ protoc --version
 ### Maven 安装
 
 ```bash
-# 方法1：使用包管理器安装
-sudo apt install -y maven
-
-# 方法2：手动安装最新版本（推荐）
+# 手动安装 Maven 3.9+。apt 提供的 maven 版本过旧，无法构建 Java SDK
+# （Ubuntu 22.04 为 3.6.3，Ubuntu 24.04 为 3.8.7）。
 cd /opt
 sudo wget https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz
 sudo tar -xzf apache-maven-3.9.6-bin.tar.gz

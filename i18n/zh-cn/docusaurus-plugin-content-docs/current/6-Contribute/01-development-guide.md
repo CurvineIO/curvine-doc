@@ -53,7 +53,7 @@ Curvine 仓库同时包含 Cargo workspace，以及若干用于打包、部署�
 - Protobuf `3.x`
 - LLVM `12+`
 - libfuse2 或 libfuse3 开发包
-- JDK `1.8+` 与 Maven `3.8+`
+- JDK `1.8+` 与 Maven `3.9+`
 - Node.js / npm `9+`
 - Python `3.7+`
 

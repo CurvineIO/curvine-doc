@@ -13,7 +13,7 @@ sidebar_position: 2
 - **GCC**：10 或更高版本（[安装指南](https://gcc.gnu.org/install/)）
 - **Rust**：1.98（由 `rust-toolchain.toml` 固定；`build/check-env.sh` 接受 1.86 及以上）（[安装指南](https://www.rust-lang.org/tools/install)）
 - **Protobuf**：3.x 版本
-- **Maven**：3.8 或更高版本（[安装指南](https://maven.apache.org/install.html)）
+- **Maven**：3.9 或更高版本（[安装指南](https://maven.apache.org/install.html)）
 - **LLVM**：12 或更高版本（[安装指南](https://llvm.org/docs/GettingStarted.html)）
 - **FUSE**：libfuse2 或 libfuse3 开发包
 - **JDK**：1.8 或更高版本（OpenJDK 或 Oracle JDK）
