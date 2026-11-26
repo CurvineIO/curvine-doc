@@ -281,7 +281,27 @@ data_dir = [
 
 `dir_reserved` 是固定字节预留；`free_ratio` 按物理设备比例预留，并且会考虑同盘其他应用占用的空间。两者都会在写入准入时作用于新 block 和 FileLayout 重写 staging 副本。
 
-`[worker.spdk_disk]` 仅在启用 SPDK 的服务端构建中有效（`build.sh --spdk` 或 `--spdk-rdma`），包含 `enabled`、`app_name`、`reactor_mask`、`qpair_acquire_timeout`，以及 `targets` 数组（`trtype`、`adrfam`、`traddr`、`trsvcid`、`subnqn`）。
+`[worker.spdk_disk]` 仅在启用 SPDK 的服务端构建中有效（`build.sh --spdk` 或 `--spdk-rdma`）：
+
+| 字段 | 默认值 | 说明 |
+| --- | --- | --- |
+| `enabled` | `false` | 使用 SPDK NVMe-oF 磁盘；为 `true` 时至少需要一个 target |
+| `app_name` | `curvine` | SPDK 应用名 |
+| `hugepage` | `1024MB` | 为 DMA 缓冲区预留的 hugepage 内存 |
+| `reactor_mask` | `0x1` | SPDK reactor 的 CPU 掩码（十六进制） |
+| `iova_mode` | 空（自动检测） | `va` 或 `pa` |
+| `io_queue_depth` | `128` | 每个 I/O qpair 的队列深度 |
+| `io_queue_requests` | `512` | 每个 qpair 的请求数，不能小于 `io_queue_depth` |
+| `io_timeout` | `30s` | 单个 NVMe I/O 的超时时间 |
+| `io_retry_count` | `4` | I/O 失败后的重试次数 |
+| `keep_alive_timeout` | `10s` | NVMe-oF keep-alive 超时时间 |
+| `qpair_acquire_timeout` | `30s` | 等待空闲 qpair 的时间 |
+| `poll_interval_ms` | `100` | 空闲时 poller 的轮询间隔 |
+| `spin_iter` | `1000` | poller 休眠前的空轮询次数 |
+| `dma_buffer_size` | `1MB` | 每个预分配 DMA 读写缓冲区的大小；更大的 I/O 按此大小分块 |
+| `targets` | `[]` | NVMe-oF target 列表，见下文 |
+
+每个 `[[worker.spdk_disk.targets]]` 条目包含 `trtype`（默认 `rdma`，也可为 `tcp`）、`adrfam`（`ipv4`）、`traddr`、`trsvcid`（`4420`）和 `subnqn`（`traddr` 与 `subnqn` 必填），以及可选的 `hostnqn`、`io_queues`（`0` 表示使用 SPDK 默认值）、`keep_alive_timeout` 和 `io_timeout`，后两者会覆盖上表中该 target 的取值。
 
 ## `[client]`
 

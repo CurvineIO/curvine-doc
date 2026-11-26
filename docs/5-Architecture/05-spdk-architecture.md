@@ -139,11 +139,11 @@ Handler threads communicate with the poller through three types:
 
 Per-bdev handle analogous to `LocalFile`. It holds:
 - Raw NVMe namespace and qpair pointers
-- DMA read and write buffers (hugepage-backed, fixed-size per `dma_buf_size` (1 MB as the default), reused across I/Os)
+- DMA read and write buffers (hugepage-backed, fixed-size per `dma_buffer_size` (1 MB as the default), reused across I/Os)
 - I/O channel sender to the poller thread
 - Current position (`pos`), device size, block size
 
-Large I/Os are **chunked**: split into `dma_buf_size` chunks and submitted serially.
+Large I/Os are **chunked**: split into `dma_buffer_size` chunks and submitted serially.
 
 `BlockDevice` (in `orpc/src/io/block_io.rs`) wraps `SpdkBdev` and `LocalFile` into a single enum that implements `BlockIO`. The handler code dispatches through the trait at runtime without knowing which backend it's talking to.
 
@@ -208,7 +208,7 @@ A pre-allocated, fixed-size buffer backed by hugepages for NVMe DMA.
 - **Hugepage backing**: Allocated via `curvine_spdk_dma_malloc` which returns physically contiguous, pinned memory. This satisfies the NVMe controller's DMA requirements and avoids TLB misses for large I/Os.
 - **Pre-allocated and reused**: Each `SpdkBdev` allocates two buffers (read + write) at open time via `curvine_spdk_dma_malloc` and reuses them for every I/O. This avoids a malloc/free cycle per I/O — the buffer is zero-cost after the first allocation.
 - **Cleanup on close**: Buffers are freed via `curvine_spdk_dma_free` in `SpdkBdev::drop`. If inflight I/Os do not drain before the drop deadline, the buffer pointers are nulled to prevent use-after-free (safe leak).
-- **Reuse through chunking**: Large I/Os are split into `dma_buf_size` chunks and processed serially through the same fixed buffer, avoiding the need for dynamically-sized DMA memory.
+- **Reuse through chunking**: Large I/Os are split into `dma_buffer_size` chunks and processed serially through the same fixed buffer, avoiding the need for dynamically-sized DMA memory.
 - **Block alignment**: All offsets are aligned down to the device block size. This is required by the NVMe specification — unaligned DMA addresses cause controller errors.
 
 ### BdevOffsetAllocator
@@ -268,8 +268,8 @@ flowchart LR
 
 ## DMA Buffer Management
 
-- Read and write buffers are `dma_buf_size` 1 MB each by default, pre-allocated at `SpdkBdev::open()`
-- Larger I/Os are split into `dma_buf_size` chunks, processed serially
+- Read and write buffers are `dma_buffer_size` 1 MB each by default, pre-allocated at `SpdkBdev::open()`
+- Larger I/Os are split into `dma_buffer_size` chunks, processed serially
 - Each chunk requires a DMA memcpy: `DmaBuf → heap BytesMut` (read) or `heap → DmaBuf` (write)
 
 ### Alignment Constraints

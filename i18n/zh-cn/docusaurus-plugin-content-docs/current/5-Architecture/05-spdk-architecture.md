@@ -138,11 +138,11 @@ handler 线程通过三种类型与 poller 通信：
 `SpdkBdev` 是每个 bdev 的句柄，类似 `LocalFile`。它持有：
 
 - 原始 NVMe namespace 和 qpair 指针
-- DMA 读写缓冲区（基于 hugepage、固定大小，由 `dma_buf_size` 控制，默认 1 MB，并在 I/O 间复用）
+- DMA 读写缓冲区（基于 hugepage、固定大小，由 `dma_buffer_size` 控制，默认 1 MB，并在 I/O 间复用）
 - 发送到 poller 线程的 I/O channel
 - 当前偏移（`pos`）、设备大小、block size
 
-大 I/O 会被**分块**：拆成 `dma_buf_size` 大小的 chunk，并串行提交。
+大 I/O 会被**分块**：拆成 `dma_buffer_size` 大小的 chunk，并串行提交。
 
 `BlockDevice`（位于 `orpc/src/io/block_io.rs`）将 `SpdkBdev` 和 `LocalFile` 包装到同一个 enum 中，并实现 `BlockIO`。handler 代码在运行时通过 trait 分发，不需要知道底层使用哪个 backend。
 
@@ -207,7 +207,7 @@ flowchart LR
 - **Hugepage 支持**：通过 `curvine_spdk_dma_malloc` 分配，返回物理连续且固定的内存，满足 NVMe controller 的 DMA 要求，并减少大 I/O 中的 TLB miss。
 - **预分配和复用**：每个 `SpdkBdev` 在打开时通过 `curvine_spdk_dma_malloc` 分配两个缓冲区（读 + 写），并在所有 I/O 中复用。这样避免了每次 I/O 都 malloc/free，首次分配之后使用成本很低。
 - **关闭时清理**：在 `SpdkBdev::drop` 中通过 `curvine_spdk_dma_free` 释放缓冲区。如果 drop 截止时间前 inflight I/O 未清空，则将缓冲区指针置空，避免 use-after-free（以安全泄漏换取正确性）。
-- **通过分块复用**：大 I/O 会被拆成 `dma_buf_size` 大小的 chunk，并通过同一个固定缓冲区串行处理，不需要动态大小的 DMA 内存。
+- **通过分块复用**：大 I/O 会被拆成 `dma_buffer_size` 大小的 chunk，并通过同一个固定缓冲区串行处理，不需要动态大小的 DMA 内存。
 - **块对齐**：所有 offset 都会向下对齐到设备 block size。这是 NVMe 规范要求，未对齐 DMA 地址会导致 controller 错误。
 
 ### BdevOffsetAllocator
@@ -267,8 +267,8 @@ flowchart LR
 
 ## DMA 缓冲区管理
 
-- 读写缓冲区默认都是 `dma_buf_size` 1 MB，在 `SpdkBdev::open()` 时预分配
-- 更大的 I/O 会拆成 `dma_buf_size` 大小的 chunk，并串行处理
+- 读写缓冲区默认都是 `dma_buffer_size` 1 MB，在 `SpdkBdev::open()` 时预分配
+- 更大的 I/O 会拆成 `dma_buffer_size` 大小的 chunk，并串行处理
 - 每个 chunk 都需要一次 DMA memcpy：读路径是 `DmaBuf → heap BytesMut`，写路径是 `heap → DmaBuf`
 
 ### 对齐约束

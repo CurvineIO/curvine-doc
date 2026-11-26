@@ -283,7 +283,27 @@ Storage types are `SSD`, `HDD`, `DISK`, and `MEM`. The Worker appends `cluster_i
 
 `dir_reserved` is a fixed byte reservation. `free_ratio` is a fraction of the physical device and also covers space consumed by other applications on the same disk. Both are enforced at write admission for new blocks and FileLayout rewrite staging copies.
 
-`[worker.spdk_disk]` is only meaningful in server builds that enable SPDK (`build.sh --spdk` or `--spdk-rdma`). It contains `enabled`, `app_name`, `reactor_mask`, `qpair_acquire_timeout`, and a `targets` array (`trtype`, `adrfam`, `traddr`, `trsvcid`, `subnqn`).
+`[worker.spdk_disk]` is only meaningful in server builds that enable SPDK (`build.sh --spdk` or `--spdk-rdma`):
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `enabled` | `false` | Use the SPDK NVMe-oF disks; `true` requires at least one target |
+| `app_name` | `curvine` | SPDK application name |
+| `hugepage` | `1024MB` | Hugepage memory reserved for DMA buffers |
+| `reactor_mask` | `0x1` | CPU mask of the SPDK reactor, in hex |
+| `iova_mode` | empty (auto-detect) | `va` or `pa` |
+| `io_queue_depth` | `128` | Queue depth of each I/O qpair |
+| `io_queue_requests` | `512` | Requests per qpair; must be at least `io_queue_depth` |
+| `io_timeout` | `30s` | Timeout of one NVMe I/O |
+| `io_retry_count` | `4` | Retries of a failed I/O |
+| `keep_alive_timeout` | `10s` | NVMe-oF keep-alive timeout |
+| `qpair_acquire_timeout` | `30s` | Wait for a free qpair |
+| `poll_interval_ms` | `100` | Poller interval while idle |
+| `spin_iter` | `1000` | Empty polls before the poller parks |
+| `dma_buffer_size` | `1MB` | Size of each pre-allocated DMA read/write buffer; larger I/Os are split into chunks of this size |
+| `targets` | `[]` | NVMe-oF targets, see below |
+
+Each `[[worker.spdk_disk.targets]]` entry has `trtype` (`rdma` by default, or `tcp`), `adrfam` (`ipv4`), `traddr`, `trsvcid` (`4420`) and `subnqn` (`traddr` and `subnqn` are required), plus optional `hostnqn`, `io_queues` (`0` keeps the SPDK default), `keep_alive_timeout` and `io_timeout`, which override the values above for that target.
 
 ## `[client]`
 
