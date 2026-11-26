@@ -89,7 +89,7 @@ PR 默认以草稿（draft）形式创建。描述确认无误、测试通过后
 
 这里有两个 skill，分别对应 Review 的双方。
 
-**如果你是 Reviewer**，运行：
+**如果你是 Reviewer**，运行 `cv-submit-pr-review`：
 
 ```text
 /cv-submit-pr-review 124
@@ -97,7 +97,7 @@ PR 默认以草稿（draft）形式创建。描述确认无误、测试通过后
 
 Skill 会核对 PR 当前的 base 和 head，先读改动的测试、再读实现，并梳理这次改动涉及哪些 crate。然后它会检查正确性、并发与生命周期、接口兼容性，以及数据、RPC 和元数据路径上的性能影响。评论会带上明确的级别前缀——`Critical:`、`Required:` 或 `Optional:`——并给出本地结论。在你确认之前，不会发布任何内容。
 
-**如果你是作者，需要回应 Review 意见**，运行：
+**如果你是作者，需要回应 Review 意见**，运行 `cv-address-pr-review`：
 
 ```text
 /cv-address-pr-review 124
@@ -107,18 +107,34 @@ Skill 会收集所有 Review 评论，整理成一张表，列出建议接受、
 
 Review 是一场讨论，不是打分。如果你不同意某条意见，把理由说清楚——这些理由会被记录下来，方便后来的人理解当时的决定。
 
+### 5. 发布前用 `cv-sensitive-review` 检查内容
+
+创建或更新 Issue、PR、Review 评论或提交之前，先运行泄露检查：
+
+```text
+/cv-sensitive-review
+检查这份 Issue/PR 文本和 diff 中是否包含凭据、私钥、内部端点、个人信息或业务机密。
+```
+
+如果内容可以发布，skill 会返回 **PASS**；发现敏感数据时会返回 **BLOCK** 和脱敏方案。先删除或替换被标记的内容，再重新检查。通过检查不代表可以跳过自己的 Review，也不代表测试目标本身适合公开分享。
+
 ## 配套技能
 
-上面四个是主干流程，下面这些是在路不好走时帮你绕过去的“辅路”。
+上面四个是主干流程，下面这些是在路不好走时帮你绕过去的“辅路”。下表覆盖 Curvine 仓库中当前维护的全部版本化 `cv-*` skill；需要参数时，按对应 `SKILL.md` 中的调用方式使用。
 
 | Skill | 适用场景 |
 | --- | --- |
+| `cv-add-adopter` | 在 `ADOPTERS.md` 中新增或更新组织，包括 Logo 和简短的使用场景。你的项目采用 Curvine 时使用。 |
+| `cv-add-blog` | 发布成对的中英文 Curvine 博客文章，包括 frontmatter、本地化图片、验证和 PR 流程。向 Curvine 博客投稿时使用。 |
 | `cv-codegraph` | 在本地建立符号和调用路径索引，让 AI 助手不用扫全仓库就能回答“这段逻辑在哪里”。一次性安装步骤见该 skill 本身。 |
 | `cv-tasks-breakdown` | 把大型功能拆成有依赖顺序的小任务，每个任务作为一次提交并自带测试，也可以创建子 Issue。 |
 | `cv-csi-test` | 指导在 Kubernetes 上部署和测试 CSI 驱动，包括重启、恢复和卷扩容等场景。 |
 | `cv-run-workflow` | 用正确的分支和参数触发 GitHub Actions，并跟踪运行结果、定位失败。 |
 | `cv-test-report` | 把全链路测试结果整理成标准格式，并发布到测试报告站点。 |
 | `cv-add-skills` | 说明如何新增或修改 `cv-*` skill，并同步维护 `AGENTS.md` 中的注册表。 |
+| `cv-sensitive-review` | 在发布前检查凭据、私钥、内部端点、个人信息和业务机密，是必须执行的泄露检查。 |
+
+上面四个工作流使用的五个 skill、这个发布前检查以及配套技能，覆盖 Curvine 当前维护的全部版本化 `cv-*` skill。
 
 ## 串起来看一遍
 
